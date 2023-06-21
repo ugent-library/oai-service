@@ -138,7 +138,7 @@ type Header struct {
 }
 
 type Payload struct {
-	XML []byte `xml:",innerxml"`
+	XML string `xml:",innerxml"`
 }
 
 type Record struct {
@@ -159,15 +159,17 @@ type Provider struct {
 	setMap     map[string]struct{}
 }
 
+// TODO use context in callbacks
 type ProviderConfig struct {
+	ErrorHandler        func(error)
 	RepositoryName      string
 	BaseURL             string
 	AdminEmail          []string
 	Granularity         string
-	EarliestDatestamp   string
 	Compression         string
 	DeletedRecord       string
-	Sets                []*Set
+	Sets                []*Set // TODO callback
+	EarliestDatestamp   func() (time.Time, error)
 	ListMetadataFormats func(*Request) ([]*MetadataFormat, error)
 	GetRecord           func(*Request) (*Record, error)
 	ListIdentifiers     func(*Request) ([]*Header, *ResumptionToken, error)
@@ -203,17 +205,16 @@ func NewProvider(conf ProviderConfig) (*Provider, error) {
 	return p, nil
 }
 
-// TODO description
+// TODO description, earliestDatestamp
 func (p *Provider) identify(r *response) error {
 	r.Body = &Identify{
-		RepositoryName:    p.RepositoryName,
-		BaseURL:           p.BaseURL,
-		ProtocolVersion:   "2.0",
-		AdminEmail:        p.AdminEmail,
-		Granularity:       p.Granularity,
-		EarliestDatestamp: p.EarliestDatestamp,
-		Compression:       p.Compression,
-		DeletedRecord:     p.DeletedRecord,
+		RepositoryName:  p.RepositoryName,
+		BaseURL:         p.BaseURL,
+		ProtocolVersion: "2.0",
+		AdminEmail:      p.AdminEmail,
+		Granularity:     p.Granularity,
+		Compression:     p.Compression,
+		DeletedRecord:   p.DeletedRecord,
 	}
 	return nil
 }
@@ -305,13 +306,16 @@ func (p *Provider) getRecord(r *response) error {
 }
 
 func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	u, _ := url.Parse(p.BaseURL)
+	u.RawQuery = r.URL.RawQuery
+
 	res := &response{
 		provider:          p,
 		XmlnsXsi:          xmlnsXsi,
 		XsiSchemaLocation: xsiSchemaLocation,
 		ResponseDate:      time.Now().UTC().Format(time.RFC3339),
 		Request: Request{
-			URL: p.BaseURL + r.URL.Path,
+			URL: u.String(),
 		},
 	}
 
@@ -354,21 +358,20 @@ func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res.setRequiredIdentifier(args)
 	}
 
-	if err := handler(res); err != nil {
-		// TODO error handler, log error
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
 	status := 200
-	if len(res.Errors) > 0 {
+
+	if len(res.Errors) == 0 {
+		if err := handler(res); err != nil {
+			p.handleError(w, err)
+			return
+		}
+	} else {
 		status = 400
 	}
 
-	out, err := xml.MarshalIndent(r, "", "  ")
+	out, err := xml.MarshalIndent(res, "", "  ")
 	if err != nil {
-		// TODO error handler, log error
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		p.handleError(w, err)
 		return
 	}
 
@@ -376,6 +379,13 @@ func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(status)
 	w.Write([]byte(xml.Header))
 	w.Write(out)
+}
+
+func (p *Provider) handleError(w http.ResponseWriter, err error) {
+	if p.ErrorHandler != nil {
+		p.ErrorHandler(err)
+	}
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 func (r *response) validateArgs(q url.Values, attrs map[string]struct{}) {

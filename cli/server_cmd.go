@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -10,7 +11,9 @@ import (
 	"github.com/ory/graceful"
 	"github.com/spf13/cobra"
 	"github.com/ugent-library/httpx/render"
+	"github.com/ugent-library/oai-service/models"
 	"github.com/ugent-library/oai-service/oaipmh"
+	"github.com/ugent-library/oai-service/repository"
 	"github.com/ugent-library/zaphttp"
 	"github.com/ugent-library/zaphttp/zapchi"
 )
@@ -23,8 +26,63 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Start the server",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// setup services
+		repo, err := repository.New(config.Repo.Conn)
+		if err != nil {
+			return err
+		}
+
 		// setup oai provider
-		oaiProvider, err := oaipmh.NewProvider(oaipmh.ProviderConfig{})
+		// TODO simpler verb request and response types?
+		oaiProvider, err := oaipmh.NewProvider(oaipmh.ProviderConfig{
+			ErrorHandler:   func(err error) { logger.Error(err) },
+			RepositoryName: "Ghent University Institutional Archive",
+			BaseURL:        "https://biblio.ugent.be/oai",
+			AdminEmail:     []string{"libservice@ugent.be"},
+			DeletedRecord:  "persistent",
+			Granularity:    "YYYY-MM-DDThh:mm:ssZ",
+			GetRecord: func(r *oaipmh.Request) (*oaipmh.Record, error) {
+				ctx := context.TODO()
+
+				exists, err := repo.HasRecord(ctx, r.Identifier)
+				if err != nil {
+					return nil, err
+				}
+				if !exists {
+					return nil, oaipmh.ErrIDDoesNotExist
+				}
+
+				rec, err := repo.GetRecord(ctx, r.Identifier, r.MetadataPrefix)
+				if err == models.ErrNotFound {
+					return nil, oaipmh.ErrCannotDisseminateFormat
+				}
+				if err != nil {
+					return nil, err
+				}
+
+				if rec.Deleted {
+					return &oaipmh.Record{
+						Header: &oaipmh.Header{
+							Identifier: rec.Identifier,
+							Datestamp:  rec.Datestamp.UTC().Format(time.RFC3339),
+							Status:     "deleted",
+							SetSpec:    rec.SetSpecs,
+						},
+					}, nil
+				}
+
+				return &oaipmh.Record{
+					Header: &oaipmh.Header{
+						Identifier: rec.Identifier,
+						Datestamp:  rec.Datestamp.UTC().Format(time.RFC3339),
+						SetSpec:    rec.SetSpecs,
+					},
+					Metadata: &oaipmh.Payload{
+						XML: rec.Metadata,
+					},
+				}, nil
+			},
+		})
 		if err != nil {
 			return err
 		}

@@ -19,3 +19,10 @@
 
 # Go workspace file
 go.work
+
+# Live reloading
+.reflex.conf
+
+# Config
+.env*
+!.env.example
