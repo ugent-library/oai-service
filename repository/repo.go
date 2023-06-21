@@ -40,7 +40,7 @@ func New(conn string) (*Repo, error) {
 	}, nil
 }
 
-func (r *Repo) GetAllMetadataFormats(ctx context.Context) ([]*models.MetadataFormat, error) {
+func (r *Repo) GetMetadataFormats(ctx context.Context) ([]*models.MetadataFormat, error) {
 	rows, err := r.client.MetadataFormat.Query().All(ctx)
 	if err != nil {
 		return nil, err
@@ -92,4 +92,22 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string)
 	}
 
 	return rec, nil
+}
+
+func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) ([]*models.MetadataFormat, error) {
+	rows, err := r.client.Record.Query().
+		Where(record.IdentifierEQ(identifier)).
+		QueryMetadataFormat().All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	formats := make([]*models.MetadataFormat, len(rows))
+	for i, row := range rows {
+		formats[i] = &models.MetadataFormat{
+			Prefix:    row.Prefix,
+			Schema:    row.Schema,
+			Namespace: row.Namespace,
+		}
+	}
+	return formats, nil
 }

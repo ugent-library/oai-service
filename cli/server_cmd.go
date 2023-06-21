@@ -45,9 +45,17 @@ var serverCmd = &cobra.Command{
 			ListMetadataFormats: func(r *oaipmh.Request) ([]*oaipmh.MetadataFormat, error) {
 				ctx := context.TODO()
 
-				// TODO get by identifier
+				var formats []*models.MetadataFormat
+				var err error
+				if r.Identifier != "" {
+					formats, err = repo.GetRecordMetadataFormats(ctx, r.Identifier)
+					if err == models.ErrNotFound {
+						return nil, oaipmh.ErrIDDoesNotExist
+					}
+				} else {
+					formats, err = repo.GetMetadataFormats(ctx)
+				}
 
-				formats, err := repo.GetAllMetadataFormats(ctx)
 				if err != nil {
 					return nil, err
 				}
