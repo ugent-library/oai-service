@@ -1,5 +1,7 @@
 package cli
 
+import "fmt"
+
 type Config struct {
 	// Version info
 	Source struct {
@@ -13,4 +15,8 @@ type Config struct {
 	Repo struct {
 		Conn string `env:"CONN,notEmpty"`
 	} `envPrefix:"OAI_REPO_"`
+}
+
+func (c Config) Addr() string {
+	return fmt.Sprintf("%s:%d", config.Host, config.Port)
 }
