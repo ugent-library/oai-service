@@ -87,6 +87,7 @@ type Identify struct {
 	AdminEmail        []string `xml:"adminEmail"`
 	Granularity       string   `xml:"granularity"`
 	EarliestDatestamp string   `xml:"earliestDatestamp"`
+	Compression       string   `xml:"compression,omitempty"`
 	DeletedRecord     string   `xml:"deletedRecord"`
 }
 
@@ -164,6 +165,7 @@ type ProviderConfig struct {
 	AdminEmail          []string
 	Granularity         string
 	EarliestDatestamp   string
+	Compression         string
 	DeletedRecord       string
 	Sets                []*Set
 	ListMetadataFormats func(*Request) ([]*MetadataFormat, error)
@@ -201,7 +203,7 @@ func NewProvider(conf ProviderConfig) (*Provider, error) {
 	return p, nil
 }
 
-// TODO description, compression
+// TODO description
 func (p *Provider) identify(r *response) error {
 	r.Body = &Identify{
 		RepositoryName:    p.RepositoryName,
@@ -210,6 +212,7 @@ func (p *Provider) identify(r *response) error {
 		AdminEmail:        p.AdminEmail,
 		Granularity:       p.Granularity,
 		EarliestDatestamp: p.EarliestDatestamp,
+		Compression:       p.Compression,
 		DeletedRecord:     p.DeletedRecord,
 	}
 	return nil
