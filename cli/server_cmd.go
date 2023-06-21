@@ -41,6 +41,29 @@ var serverCmd = &cobra.Command{
 			AdminEmail:     []string{"libservice@ugent.be"},
 			DeletedRecord:  "persistent",
 			Granularity:    "YYYY-MM-DDThh:mm:ssZ",
+
+			ListMetadataFormats: func(r *oaipmh.Request) ([]*oaipmh.MetadataFormat, error) {
+				ctx := context.TODO()
+
+				// TODO get by identifier
+
+				formats, err := repo.GetAllMetadataFormats(ctx)
+				if err != nil {
+					return nil, err
+				}
+
+				oaiFormats := make([]*oaipmh.MetadataFormat, len(formats))
+				for i, f := range formats {
+					oaiFormats[i] = &oaipmh.MetadataFormat{
+						MetadataPrefix:    f.Prefix,
+						MetadataNamespace: f.Namespace,
+						Schema:            f.Schema,
+					}
+				}
+
+				return oaiFormats, nil
+			},
+
 			GetRecord: func(r *oaipmh.Request) (*oaipmh.Record, error) {
 				ctx := context.TODO()
 
