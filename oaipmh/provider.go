@@ -306,16 +306,13 @@ func (p *Provider) getRecord(r *response) error {
 }
 
 func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	u, _ := url.Parse(p.BaseURL)
-	u.RawQuery = r.URL.RawQuery
-
 	res := &response{
 		provider:          p,
 		XmlnsXsi:          xmlnsXsi,
 		XsiSchemaLocation: xsiSchemaLocation,
 		ResponseDate:      time.Now().UTC().Format(time.RFC3339),
 		Request: Request{
-			URL: u.String(),
+			URL: p.BaseURL,
 		},
 	}
 
