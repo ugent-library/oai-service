@@ -11,7 +11,6 @@ import (
 	"github.com/ory/graceful"
 	"github.com/spf13/cobra"
 	"github.com/ugent-library/httpx/render"
-	"github.com/ugent-library/oai-service/models"
 	"github.com/ugent-library/oai-service/oaipmh"
 	"github.com/ugent-library/oai-service/repository"
 	"github.com/ugent-library/zaphttp"
@@ -38,38 +37,22 @@ var serverCmd = &cobra.Command{
 			ErrorHandler:   func(err error) { logger.Error(err) },
 			RepositoryName: "Ghent University Institutional Archive",
 			BaseURL:        "https://biblio.ugent.be/oai",
-			AdminEmail:     []string{"libservice@ugent.be"},
+			AdminEmails:    []string{"libservice@ugent.be"},
 			DeletedRecord:  "persistent",
 			Granularity:    "YYYY-MM-DDThh:mm:ssZ",
 
 			ListMetadataFormats: func(r *oaipmh.Request) ([]*oaipmh.MetadataFormat, error) {
 				ctx := context.TODO()
 
-				var formats []*models.MetadataFormat
-				var err error
 				if r.Identifier != "" {
-					formats, err = repo.GetRecordMetadataFormats(ctx, r.Identifier)
-					if err == models.ErrNotFound {
+					formats, err := repo.GetRecordMetadataFormats(ctx, r.Identifier)
+					if err == repository.ErrNotFound {
 						return nil, oaipmh.ErrIDDoesNotExist
 					}
-				} else {
-					formats, err = repo.GetMetadataFormats(ctx)
+					return formats, err
 				}
 
-				if err != nil {
-					return nil, err
-				}
-
-				oaiFormats := make([]*oaipmh.MetadataFormat, len(formats))
-				for i, f := range formats {
-					oaiFormats[i] = &oaipmh.MetadataFormat{
-						MetadataPrefix:    f.Prefix,
-						MetadataNamespace: f.Namespace,
-						Schema:            f.Schema,
-					}
-				}
-
-				return oaiFormats, nil
+				return repo.GetMetadataFormats(ctx)
 			},
 
 			GetRecord: func(r *oaipmh.Request) (*oaipmh.Record, error) {
@@ -84,34 +67,36 @@ var serverCmd = &cobra.Command{
 				}
 
 				rec, err := repo.GetRecord(ctx, r.Identifier, r.MetadataPrefix)
-				if err == models.ErrNotFound {
+				if err == repository.ErrNotFound {
 					return nil, oaipmh.ErrCannotDisseminateFormat
 				}
 				if err != nil {
 					return nil, err
 				}
 
-				if rec.Deleted {
-					return &oaipmh.Record{
-						Header: &oaipmh.Header{
-							Identifier: rec.Identifier,
-							Datestamp:  rec.Datestamp.UTC().Format(time.RFC3339),
-							Status:     "deleted",
-							SetSpec:    rec.SetSpecs,
-						},
-					}, nil
+				return rec, nil
+			},
+
+			ListRecords: func(r *oaipmh.Request) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
+				ctx := context.TODO()
+
+				exists, err := repo.HasMetadataFormat(ctx, r.MetadataPrefix)
+				if err != nil {
+					return nil, nil, err
+				}
+				if !exists {
+					return nil, nil, oaipmh.ErrCannotDisseminateFormat
 				}
 
-				return &oaipmh.Record{
-					Header: &oaipmh.Header{
-						Identifier: rec.Identifier,
-						Datestamp:  rec.Datestamp.UTC().Format(time.RFC3339),
-						SetSpec:    rec.SetSpecs,
-					},
-					Metadata: &oaipmh.Payload{
-						XML: rec.Metadata,
-					},
-				}, nil
+				// if r.ResumptionToken != "" {
+				// }
+
+				recs, err := repo.GetRecords(ctx, r.MetadataPrefix)
+				if err != nil {
+					return nil, nil, err
+				}
+
+				return recs, nil, nil
 			},
 		})
 		if err != nil {

@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"time"
 
 	"entgo.io/ent/dialect"
 	sqldialect "entgo.io/ent/dialect/sql"
@@ -12,8 +14,10 @@ import (
 	"github.com/ugent-library/oai-service/ent/migrate"
 	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/set"
-	"github.com/ugent-library/oai-service/models"
+	"github.com/ugent-library/oai-service/oaipmh"
 )
+
+var ErrNotFound = errors.New("not found")
 
 type Repo struct {
 	client *ent.Client
@@ -40,17 +44,23 @@ func New(conn string) (*Repo, error) {
 	}, nil
 }
 
-func (r *Repo) GetMetadataFormats(ctx context.Context) ([]*models.MetadataFormat, error) {
+func (r *Repo) HasMetadataFormat(ctx context.Context, prefix string) (bool, error) {
+	return r.client.MetadataFormat.Query().
+		Where(metadataformat.PrefixEQ(prefix)).
+		Exist(ctx)
+}
+
+func (r *Repo) GetMetadataFormats(ctx context.Context) ([]*oaipmh.MetadataFormat, error) {
 	rows, err := r.client.MetadataFormat.Query().All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	formats := make([]*models.MetadataFormat, len(rows))
+	formats := make([]*oaipmh.MetadataFormat, len(rows))
 	for i, row := range rows {
-		formats[i] = &models.MetadataFormat{
-			Prefix:    row.Prefix,
-			Schema:    row.Schema,
-			Namespace: row.Namespace,
+		formats[i] = &oaipmh.MetadataFormat{
+			MetadataPrefix:    row.Prefix,
+			Schema:            row.Schema,
+			MetadataNamespace: row.Namespace,
 		}
 	}
 	return formats, nil
@@ -62,7 +72,46 @@ func (r *Repo) HasRecord(ctx context.Context, identifier string) (bool, error) {
 		Exist(ctx)
 }
 
-func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string) (*models.Record, error) {
+func (r *Repo) GetRecords(ctx context.Context, metadataPrefix string) ([]*oaipmh.Record, error) {
+	rows, err := r.client.Record.Query().
+		Where(
+			record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
+		).
+		WithSets(func(q *ent.SetQuery) {
+			q.Select(set.FieldSpec)
+		}).
+		Order(ent.Asc(record.FieldID)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, nil
+	}
+	recs := make([]*oaipmh.Record, len(rows))
+	for i, row := range rows {
+		rec := &oaipmh.Record{
+			Header: &oaipmh.Header{
+				Identifier: row.Identifier,
+				Datestamp:  row.Datestamp.UTC().Format(time.RFC3339),
+			},
+		}
+		for _, set := range row.Edges.Sets {
+			rec.Header.SetSpecs = append(rec.Header.SetSpecs, set.Spec)
+		}
+		if row.Deleted {
+			rec.Header.Status = "deleted"
+		} else {
+			rec.Metadata = &oaipmh.Payload{
+				XML: row.Metadata,
+			}
+		}
+		recs[i] = rec
+	}
+	return recs, nil
+}
+
+func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string) (*oaipmh.Record, error) {
 	row, err := r.client.Record.Query().
 		Where(
 			record.IdentifierEQ(identifier),
@@ -73,40 +122,48 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string)
 		}).
 		First(ctx)
 	if ent.IsNotFound(err) {
-		return nil, models.ErrNotFound
+		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	rec := &models.Record{
-		Identifier: row.Identifier,
-		Datestamp:  row.Datestamp,
-		Deleted:    row.Deleted,
+	rec := &oaipmh.Record{
+		Header: &oaipmh.Header{
+			Identifier: row.Identifier,
+			Datestamp:  row.Datestamp.UTC().Format(time.RFC3339),
+		},
 	}
 	for _, set := range row.Edges.Sets {
-		rec.SetSpecs = append(rec.SetSpecs, set.Spec)
+		rec.Header.SetSpecs = append(rec.Header.SetSpecs, set.Spec)
 	}
-	if !row.Deleted {
-		rec.Metadata = row.Metadata
+	if row.Deleted {
+		rec.Header.Status = "deleted"
+	} else {
+		rec.Metadata = &oaipmh.Payload{
+			XML: row.Metadata,
+		}
 	}
 
 	return rec, nil
 }
 
-func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) ([]*models.MetadataFormat, error) {
+func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) ([]*oaipmh.MetadataFormat, error) {
 	rows, err := r.client.Record.Query().
 		Where(record.IdentifierEQ(identifier)).
 		QueryMetadataFormat().All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	formats := make([]*models.MetadataFormat, len(rows))
+	if len(rows) == 0 {
+		return nil, nil
+	}
+	formats := make([]*oaipmh.MetadataFormat, len(rows))
 	for i, row := range rows {
-		formats[i] = &models.MetadataFormat{
-			Prefix:    row.Prefix,
-			Schema:    row.Schema,
-			Namespace: row.Namespace,
+		formats[i] = &oaipmh.MetadataFormat{
+			MetadataPrefix:    row.Prefix,
+			Schema:            row.Schema,
+			MetadataNamespace: row.Namespace,
 		}
 	}
 	return formats, nil

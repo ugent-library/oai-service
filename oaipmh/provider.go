@@ -84,7 +84,7 @@ type Identify struct {
 	RepositoryName    string   `xml:"repositoryName"`
 	BaseURL           string   `xml:"baseURL"`
 	ProtocolVersion   string   `xml:"protocolVersion"`
-	AdminEmail        []string `xml:"adminEmail"`
+	AdminEmails       []string `xml:"adminEmail"`
 	Granularity       string   `xml:"granularity"`
 	EarliestDatestamp string   `xml:"earliestDatestamp"`
 	Compression       string   `xml:"compression,omitempty"`
@@ -134,7 +134,7 @@ type Header struct {
 	Status     string   `xml:"status,attr,omitempty"`
 	Identifier string   `xml:"identifier"`
 	Datestamp  string   `xml:"datestamp"`
-	SetSpec    []string `xml:"setSpec"`
+	SetSpecs   []string `xml:"setSpec"`
 }
 
 type Payload struct {
@@ -164,7 +164,7 @@ type ProviderConfig struct {
 	ErrorHandler        func(error)
 	RepositoryName      string
 	BaseURL             string
-	AdminEmail          []string
+	AdminEmails         []string
 	Granularity         string
 	Compression         string
 	DeletedRecord       string
@@ -211,7 +211,7 @@ func (p *Provider) identify(r *response) error {
 		RepositoryName:  p.RepositoryName,
 		BaseURL:         p.BaseURL,
 		ProtocolVersion: "2.0",
-		AdminEmail:      p.AdminEmail,
+		AdminEmails:     p.AdminEmails,
 		Granularity:     p.Granularity,
 		Compression:     p.Compression,
 		DeletedRecord:   p.DeletedRecord,
@@ -446,22 +446,24 @@ func (r *response) setRequiredIdentifier(q url.Values) {
 func (r *response) setSet(q url.Values) {
 	val := r.getArg(q, "set")
 
-	if val != "" && r.Request.ResumptionToken != "" {
-		r.Errors = append(r.Errors, ErrResumptiontokenExclusive)
-		return
-	}
+	if val != "" {
+		if r.Request.ResumptionToken != "" {
+			r.Errors = append(r.Errors, ErrResumptiontokenExclusive)
+			return
+		}
 
-	if val != "" && len(r.provider.Sets) == 0 {
-		r.Errors = append(r.Errors, ErrNoSetHierarchy)
-		return
-	}
+		if len(r.provider.Sets) == 0 {
+			r.Errors = append(r.Errors, ErrNoSetHierarchy)
+			return
+		}
 
-	if _, ok := r.provider.setMap[val]; !ok {
-		r.Errors = append(r.Errors, ErrSetDoesNotExist)
-		return
-	}
+		if _, ok := r.provider.setMap[val]; !ok {
+			r.Errors = append(r.Errors, ErrSetDoesNotExist)
+			return
+		}
 
-	r.Request.Set = val
+		r.Request.Set = val
+	}
 }
 
 func (r *response) setFromUntil(q url.Values) {
