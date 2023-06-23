@@ -147,10 +147,10 @@ type Record struct {
 }
 
 type ResumptionToken struct {
-	ExpirationDate   string `xml:"expirationDate,attr,omitempty"`
 	CompleteListSize int    `xml:"completeListSize,attr,omitempty"`
-	Cursor           int    `xml:"cursor,attr,omitempty"`
 	Value            string `xml:",chardata"`
+	ExpirationDate   string `xml:"expirationDate,attr,omitempty"`
+	Cursor           *int   `xml:"cursor,attr,omitempty"`
 }
 
 type Provider struct {

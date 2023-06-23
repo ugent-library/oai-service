@@ -91,12 +91,12 @@ var serverCmd = &cobra.Command{
 				// if r.ResumptionToken != "" {
 				// }
 
-				recs, err := repo.GetRecords(ctx, r.MetadataPrefix)
+				recs, token, err := repo.GetRecords(ctx, r.MetadataPrefix)
 				if err != nil {
 					return nil, nil, err
 				}
 
-				return recs, nil, nil
+				return recs, token, nil
 			},
 		})
 		if err != nil {

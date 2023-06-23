@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -72,7 +73,20 @@ func (r *Repo) HasRecord(ctx context.Context, identifier string) (bool, error) {
 		Exist(ctx)
 }
 
-func (r *Repo) GetRecords(ctx context.Context, metadataPrefix string) ([]*oaipmh.Record, error) {
+func (r *Repo) GetRecords(ctx context.Context, metadataPrefix string) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
+	// TODO ent can't do count and select in one query
+	n, err := r.client.Record.Query().
+		Where(
+			record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
+		).
+		Count(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	if n == 0 {
+		return nil, nil, nil
+	}
+
 	rows, err := r.client.Record.Query().
 		Where(
 			record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
@@ -81,12 +95,10 @@ func (r *Repo) GetRecords(ctx context.Context, metadataPrefix string) ([]*oaipmh
 			q.Select(set.FieldSpec)
 		}).
 		Order(ent.Asc(record.FieldID)).
+		Limit(100).
 		All(ctx)
 	if err != nil {
-		return nil, err
-	}
-	if len(rows) == 0 {
-		return nil, nil
+		return nil, nil, err
 	}
 	recs := make([]*oaipmh.Record, len(rows))
 	for i, row := range rows {
@@ -108,7 +120,16 @@ func (r *Repo) GetRecords(ctx context.Context, metadataPrefix string) ([]*oaipmh
 		}
 		recs[i] = rec
 	}
-	return recs, nil
+
+	var token *oaipmh.ResumptionToken
+	if n > len(rows) {
+		token = &oaipmh.ResumptionToken{
+			CompleteListSize: n,
+			Value:            fmt.Sprint(rows[len(rows)-1].ID),
+		}
+	}
+
+	return recs, token, nil
 }
 
 func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string) (*oaipmh.Record, error) {
