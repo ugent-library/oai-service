@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package oai.v1;
+
+message AddRecordRequest {
+  string identifier = 1;
+  string metadata_prefix = 2;
+  repeated string set_specs = 3;
+  string metadata = 4;
+}
+
+message AddRecordResponse {
+}
+
+service OaiService {
+  rpc AddRecord(AddRecordRequest) returns (AddRecordResponse) {}
+}

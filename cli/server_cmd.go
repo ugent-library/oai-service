@@ -11,10 +11,14 @@ import (
 	"github.com/ory/graceful"
 	"github.com/spf13/cobra"
 	"github.com/ugent-library/httpx/render"
+	"github.com/ugent-library/oai-service/api"
+	"github.com/ugent-library/oai-service/gen/oai/v1/oaiv1connect"
 	"github.com/ugent-library/oai-service/oaipmh"
 	"github.com/ugent-library/oai-service/repository"
 	"github.com/ugent-library/zaphttp"
 	"github.com/ugent-library/zaphttp/zapchi"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 func init() {
@@ -103,23 +107,25 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
+		// setup api server
+		apiPath, apiHandler := oaiv1connect.NewOaiServiceHandler(api.NewServer(repo))
+
 		// setup health checker
 		// TODO add checkers
 		healthChecker := health.NewChecker()
 
-		// setup router
-		router := chi.NewMux()
-		router.Use(middleware.RequestID)
+		// setup mux
+		mux := chi.NewMux()
+		mux.Use(middleware.RequestID)
 		if config.Env != "local" {
-			router.Use(middleware.RealIP)
+			mux.Use(middleware.RealIP)
 		}
-		router.Use(zaphttp.SetLogger(logger.Desugar(), zapchi.RequestID))
-		router.Use(middleware.RequestLogger(zapchi.LogFormatter()))
-		router.Use(middleware.Recoverer)
-		router.Use(middleware.StripSlashes)
+		mux.Use(zaphttp.SetLogger(logger.Desugar(), zapchi.RequestID))
+		mux.Use(middleware.RequestLogger(zapchi.LogFormatter()))
+		mux.Use(middleware.Recoverer)
 
-		router.Get("/health", health.NewHandler(healthChecker))
-		router.Get("/info", func(w http.ResponseWriter, r *http.Request) {
+		mux.Get("/health", health.NewHandler(healthChecker))
+		mux.Get("/info", func(w http.ResponseWriter, r *http.Request) {
 			render.JSON(w, http.StatusOK, &struct {
 				Branch string `json:"branch,omitempty"`
 				Commit string `json:"commit,omitempty"`
@@ -128,12 +134,15 @@ var serverCmd = &cobra.Command{
 				Commit: config.Source.Commit,
 			})
 		})
-		router.Method("GET", "/", oaiProvider)
+		mux.Method("GET", "/", oaiProvider)
+		mux.Mount(apiPath, apiHandler)
+
+		handler := h2c.NewHandler(mux, &http2.Server{})
 
 		// start server
 		server := graceful.WithDefaults(&http.Server{
 			Addr:         config.Addr(),
-			Handler:      router,
+			Handler:      handler,
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
 		})

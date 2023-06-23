@@ -4,8 +4,10 @@ go 1.20
 
 require (
 	entgo.io/ent v0.12.3
+	github.com/bufbuild/connect-go v1.8.0
 	github.com/caarlos0/env/v8 v8.0.0
 	go.uber.org/zap v1.24.0
+	google.golang.org/protobuf v1.30.0
 )
 
 require (
@@ -25,9 +27,9 @@ require (
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zclconf/go-cty v1.13.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
 )
 
 require (
@@ -40,4 +42,5 @@ require (
 	github.com/ugent-library/zaphttp v0.0.0-20230513174723-52c27d21c5ce
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
+	golang.org/x/net v0.11.0
 )

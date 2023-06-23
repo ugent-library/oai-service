@@ -21,7 +21,7 @@
 go.work
 
 # Live reloading
-.reflex.conf
+reflex.conf
 
 # Config
 .env*
