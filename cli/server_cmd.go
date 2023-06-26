@@ -64,6 +64,20 @@ var serverCmd = &cobra.Command{
 				return repo.GetMetadataFormats(ctx)
 			},
 
+			ListSets: func(r *oaipmh.Request) ([]*oaipmh.Set, *oaipmh.ResumptionToken, error) {
+				ctx := context.TODO()
+
+				if r.ResumptionToken != "" {
+					headers, token, err := repo.GetMoreSets(ctx, r.ResumptionToken)
+					if err != nil {
+						return nil, nil, err
+					}
+					return headers, token, nil
+				}
+
+				return repo.GetSets(ctx)
+			},
+
 			GetRecord: func(r *oaipmh.Request) (*oaipmh.Record, error) {
 				ctx := context.TODO()
 
@@ -115,11 +129,7 @@ var serverCmd = &cobra.Command{
 					}
 				}
 
-				headers, token, err := repo.GetIdentifiers(ctx, r.MetadataPrefix, r.Set, r.From, r.Until)
-				if err != nil {
-					return nil, nil, err
-				}
-				return headers, token, nil
+				return repo.GetIdentifiers(ctx, r.MetadataPrefix, r.Set, r.From, r.Until)
 			},
 
 			ListRecords: func(r *oaipmh.Request) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
@@ -151,11 +161,7 @@ var serverCmd = &cobra.Command{
 					}
 				}
 
-				recs, token, err := repo.GetRecords(ctx, r.MetadataPrefix, r.Set, r.From, r.Until)
-				if err != nil {
-					return nil, nil, err
-				}
-				return recs, token, nil
+				return repo.GetRecords(ctx, r.MetadataPrefix, r.Set, r.From, r.Until)
 			},
 		})
 		if err != nil {

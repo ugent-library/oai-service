@@ -36,7 +36,11 @@ type Config struct {
 	Secret []byte
 }
 
-type cursor struct {
+type setCursor struct {
+	LastID int64 `json:"l"`
+}
+
+type recordCursor struct {
 	MetadataPrefix string `json:"m"`
 	SetSpec        string `json:"s"`
 	From           string `json:"f"`
@@ -94,6 +98,70 @@ func (r *Repo) HasSet(ctx context.Context, spec string) (bool, error) {
 		Exist(ctx)
 }
 
+func (r *Repo) GetSets(ctx context.Context) ([]*oaipmh.Set, *oaipmh.ResumptionToken, error) {
+	return r.getSets(ctx, setCursor{})
+}
+
+func (r *Repo) GetMoreSets(ctx context.Context, tokenValue string) ([]*oaipmh.Set, *oaipmh.ResumptionToken, error) {
+	c := setCursor{}
+	if err := r.decodeCursor(tokenValue, &c); err != nil {
+		return nil, nil, err
+	}
+	return r.getSets(ctx, c)
+}
+
+func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh.ResumptionToken, error) {
+	// TODO ent can't do count and select in one query
+	n, err := r.client.Set.Query().
+		Count(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	if n == 0 {
+		return nil, nil, nil
+	}
+
+	var where []predicate.Set
+	if c.LastID > 0 {
+		where = append(where, set.IDGT(c.LastID))
+	}
+
+	rows, err := r.client.Set.Query().
+		Where(where...).
+		Order(ent.Asc(set.FieldID)).
+		Limit(100).
+		All(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	sets := make([]*oaipmh.Set, len(rows))
+	for i, row := range rows {
+		sets[i] = &oaipmh.Set{
+			Spec: row.Spec,
+			Name: row.Name,
+			Description: &oaipmh.Payload{
+				XML: row.Description,
+			},
+		}
+	}
+
+	var token *oaipmh.ResumptionToken
+	if n > len(rows) {
+		tokenValue, err := r.encodeCursor(setCursor{
+			LastID: rows[len(rows)-1].ID,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+		token = &oaipmh.ResumptionToken{
+			CompleteListSize: n,
+			Value:            tokenValue,
+		}
+	}
+
+	return sets, token, nil
+}
+
 func (r *Repo) HasRecord(ctx context.Context, identifier string) (bool, error) {
 	return r.client.Record.Query().
 		Where(record.IdentifierEQ(identifier)).
@@ -144,7 +212,7 @@ func (r *Repo) GetIdentifiers(ctx context.Context,
 	from string,
 	until string,
 ) ([]*oaipmh.Header, *oaipmh.ResumptionToken, error) {
-	recs, token, err := r.getRecords(ctx, cursor{
+	recs, token, err := r.getRecords(ctx, recordCursor{
 		MetadataPrefix: metadataPrefix,
 		SetSpec:        setSpec,
 		From:           from,
@@ -162,8 +230,8 @@ func (r *Repo) GetIdentifiers(ctx context.Context,
 
 // TODO this loads the complete record, maken an efficient version
 func (r *Repo) GetMoreIdentifiers(ctx context.Context, tokenValue string) ([]*oaipmh.Header, *oaipmh.ResumptionToken, error) {
-	c, err := r.decodeCursor(tokenValue)
-	if err != nil {
+	c := recordCursor{}
+	if err := r.decodeCursor(tokenValue, &c); err != nil {
 		return nil, nil, err
 	}
 	recs, token, err := r.getRecords(ctx, c)
@@ -183,7 +251,7 @@ func (r *Repo) GetRecords(ctx context.Context,
 	from string,
 	until string,
 ) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
-	return r.getRecords(ctx, cursor{
+	return r.getRecords(ctx, recordCursor{
 		MetadataPrefix: metadataPrefix,
 		SetSpec:        setSpec,
 		From:           from,
@@ -192,15 +260,14 @@ func (r *Repo) GetRecords(ctx context.Context,
 }
 
 func (r *Repo) GetMoreRecords(ctx context.Context, tokenValue string) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
-	c, err := r.decodeCursor(tokenValue)
-	if err != nil {
+	c := recordCursor{}
+	if err := r.decodeCursor(tokenValue, &c); err != nil {
 		return nil, nil, err
 	}
-
 	return r.getRecords(ctx, c)
 }
 
-func (r *Repo) getRecords(ctx context.Context, c cursor) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
+func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
 	where := []predicate.Record{
 		record.HasMetadataFormatWith(metadataformat.PrefixEQ(c.MetadataPrefix)),
 	}
@@ -271,7 +338,7 @@ func (r *Repo) getRecords(ctx context.Context, c cursor) ([]*oaipmh.Record, *oai
 
 	var token *oaipmh.ResumptionToken
 	if n > len(rows) {
-		tokenValue, err := r.encodeCursor(cursor{
+		tokenValue, err := r.encodeCursor(recordCursor{
 			MetadataPrefix: c.MetadataPrefix,
 			SetSpec:        c.SetSpec,
 			From:           c.From,
@@ -336,8 +403,8 @@ func (r *Repo) DeleteRecord(ctx context.Context, identifier string) error {
 		Exec(ctx)
 }
 
-func (r *Repo) encodeCursor(c cursor) (string, error) {
-	msg, _ := json.Marshal(&c)
+func (r *Repo) encodeCursor(c any) (string, error) {
+	msg, _ := json.Marshal(c)
 
 	// Create a new AES cipher block from the secret key.
 	block, err := aes.NewCipher(r.config.Secret)
@@ -368,42 +435,40 @@ func (r *Repo) encodeCursor(c cursor) (string, error) {
 	return base64.URLEncoding.EncodeToString(cryptedMsg), nil
 }
 
-func (r *Repo) decodeCursor(encodedMsg string) (cursor, error) {
-	c := cursor{}
-
+func (r *Repo) decodeCursor(encodedMsg string, c any) error {
 	// Decode base64.
 	cryptedMsg, err := base64.URLEncoding.DecodeString(encodedMsg)
 	if err != nil {
-		return c, err
+		return err
 	}
 
 	// Create a new AES cipher block from the secret key.
 	block, err := aes.NewCipher(r.config.Secret)
 	if err != nil {
-		return c, err
+		return err
 	}
 
 	// Wrap the cipher block in Galois Counter Mode.
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return c, err
+		return err
 	}
 
 	nonceSize := gcm.NonceSize()
 
 	// Avoid potential 'index out of range' panic in the next step.
 	if len(cryptedMsg) < nonceSize {
-		return c, oaipmh.ErrBadResumptionToken
+		return oaipmh.ErrBadResumptionToken
 	}
 
 	// Split cryptedMsg in nonce and encrypted message and use gcm.Open() to
 	// decrypt and authenticate the data.
 	msg, err := gcm.Open(nil, cryptedMsg[:nonceSize], cryptedMsg[nonceSize:], nil)
 	if err != nil {
-		return c, oaipmh.ErrBadResumptionToken
+		return oaipmh.ErrBadResumptionToken
 	}
 
-	err = json.Unmarshal(msg, &c)
+	err = json.Unmarshal(msg, c)
 
-	return c, err
+	return err
 }

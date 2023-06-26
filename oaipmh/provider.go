@@ -97,8 +97,9 @@ type ListMetadataFormats struct {
 }
 
 type ListSets struct {
-	XMLName xml.Name `xml:"ListSets"`
-	Sets    []*Set   `xml:"set"`
+	XMLName         xml.Name         `xml:"ListSets"`
+	Sets            []*Set           `xml:"set"`
+	ResumptionToken *ResumptionToken `xml:"resumptionToken"`
 }
 
 type GetRecord struct {
@@ -156,7 +157,6 @@ type ResumptionToken struct {
 type Provider struct {
 	ProviderConfig
 	dateFormat string
-	setMap     map[string]struct{}
 }
 
 // TODO use context in callbacks
@@ -172,6 +172,7 @@ type ProviderConfig struct {
 	Sets                bool
 	EarliestDatestamp   func() (time.Time, error)
 	ListMetadataFormats func(*Request) ([]*MetadataFormat, error)
+	ListSets            func(*Request) ([]*Set, *ResumptionToken, error)
 	GetRecord           func(*Request) (*Record, error)
 	ListIdentifiers     func(*Request) ([]*Header, *ResumptionToken, error)
 	ListRecords         func(*Request) ([]*Record, *ResumptionToken, error)
@@ -180,7 +181,6 @@ type ProviderConfig struct {
 func NewProvider(conf ProviderConfig) (*Provider, error) {
 	p := &Provider{
 		ProviderConfig: conf,
-		setMap:         make(map[string]struct{}),
 	}
 
 	if p.Granularity == "" {
@@ -237,13 +237,22 @@ func (p *Provider) listMetadataFormats(r *response) error {
 
 // TODO resumptionToken, badResumptionToken
 func (p *Provider) listSets(r *response) error {
-	// if len(p.Sets) == 0 {
-	// 	r.Errors = append(r.Errors, ErrNoSetHierarchy)
-	// 	return nil
-	// }
-	// r.Body = &ListSets{
-	// 	Sets: p.Sets,
-	// }
+	sets, token, err := p.ListSets(&r.Request)
+	if err == ErrBadResumptionToken {
+		r.Errors = append(r.Errors, err.(*Error))
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if len(sets) == 0 {
+		r.Errors = append(r.Errors, ErrNoSetHierarchy)
+		return nil
+	}
+	r.Body = &ListSets{
+		Sets:            sets,
+		ResumptionToken: token,
+	}
 	return nil
 }
 
