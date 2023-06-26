@@ -35,11 +35,14 @@ const (
 const (
 	// OaiServiceAddRecordProcedure is the fully-qualified name of the OaiService's AddRecord RPC.
 	OaiServiceAddRecordProcedure = "/oai.v1.OaiService/AddRecord"
+	// OaiServiceDeleteRecordProcedure is the fully-qualified name of the OaiService's DeleteRecord RPC.
+	OaiServiceDeleteRecordProcedure = "/oai.v1.OaiService/DeleteRecord"
 )
 
 // OaiServiceClient is a client for the oai.v1.OaiService service.
 type OaiServiceClient interface {
 	AddRecord(context.Context, *connect_go.Request[v1.AddRecordRequest]) (*connect_go.Response[v1.AddRecordResponse], error)
+	DeleteRecord(context.Context, *connect_go.Request[v1.DeleteRecordRequest]) (*connect_go.Response[v1.DeleteRecordResponse], error)
 }
 
 // NewOaiServiceClient constructs a client for the oai.v1.OaiService service. By default, it uses
@@ -57,12 +60,18 @@ func NewOaiServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts 
 			baseURL+OaiServiceAddRecordProcedure,
 			opts...,
 		),
+		deleteRecord: connect_go.NewClient[v1.DeleteRecordRequest, v1.DeleteRecordResponse](
+			httpClient,
+			baseURL+OaiServiceDeleteRecordProcedure,
+			opts...,
+		),
 	}
 }
 
 // oaiServiceClient implements OaiServiceClient.
 type oaiServiceClient struct {
-	addRecord *connect_go.Client[v1.AddRecordRequest, v1.AddRecordResponse]
+	addRecord    *connect_go.Client[v1.AddRecordRequest, v1.AddRecordResponse]
+	deleteRecord *connect_go.Client[v1.DeleteRecordRequest, v1.DeleteRecordResponse]
 }
 
 // AddRecord calls oai.v1.OaiService.AddRecord.
@@ -70,9 +79,15 @@ func (c *oaiServiceClient) AddRecord(ctx context.Context, req *connect_go.Reques
 	return c.addRecord.CallUnary(ctx, req)
 }
 
+// DeleteRecord calls oai.v1.OaiService.DeleteRecord.
+func (c *oaiServiceClient) DeleteRecord(ctx context.Context, req *connect_go.Request[v1.DeleteRecordRequest]) (*connect_go.Response[v1.DeleteRecordResponse], error) {
+	return c.deleteRecord.CallUnary(ctx, req)
+}
+
 // OaiServiceHandler is an implementation of the oai.v1.OaiService service.
 type OaiServiceHandler interface {
 	AddRecord(context.Context, *connect_go.Request[v1.AddRecordRequest]) (*connect_go.Response[v1.AddRecordResponse], error)
+	DeleteRecord(context.Context, *connect_go.Request[v1.DeleteRecordRequest]) (*connect_go.Response[v1.DeleteRecordResponse], error)
 }
 
 // NewOaiServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -87,6 +102,11 @@ func NewOaiServiceHandler(svc OaiServiceHandler, opts ...connect_go.HandlerOptio
 		svc.AddRecord,
 		opts...,
 	))
+	mux.Handle(OaiServiceDeleteRecordProcedure, connect_go.NewUnaryHandler(
+		OaiServiceDeleteRecordProcedure,
+		svc.DeleteRecord,
+		opts...,
+	))
 	return "/oai.v1.OaiService/", mux
 }
 
@@ -95,4 +115,8 @@ type UnimplementedOaiServiceHandler struct{}
 
 func (UnimplementedOaiServiceHandler) AddRecord(context.Context, *connect_go.Request[v1.AddRecordRequest]) (*connect_go.Response[v1.AddRecordResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("oai.v1.OaiService.AddRecord is not implemented"))
+}
+
+func (UnimplementedOaiServiceHandler) DeleteRecord(context.Context, *connect_go.Request[v1.DeleteRecordRequest]) (*connect_go.Response[v1.DeleteRecordResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("oai.v1.OaiService.DeleteRecord is not implemented"))
 }

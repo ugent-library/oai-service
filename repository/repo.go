@@ -15,6 +15,7 @@ import (
 	"github.com/ugent-library/oai-service/ent"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
 	"github.com/ugent-library/oai-service/ent/migrate"
+	"github.com/ugent-library/oai-service/ent/predicate"
 	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/set"
 	"github.com/ugent-library/oai-service/oaipmh"
@@ -113,26 +114,33 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string)
 }
 
 // TODO set, date from until
-func (r *Repo) GetRecords(ctx context.Context, metadataPrefix string) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
-	return r.getRecords(ctx, metadataPrefix, "", 0)
+func (r *Repo) GetRecords(ctx context.Context,
+	metadataPrefix string,
+	set string,
+	from string,
+	until string,
+) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
+	return r.getRecords(ctx, metadataPrefix, set, from, until, 0)
 }
 
 func (r *Repo) GetMoreRecords(ctx context.Context, tokenValue string) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
 	// TODO validate token
 	// TODO encrypt token
-	tokenParts := strings.SplitN(tokenValue, "|", 3)
+	tokenParts := strings.SplitN(tokenValue, "|", 5)
 	metadataPrefix := tokenParts[0]
 	setSpec := tokenParts[1]
-	lastID, err := strconv.ParseInt(tokenParts[2], 10, 64)
+	from := tokenParts[2]
+	until := tokenParts[3]
+	lastID, err := strconv.ParseInt(tokenParts[4], 10, 64)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return r.getRecords(ctx, metadataPrefix, setSpec, lastID)
+	return r.getRecords(ctx, metadataPrefix, setSpec, from, until, lastID)
 }
 
 // TODO set
-func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec string, lastID int64) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
+func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec, from, until string, lastID int64) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
 	// TODO ent can't do count and select in one query
 	n, err := r.client.Record.Query().
 		Where(
@@ -146,11 +154,29 @@ func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec string, l
 		return nil, nil, nil
 	}
 
+	where := []predicate.Record{
+		record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
+	}
+	if lastID > 0 {
+		where = append(where, record.IDGT(lastID))
+	}
+	if from != "" {
+		dt, err := time.Parse(time.RFC3339, from)
+		if err != nil {
+			return nil, nil, err
+		}
+		where = append(where, record.DatestampGTE(dt))
+	}
+	if until != "" {
+		dt, err := time.Parse(time.RFC3339, until)
+		if err != nil {
+			return nil, nil, err
+		}
+		where = append(where, record.DatestampLTE(dt))
+	}
+
 	rows, err := r.client.Record.Query().
-		Where(
-			record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
-			record.IDGT(lastID),
-		).
+		Where(where...).
 		WithSets(func(q *ent.SetQuery) {
 			q.Select(set.FieldSpec)
 		}).
@@ -185,7 +211,7 @@ func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec string, l
 	if n > len(rows) {
 		token = &oaipmh.ResumptionToken{
 			CompleteListSize: n,
-			Value:            fmt.Sprintf("%s|%s|%d", metadataPrefix, setSpec, rows[len(rows)-1].ID),
+			Value:            fmt.Sprintf("%s|%s|%s|%s|%d", metadataPrefix, setSpec, from, until, rows[len(rows)-1].ID),
 		}
 	}
 

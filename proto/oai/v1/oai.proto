@@ -12,6 +12,14 @@ message AddRecordRequest {
 message AddRecordResponse {
 }
 
+message DeleteRecordRequest {
+  string identifier = 1;
+}
+
+message DeleteRecordResponse {
+}
+
 service OaiService {
   rpc AddRecord(AddRecordRequest) returns (AddRecordResponse) {}
+  rpc DeleteRecord(DeleteRecordRequest) returns (DeleteRecordResponse) {}
 }

@@ -470,6 +470,7 @@ func (r *response) setSet(q url.Values) {
 	}
 }
 
+// TODO parse dates and check if from <= until
 func (r *response) setFromUntil(q url.Values) {
 	f := r.getArg(q, "from")
 	u := r.getArg(q, "until")
@@ -482,7 +483,7 @@ func (r *response) setFromUntil(q url.Values) {
 	}
 	if u != "" {
 		if _, err := time.Parse(r.provider.dateFormat, u); err == nil {
-			r.Request.From = f
+			r.Request.Until = f
 		} else {
 			r.Errors = append(r.Errors, ErrUntilInvalid)
 		}

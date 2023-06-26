@@ -33,3 +33,15 @@ func (s *Server) AddRecord(
 	res := connect.NewResponse(&oaiv1.AddRecordResponse{})
 	return res, nil
 }
+
+func (s *Server) DeleteRecord(
+	ctx context.Context,
+	req *connect.Request[oaiv1.DeleteRecordRequest],
+) (*connect.Response[oaiv1.DeleteRecordResponse], error) {
+	if err := s.repo.DeleteRecord(ctx, req.Msg.Identifier); err != nil {
+		return nil, err
+	}
+
+	res := connect.NewResponse(&oaiv1.DeleteRecordResponse{})
+	return res, nil
+}

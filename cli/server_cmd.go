@@ -101,7 +101,7 @@ var serverCmd = &cobra.Command{
 					return nil, nil, oaipmh.ErrCannotDisseminateFormat
 				}
 
-				recs, token, err := repo.GetRecords(ctx, r.MetadataPrefix)
+				recs, token, err := repo.GetRecords(ctx, r.MetadataPrefix, r.Set, r.From, r.Until)
 				if err != nil {
 					return nil, nil, err
 				}
