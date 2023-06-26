@@ -388,7 +388,7 @@ func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) 
 	return formats, nil
 }
 
-// TODO sets
+// TODO remove old sets first
 func (r *Repo) AddRecord(ctx context.Context, identifier, metadataPrefix, metadata string, setSpecs []string) error {
 	formatID, err := r.client.MetadataFormat.Query().
 		Where(metadataformat.PrefixEQ(metadataPrefix)).OnlyID(ctx)
@@ -396,10 +396,22 @@ func (r *Repo) AddRecord(ctx context.Context, identifier, metadataPrefix, metada
 		return err
 	}
 
+	setIDs := make([]int64, len(setSpecs))
+	for i, spec := range setSpecs {
+		id, err := r.client.Set.Query().
+			Where(set.SpecEQ(spec)).
+			OnlyID(ctx)
+		if err != nil {
+			return err
+		}
+		setIDs[i] = id
+	}
+
 	return r.client.Record.Create().
 		SetIdentifier(identifier).
 		SetMetadataFormatID(formatID).
 		SetMetadata(metadata).
+		AddSetIDs(setIDs...).
 		OnConflictColumns(record.FieldIdentifier, record.FieldMetadataFormatID).
 		UpdateNewValues().
 		Exec(ctx)
