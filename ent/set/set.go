@@ -18,7 +18,7 @@ const (
 	// Table holds the table name of the set in the database.
 	Table = "sets"
 	// RecordsTable is the table that holds the records relation/edge. The primary key declared below.
-	RecordsTable = "set_records"
+	RecordsTable = "record_sets"
 	// RecordsInverseTable is the table name for the Record entity.
 	// It exists in this package in order to avoid circular dependency with the "record" package.
 	RecordsInverseTable = "records"
@@ -35,7 +35,7 @@ var Columns = []string{
 var (
 	// RecordsPrimaryKey and RecordsColumn2 are the table columns denoting the
 	// primary key for the records relation (M2M).
-	RecordsPrimaryKey = []string{"set_id", "record_id"}
+	RecordsPrimaryKey = []string{"record_id", "set_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).

@@ -476,7 +476,7 @@ func HasSets() predicate.Record {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(SetsTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, SetsTable, SetsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, false, SetsTable, SetsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -488,7 +488,7 @@ func HasSetsWith(preds ...predicate.Set) predicate.Record {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(SetsInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, SetsTable, SetsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, false, SetsTable, SetsPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

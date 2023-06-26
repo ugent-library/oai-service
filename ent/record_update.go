@@ -282,7 +282,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if ru.mutation.SetsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   record.SetsTable,
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
@@ -298,7 +298,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := ru.mutation.RemovedSetsIDs(); len(nodes) > 0 && !ru.mutation.SetsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   record.SetsTable,
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
@@ -317,7 +317,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := ru.mutation.SetsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   record.SetsTable,
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
@@ -634,7 +634,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 	if ruo.mutation.SetsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   record.SetsTable,
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
@@ -650,7 +650,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 	if nodes := ruo.mutation.RemovedSetsIDs(); len(nodes) > 0 && !ruo.mutation.SetsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   record.SetsTable,
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
@@ -669,7 +669,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 	if nodes := ruo.mutation.SetsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   record.SetsTable,
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,

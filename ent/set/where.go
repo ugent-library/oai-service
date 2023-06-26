@@ -417,7 +417,7 @@ func HasRecords() predicate.Set {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(RecordsTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, RecordsTable, RecordsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, true, RecordsTable, RecordsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -429,7 +429,7 @@ func HasRecordsWith(preds ...predicate.Record) predicate.Set {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(RecordsInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, RecordsTable, RecordsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, true, RecordsTable, RecordsPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

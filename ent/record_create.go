@@ -281,7 +281,7 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 	if nodes := rc.mutation.SetsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   record.SetsTable,
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,

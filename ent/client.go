@@ -352,7 +352,7 @@ func (c *RecordClient) QuerySets(r *Record) *SetQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(record.Table, record.FieldID, id),
 			sqlgraph.To(set.Table, set.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, record.SetsTable, record.SetsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, false, record.SetsTable, record.SetsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
@@ -458,7 +458,7 @@ func (c *SetClient) QueryRecords(s *Set) *RecordQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(set.Table, set.FieldID, id),
 			sqlgraph.To(record.Table, record.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, set.RecordsTable, set.RecordsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, true, set.RecordsTable, set.RecordsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil

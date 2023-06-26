@@ -64,27 +64,27 @@ var (
 		Columns:    SetsColumns,
 		PrimaryKey: []*schema.Column{SetsColumns[0]},
 	}
-	// SetRecordsColumns holds the columns for the "set_records" table.
-	SetRecordsColumns = []*schema.Column{
-		{Name: "set_id", Type: field.TypeInt64},
+	// RecordSetsColumns holds the columns for the "record_sets" table.
+	RecordSetsColumns = []*schema.Column{
 		{Name: "record_id", Type: field.TypeInt64},
+		{Name: "set_id", Type: field.TypeInt64},
 	}
-	// SetRecordsTable holds the schema information for the "set_records" table.
-	SetRecordsTable = &schema.Table{
-		Name:       "set_records",
-		Columns:    SetRecordsColumns,
-		PrimaryKey: []*schema.Column{SetRecordsColumns[0], SetRecordsColumns[1]},
+	// RecordSetsTable holds the schema information for the "record_sets" table.
+	RecordSetsTable = &schema.Table{
+		Name:       "record_sets",
+		Columns:    RecordSetsColumns,
+		PrimaryKey: []*schema.Column{RecordSetsColumns[0], RecordSetsColumns[1]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "set_records_set_id",
-				Columns:    []*schema.Column{SetRecordsColumns[0]},
-				RefColumns: []*schema.Column{SetsColumns[0]},
+				Symbol:     "record_sets_record_id",
+				Columns:    []*schema.Column{RecordSetsColumns[0]},
+				RefColumns: []*schema.Column{RecordsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "set_records_record_id",
-				Columns:    []*schema.Column{SetRecordsColumns[1]},
-				RefColumns: []*schema.Column{RecordsColumns[0]},
+				Symbol:     "record_sets_set_id",
+				Columns:    []*schema.Column{RecordSetsColumns[1]},
+				RefColumns: []*schema.Column{SetsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
@@ -94,12 +94,12 @@ var (
 		MetadataFormatsTable,
 		RecordsTable,
 		SetsTable,
-		SetRecordsTable,
+		RecordSetsTable,
 	}
 )
 
 func init() {
 	RecordsTable.ForeignKeys[0].RefTable = MetadataFormatsTable
-	SetRecordsTable.ForeignKeys[0].RefTable = SetsTable
-	SetRecordsTable.ForeignKeys[1].RefTable = RecordsTable
+	RecordSetsTable.ForeignKeys[0].RefTable = RecordsTable
+	RecordSetsTable.ForeignKeys[1].RefTable = SetsTable
 }

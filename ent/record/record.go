@@ -35,7 +35,7 @@ const (
 	// MetadataFormatColumn is the table column denoting the metadata_format relation/edge.
 	MetadataFormatColumn = "metadata_format_id"
 	// SetsTable is the table that holds the sets relation/edge. The primary key declared below.
-	SetsTable = "set_records"
+	SetsTable = "record_sets"
 	// SetsInverseTable is the table name for the Set entity.
 	// It exists in this package in order to avoid circular dependency with the "set" package.
 	SetsInverseTable = "sets"
@@ -54,7 +54,7 @@ var Columns = []string{
 var (
 	// SetsPrimaryKey and SetsColumn2 are the table columns denoting the
 	// primary key for the sets relation (M2M).
-	SetsPrimaryKey = []string{"set_id", "record_id"}
+	SetsPrimaryKey = []string{"record_id", "set_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).

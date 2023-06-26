@@ -188,7 +188,7 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if su.mutation.RecordsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   set.RecordsTable,
 			Columns: set.RecordsPrimaryKey,
 			Bidi:    false,
@@ -204,7 +204,7 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := su.mutation.RemovedRecordsIDs(); len(nodes) > 0 && !su.mutation.RecordsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   set.RecordsTable,
 			Columns: set.RecordsPrimaryKey,
 			Bidi:    false,
@@ -223,7 +223,7 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := su.mutation.RecordsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   set.RecordsTable,
 			Columns: set.RecordsPrimaryKey,
 			Bidi:    false,
@@ -448,7 +448,7 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 	if suo.mutation.RecordsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   set.RecordsTable,
 			Columns: set.RecordsPrimaryKey,
 			Bidi:    false,
@@ -464,7 +464,7 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 	if nodes := suo.mutation.RemovedRecordsIDs(); len(nodes) > 0 && !suo.mutation.RecordsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   set.RecordsTable,
 			Columns: set.RecordsPrimaryKey,
 			Bidi:    false,
@@ -483,7 +483,7 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 	if nodes := suo.mutation.RecordsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   set.RecordsTable,
 			Columns: set.RecordsPrimaryKey,
 			Bidi:    false,

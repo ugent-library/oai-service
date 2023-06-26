@@ -388,7 +388,6 @@ func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) 
 	return formats, nil
 }
 
-// TODO remove old sets first
 func (r *Repo) AddRecord(ctx context.Context, identifier, metadataPrefix, metadata string, setSpecs []string) error {
 	formatID, err := r.client.MetadataFormat.Query().
 		Where(metadataformat.PrefixEQ(metadataPrefix)).OnlyID(ctx)
@@ -407,7 +406,24 @@ func (r *Repo) AddRecord(ctx context.Context, identifier, metadataPrefix, metada
 		setIDs[i] = id
 	}
 
-	return r.client.Record.Create().
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		return err
+	}
+
+	// remove old sets
+	err = tx.Record.Update().
+		Where(
+			record.IdentifierEQ(identifier),
+			record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
+		).
+		ClearSets().
+		Exec(ctx)
+	if err != nil {
+		return tx.Rollback()
+	}
+
+	err = tx.Record.Create().
 		SetIdentifier(identifier).
 		SetMetadataFormatID(formatID).
 		SetMetadata(metadata).
@@ -415,6 +431,11 @@ func (r *Repo) AddRecord(ctx context.Context, identifier, metadataPrefix, metada
 		OnConflictColumns(record.FieldIdentifier, record.FieldMetadataFormatID).
 		UpdateNewValues().
 		Exec(ctx)
+	if err != nil {
+		return tx.Rollback()
+	}
+
+	return tx.Commit()
 }
 
 func (r *Repo) DeleteRecord(ctx context.Context, identifier string) error {

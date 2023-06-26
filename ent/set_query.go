@@ -76,7 +76,7 @@ func (sq *SetQuery) QueryRecords() *RecordQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(set.Table, set.FieldID, selector),
 			sqlgraph.To(record.Table, record.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, set.RecordsTable, set.RecordsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, true, set.RecordsTable, set.RecordsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -402,10 +402,10 @@ func (sq *SetQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes [
 	}
 	query.Where(func(s *sql.Selector) {
 		joinT := sql.Table(set.RecordsTable)
-		s.Join(joinT).On(s.C(record.FieldID), joinT.C(set.RecordsPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(set.RecordsPrimaryKey[0]), edgeIDs...))
+		s.Join(joinT).On(s.C(record.FieldID), joinT.C(set.RecordsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(set.RecordsPrimaryKey[1]), edgeIDs...))
 		columns := s.SelectedColumns()
-		s.Select(joinT.C(set.RecordsPrimaryKey[0]))
+		s.Select(joinT.C(set.RecordsPrimaryKey[1]))
 		s.AppendSelect(columns...)
 		s.SetDistinct(false)
 	})

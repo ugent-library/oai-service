@@ -21,6 +21,7 @@ func (Set) Fields() []ent.Field {
 
 func (Set) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("records", Record.Type),
+		edge.From("records", Record.Type).
+			Ref("sets"),
 	}
 }

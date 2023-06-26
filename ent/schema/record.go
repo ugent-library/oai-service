@@ -35,8 +35,7 @@ func (Record) Edges() []ent.Edge {
 			Unique().
 			Required().
 			Field("metadata_format_id"),
-		edge.From("sets", Set.Type).
-			Ref("records"),
+		edge.To("sets", Set.Type),
 	}
 }
 
