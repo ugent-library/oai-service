@@ -30,7 +30,10 @@ var serverCmd = &cobra.Command{
 	Short: "Start the server",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// setup services
-		repo, err := repository.New(config.Repo.Conn)
+		repo, err := repository.New(repository.Config{
+			Conn:   config.Repo.Conn,
+			Secret: []byte(config.Repo.Secret),
+		})
 		if err != nil {
 			return err
 		}

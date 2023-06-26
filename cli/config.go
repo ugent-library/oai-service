@@ -13,7 +13,8 @@ type Config struct {
 	Host string `env:"OAI_HOST"`
 	Port int    `env:"OAI_PORT" envDefault:"3000"`
 	Repo struct {
-		Conn string `env:"CONN,notEmpty"`
+		Conn   string `env:"CONN,notEmpty"`
+		Secret string `env:"SECRET,notEmpty"`
 	} `envPrefix:"OAI_REPO_"`
 }
 

@@ -478,7 +478,7 @@ func (r *response) setFromUntil(q url.Values) {
 	}
 	if u != "" {
 		if _, err := time.Parse(r.provider.dateFormat, u); err == nil {
-			r.Request.Until = f
+			r.Request.Until = u
 		} else {
 			r.Errors = append(r.Errors, ErrUntilInvalid)
 		}

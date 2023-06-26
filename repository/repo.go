@@ -2,11 +2,14 @@ package repository
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
-	"fmt"
-	"strconv"
-	"strings"
+	"io"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -24,11 +27,25 @@ import (
 var ErrNotFound = errors.New("not found")
 
 type Repo struct {
+	config Config
 	client *ent.Client
 }
 
-func New(conn string) (*Repo, error) {
-	db, err := sql.Open("pgx", conn)
+type Config struct {
+	Conn   string
+	Secret []byte
+}
+
+type cursor struct {
+	MetadataPrefix string `json:"m"`
+	SetSpec        string `json:"s"`
+	From           string `json:"f"`
+	Until          string `json:"u"`
+	LastID         int64  `json:"l"`
+}
+
+func New(c Config) (*Repo, error) {
+	db, err := sql.Open("pgx", c.Conn)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +61,7 @@ func New(conn string) (*Repo, error) {
 	}
 
 	return &Repo{
+		config: c,
 		client: client,
 	}, nil
 }
@@ -121,45 +139,43 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string)
 
 func (r *Repo) GetRecords(ctx context.Context,
 	metadataPrefix string,
-	set string,
+	setSpec string,
 	from string,
 	until string,
 ) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
-	return r.getRecords(ctx, metadataPrefix, set, from, until, 0)
+	return r.getRecords(ctx, cursor{
+		MetadataPrefix: metadataPrefix,
+		SetSpec:        setSpec,
+		From:           from,
+		Until:          until,
+	})
 }
 
 func (r *Repo) GetMoreRecords(ctx context.Context, tokenValue string) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
-	// TODO validate token
-	// TODO encrypt token
-	tokenParts := strings.SplitN(tokenValue, "|", 5)
-	metadataPrefix := tokenParts[0]
-	setSpec := tokenParts[1]
-	from := tokenParts[2]
-	until := tokenParts[3]
-	lastID, err := strconv.ParseInt(tokenParts[4], 10, 64)
+	c, err := r.decodeCursor(tokenValue)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return r.getRecords(ctx, metadataPrefix, setSpec, from, until, lastID)
+	return r.getRecords(ctx, c)
 }
 
-func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec, from, until string, lastID int64) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
+func (r *Repo) getRecords(ctx context.Context, c cursor) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
 	where := []predicate.Record{
-		record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
+		record.HasMetadataFormatWith(metadataformat.PrefixEQ(c.MetadataPrefix)),
 	}
-	if setSpec != "" {
-		where = append(where, record.HasSetsWith(set.SpecEQ(setSpec)))
+	if c.SetSpec != "" {
+		where = append(where, record.HasSetsWith(set.SpecEQ(c.SetSpec)))
 	}
-	if from != "" {
-		dt, err := time.Parse(time.RFC3339, from)
+	if c.From != "" {
+		dt, err := time.Parse(time.RFC3339, c.From)
 		if err != nil {
 			return nil, nil, err
 		}
 		where = append(where, record.DatestampGTE(dt))
 	}
-	if until != "" {
-		dt, err := time.Parse(time.RFC3339, until)
+	if c.Until != "" {
+		dt, err := time.Parse(time.RFC3339, c.Until)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -177,8 +193,8 @@ func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec, from, un
 		return nil, nil, nil
 	}
 
-	if lastID > 0 {
-		where = append(where, record.IDGT(lastID))
+	if c.LastID > 0 {
+		where = append(where, record.IDGT(c.LastID))
 	}
 
 	rows, err := r.client.Record.Query().
@@ -215,9 +231,19 @@ func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec, from, un
 
 	var token *oaipmh.ResumptionToken
 	if n > len(rows) {
+		tokenValue, err := r.encodeCursor(cursor{
+			MetadataPrefix: c.MetadataPrefix,
+			SetSpec:        c.SetSpec,
+			From:           c.From,
+			Until:          c.Until,
+			LastID:         rows[len(rows)-1].ID,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
 		token = &oaipmh.ResumptionToken{
 			CompleteListSize: n,
-			Value:            fmt.Sprintf("%s|%s|%s|%s|%d", metadataPrefix, setSpec, from, until, rows[len(rows)-1].ID),
+			Value:            tokenValue,
 		}
 	}
 
@@ -268,4 +294,76 @@ func (r *Repo) DeleteRecord(ctx context.Context, identifier string) error {
 		SetDeleted(true).
 		SetNillableMetadata(nil).
 		Exec(ctx)
+}
+
+func (r *Repo) encodeCursor(c cursor) (string, error) {
+	msg, _ := json.Marshal(&c)
+
+	// Create a new AES cipher block from the secret key.
+	block, err := aes.NewCipher(r.config.Secret)
+	if err != nil {
+		return "", err
+	}
+
+	// Wrap the cipher block in Galois Counter Mode.
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	// Create a unique nonce containing 12 random bytes.
+	nonce := make([]byte, gcm.NonceSize())
+	_, err = io.ReadFull(rand.Reader, nonce)
+	if err != nil {
+		return "", err
+	}
+
+	// 	// Encrypt the data using aesGCM.Seal(). By passing the nonce as the first
+	// 	// parameter, the encrypted message will be appended to the nonce so
+	// 	// that the encrypted message will be in the format
+	// 	// "{nonce}{encrypted message}".
+	cryptedMsg := gcm.Seal(nonce, nonce, msg, nil)
+
+	// Encode as a url safe base64 string.
+	return base64.URLEncoding.EncodeToString(cryptedMsg), nil
+}
+
+func (r *Repo) decodeCursor(encodedMsg string) (cursor, error) {
+	c := cursor{}
+
+	// Decode base64.
+	cryptedMsg, err := base64.URLEncoding.DecodeString(encodedMsg)
+	if err != nil {
+		return c, err
+	}
+
+	// Create a new AES cipher block from the secret key.
+	block, err := aes.NewCipher(r.config.Secret)
+	if err != nil {
+		return c, err
+	}
+
+	// Wrap the cipher block in Galois Counter Mode.
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return c, err
+	}
+
+	nonceSize := gcm.NonceSize()
+
+	// Avoid potential 'index out of range' panic in the next step.
+	if len(cryptedMsg) < nonceSize {
+		return c, oaipmh.ErrBadResumptionToken
+	}
+
+	// Split cryptedMsg in nonce and encrypted message and use gcm.Open() to
+	// decrypt and authenticate the data.
+	msg, err := gcm.Open(nil, cryptedMsg[:nonceSize], cryptedMsg[nonceSize:], nil)
+	if err != nil {
+		return c, oaipmh.ErrBadResumptionToken
+	}
+
+	err = json.Unmarshal(msg, &c)
+
+	return c, err
 }
