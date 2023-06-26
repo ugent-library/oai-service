@@ -144,7 +144,6 @@ func (r *Repo) GetMoreRecords(ctx context.Context, tokenValue string) ([]*oaipmh
 	return r.getRecords(ctx, metadataPrefix, setSpec, from, until, lastID)
 }
 
-// TODO set
 func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec, from, until string, lastID int64) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
 	where := []predicate.Record{
 		record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),

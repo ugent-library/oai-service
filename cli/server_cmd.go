@@ -36,7 +36,7 @@ var serverCmd = &cobra.Command{
 		}
 
 		// setup oai provider
-		// TODO simpler verb request and response types?
+		// TODO simpler verb request and response types
 		oaiProvider, err := oaipmh.NewProvider(oaipmh.ProviderConfig{
 			ErrorHandler:   func(err error) { logger.Error(err) },
 			RepositoryName: "Ghent University Institutional Archive",
@@ -100,6 +100,16 @@ var serverCmd = &cobra.Command{
 				}
 				if !exists {
 					return nil, nil, oaipmh.ErrCannotDisseminateFormat
+				}
+
+				if r.Set != "" {
+					exists, err := repo.HasSet(ctx, r.Set)
+					if err != nil {
+						return nil, nil, err
+					}
+					if !exists {
+						return nil, nil, oaipmh.ErrSetDoesNotExist
+					}
 				}
 
 				recs, token, err := repo.GetRecords(ctx, r.MetadataPrefix, r.Set, r.From, r.Until)

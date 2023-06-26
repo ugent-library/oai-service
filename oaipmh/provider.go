@@ -429,6 +429,8 @@ func (r *response) setRequiredMetadataPrefix(q url.Values) {
 		return
 	}
 
+	// TODO check for existence of metadata format here
+
 	r.Request.MetadataPrefix = val
 }
 
@@ -457,10 +459,7 @@ func (r *response) setSet(q url.Values) {
 			return
 		}
 
-		// if _, ok := r.provider.setMap[val]; !ok {
-		// 	r.Errors = append(r.Errors, ErrSetDoesNotExist)
-		// 	return
-		// }
+		// TODO check ErrSetDoesNotExist here
 
 		r.Request.Set = val
 	}
