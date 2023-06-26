@@ -137,6 +137,46 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string)
 	return rec, nil
 }
 
+// TODO this loads the complete record, maken an efficient version
+func (r *Repo) GetIdentifiers(ctx context.Context,
+	metadataPrefix string,
+	setSpec string,
+	from string,
+	until string,
+) ([]*oaipmh.Header, *oaipmh.ResumptionToken, error) {
+	recs, token, err := r.getRecords(ctx, cursor{
+		MetadataPrefix: metadataPrefix,
+		SetSpec:        setSpec,
+		From:           from,
+		Until:          until,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	headers := make([]*oaipmh.Header, len(recs))
+	for i, rec := range recs {
+		headers[i] = rec.Header
+	}
+	return headers, token, nil
+}
+
+// TODO this loads the complete record, maken an efficient version
+func (r *Repo) GetMoreIdentifiers(ctx context.Context, tokenValue string) ([]*oaipmh.Header, *oaipmh.ResumptionToken, error) {
+	c, err := r.decodeCursor(tokenValue)
+	if err != nil {
+		return nil, nil, err
+	}
+	recs, token, err := r.getRecords(ctx, c)
+	if err != nil {
+		return nil, nil, err
+	}
+	headers := make([]*oaipmh.Header, len(recs))
+	for i, rec := range recs {
+		headers[i] = rec.Header
+	}
+	return headers, token, nil
+}
+
 func (r *Repo) GetRecords(ctx context.Context,
 	metadataPrefix string,
 	setSpec string,

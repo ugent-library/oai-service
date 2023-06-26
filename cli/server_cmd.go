@@ -86,6 +86,42 @@ var serverCmd = &cobra.Command{
 				return rec, nil
 			},
 
+			ListIdentifiers: func(r *oaipmh.Request) ([]*oaipmh.Header, *oaipmh.ResumptionToken, error) {
+				ctx := context.TODO()
+
+				if r.ResumptionToken != "" {
+					headers, token, err := repo.GetMoreIdentifiers(ctx, r.ResumptionToken)
+					if err != nil {
+						return nil, nil, err
+					}
+					return headers, token, nil
+				}
+
+				exists, err := repo.HasMetadataFormat(ctx, r.MetadataPrefix)
+				if err != nil {
+					return nil, nil, err
+				}
+				if !exists {
+					return nil, nil, oaipmh.ErrCannotDisseminateFormat
+				}
+
+				if r.Set != "" {
+					exists, err := repo.HasSet(ctx, r.Set)
+					if err != nil {
+						return nil, nil, err
+					}
+					if !exists {
+						return nil, nil, oaipmh.ErrSetDoesNotExist
+					}
+				}
+
+				headers, token, err := repo.GetIdentifiers(ctx, r.MetadataPrefix, r.Set, r.From, r.Until)
+				if err != nil {
+					return nil, nil, err
+				}
+				return headers, token, nil
+			},
+
 			ListRecords: func(r *oaipmh.Request) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
 				ctx := context.TODO()
 
