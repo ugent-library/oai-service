@@ -6,19 +6,20 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
-// Record holds the schema definition for the Record entity.
 type Record struct {
 	ent.Schema
 }
 
-// Fields of the Record.
 func (Record) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("metadata_format_id"),
+		field.Int64("id"),
+		field.Int64("metadata_format_id"),
 		field.String("identifier"),
-		field.String("metadata"),
+		field.String("metadata").
+			Optional(),
 		field.Bool("deleted").
 			Default(false),
 		field.Time("datestamp").
@@ -27,7 +28,6 @@ func (Record) Fields() []ent.Field {
 	}
 }
 
-// Edges of the Record.
 func (Record) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("metadata_format", MetadataFormat.Type).
@@ -37,5 +37,12 @@ func (Record) Edges() []ent.Edge {
 			Field("metadata_format_id"),
 		edge.From("sets", Set.Type).
 			Ref("records"),
+	}
+}
+
+func (Record) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("identifier", "metadata_format_id").
+			Unique(),
 	}
 }

@@ -14,7 +14,7 @@ import (
 type Set struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// Spec holds the value of the "spec" field.
 	Spec string `json:"spec,omitempty"`
 	// Name holds the value of the "name" field.
@@ -73,7 +73,7 @@ func (s *Set) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			s.ID = int(value.Int64)
+			s.ID = int64(value.Int64)
 		case set.FieldSpec:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field spec", values[i])

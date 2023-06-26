@@ -61,14 +61,14 @@ func (su *SetUpdate) ClearDescription() *SetUpdate {
 }
 
 // AddRecordIDs adds the "records" edge to the Record entity by IDs.
-func (su *SetUpdate) AddRecordIDs(ids ...int) *SetUpdate {
+func (su *SetUpdate) AddRecordIDs(ids ...int64) *SetUpdate {
 	su.mutation.AddRecordIDs(ids...)
 	return su
 }
 
 // AddRecords adds the "records" edges to the Record entity.
 func (su *SetUpdate) AddRecords(r ...*Record) *SetUpdate {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -87,14 +87,14 @@ func (su *SetUpdate) ClearRecords() *SetUpdate {
 }
 
 // RemoveRecordIDs removes the "records" edge to Record entities by IDs.
-func (su *SetUpdate) RemoveRecordIDs(ids ...int) *SetUpdate {
+func (su *SetUpdate) RemoveRecordIDs(ids ...int64) *SetUpdate {
 	su.mutation.RemoveRecordIDs(ids...)
 	return su
 }
 
 // RemoveRecords removes "records" edges to Record entities.
 func (su *SetUpdate) RemoveRecords(r ...*Record) *SetUpdate {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -161,7 +161,7 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   set.Table,
 			Columns: set.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: set.FieldID,
 			},
 		},
@@ -194,7 +194,7 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -210,7 +210,7 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -229,7 +229,7 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -291,14 +291,14 @@ func (suo *SetUpdateOne) ClearDescription() *SetUpdateOne {
 }
 
 // AddRecordIDs adds the "records" edge to the Record entity by IDs.
-func (suo *SetUpdateOne) AddRecordIDs(ids ...int) *SetUpdateOne {
+func (suo *SetUpdateOne) AddRecordIDs(ids ...int64) *SetUpdateOne {
 	suo.mutation.AddRecordIDs(ids...)
 	return suo
 }
 
 // AddRecords adds the "records" edges to the Record entity.
 func (suo *SetUpdateOne) AddRecords(r ...*Record) *SetUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -317,14 +317,14 @@ func (suo *SetUpdateOne) ClearRecords() *SetUpdateOne {
 }
 
 // RemoveRecordIDs removes the "records" edge to Record entities by IDs.
-func (suo *SetUpdateOne) RemoveRecordIDs(ids ...int) *SetUpdateOne {
+func (suo *SetUpdateOne) RemoveRecordIDs(ids ...int64) *SetUpdateOne {
 	suo.mutation.RemoveRecordIDs(ids...)
 	return suo
 }
 
 // RemoveRecords removes "records" edges to Record entities.
 func (suo *SetUpdateOne) RemoveRecords(r ...*Record) *SetUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -404,7 +404,7 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 			Table:   set.Table,
 			Columns: set.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: set.FieldID,
 			},
 		},
@@ -454,7 +454,7 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -470,7 +470,7 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -489,7 +489,7 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},

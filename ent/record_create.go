@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
@@ -20,10 +21,11 @@ type RecordCreate struct {
 	config
 	mutation *RecordMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (rc *RecordCreate) SetMetadataFormatID(i int) *RecordCreate {
+func (rc *RecordCreate) SetMetadataFormatID(i int64) *RecordCreate {
 	rc.mutation.SetMetadataFormatID(i)
 	return rc
 }
@@ -37,6 +39,14 @@ func (rc *RecordCreate) SetIdentifier(s string) *RecordCreate {
 // SetMetadata sets the "metadata" field.
 func (rc *RecordCreate) SetMetadata(s string) *RecordCreate {
 	rc.mutation.SetMetadata(s)
+	return rc
+}
+
+// SetNillableMetadata sets the "metadata" field if the given value is not nil.
+func (rc *RecordCreate) SetNillableMetadata(s *string) *RecordCreate {
+	if s != nil {
+		rc.SetMetadata(*s)
+	}
 	return rc
 }
 
@@ -68,20 +78,26 @@ func (rc *RecordCreate) SetNillableDatestamp(t *time.Time) *RecordCreate {
 	return rc
 }
 
+// SetID sets the "id" field.
+func (rc *RecordCreate) SetID(i int64) *RecordCreate {
+	rc.mutation.SetID(i)
+	return rc
+}
+
 // SetMetadataFormat sets the "metadata_format" edge to the MetadataFormat entity.
 func (rc *RecordCreate) SetMetadataFormat(m *MetadataFormat) *RecordCreate {
 	return rc.SetMetadataFormatID(m.ID)
 }
 
 // AddSetIDs adds the "sets" edge to the Set entity by IDs.
-func (rc *RecordCreate) AddSetIDs(ids ...int) *RecordCreate {
+func (rc *RecordCreate) AddSetIDs(ids ...int64) *RecordCreate {
 	rc.mutation.AddSetIDs(ids...)
 	return rc
 }
 
 // AddSets adds the "sets" edges to the Set entity.
 func (rc *RecordCreate) AddSets(s ...*Set) *RecordCreate {
-	ids := make([]int, len(s))
+	ids := make([]int64, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -183,9 +199,6 @@ func (rc *RecordCreate) check() error {
 	if _, ok := rc.mutation.Identifier(); !ok {
 		return &ValidationError{Name: "identifier", err: errors.New(`ent: missing required field "Record.identifier"`)}
 	}
-	if _, ok := rc.mutation.Metadata(); !ok {
-		return &ValidationError{Name: "metadata", err: errors.New(`ent: missing required field "Record.metadata"`)}
-	}
 	if _, ok := rc.mutation.Deleted(); !ok {
 		return &ValidationError{Name: "deleted", err: errors.New(`ent: missing required field "Record.deleted"`)}
 	}
@@ -206,8 +219,10 @@ func (rc *RecordCreate) sqlSave(ctx context.Context) (*Record, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	return _node, nil
 }
 
@@ -217,11 +232,16 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: record.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: record.FieldID,
 			},
 		}
 	)
+	_spec.OnConflict = rc.conflict
+	if id, ok := rc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := rc.mutation.Identifier(); ok {
 		_spec.SetField(record.FieldIdentifier, field.TypeString, value)
 		_node.Identifier = value
@@ -247,7 +267,7 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: metadataformat.FieldID,
 				},
 			},
@@ -267,7 +287,7 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: set.FieldID,
 				},
 			},
@@ -280,10 +300,284 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Record.Create().
+//		SetMetadataFormatID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.RecordUpsert) {
+//			SetMetadataFormatID(v+v).
+//		}).
+//		Exec(ctx)
+func (rc *RecordCreate) OnConflict(opts ...sql.ConflictOption) *RecordUpsertOne {
+	rc.conflict = opts
+	return &RecordUpsertOne{
+		create: rc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Record.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (rc *RecordCreate) OnConflictColumns(columns ...string) *RecordUpsertOne {
+	rc.conflict = append(rc.conflict, sql.ConflictColumns(columns...))
+	return &RecordUpsertOne{
+		create: rc,
+	}
+}
+
+type (
+	// RecordUpsertOne is the builder for "upsert"-ing
+	//  one Record node.
+	RecordUpsertOne struct {
+		create *RecordCreate
+	}
+
+	// RecordUpsert is the "OnConflict" setter.
+	RecordUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetMetadataFormatID sets the "metadata_format_id" field.
+func (u *RecordUpsert) SetMetadataFormatID(v int64) *RecordUpsert {
+	u.Set(record.FieldMetadataFormatID, v)
+	return u
+}
+
+// UpdateMetadataFormatID sets the "metadata_format_id" field to the value that was provided on create.
+func (u *RecordUpsert) UpdateMetadataFormatID() *RecordUpsert {
+	u.SetExcluded(record.FieldMetadataFormatID)
+	return u
+}
+
+// SetIdentifier sets the "identifier" field.
+func (u *RecordUpsert) SetIdentifier(v string) *RecordUpsert {
+	u.Set(record.FieldIdentifier, v)
+	return u
+}
+
+// UpdateIdentifier sets the "identifier" field to the value that was provided on create.
+func (u *RecordUpsert) UpdateIdentifier() *RecordUpsert {
+	u.SetExcluded(record.FieldIdentifier)
+	return u
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *RecordUpsert) SetMetadata(v string) *RecordUpsert {
+	u.Set(record.FieldMetadata, v)
+	return u
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *RecordUpsert) UpdateMetadata() *RecordUpsert {
+	u.SetExcluded(record.FieldMetadata)
+	return u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *RecordUpsert) ClearMetadata() *RecordUpsert {
+	u.SetNull(record.FieldMetadata)
+	return u
+}
+
+// SetDeleted sets the "deleted" field.
+func (u *RecordUpsert) SetDeleted(v bool) *RecordUpsert {
+	u.Set(record.FieldDeleted, v)
+	return u
+}
+
+// UpdateDeleted sets the "deleted" field to the value that was provided on create.
+func (u *RecordUpsert) UpdateDeleted() *RecordUpsert {
+	u.SetExcluded(record.FieldDeleted)
+	return u
+}
+
+// SetDatestamp sets the "datestamp" field.
+func (u *RecordUpsert) SetDatestamp(v time.Time) *RecordUpsert {
+	u.Set(record.FieldDatestamp, v)
+	return u
+}
+
+// UpdateDatestamp sets the "datestamp" field to the value that was provided on create.
+func (u *RecordUpsert) UpdateDatestamp() *RecordUpsert {
+	u.SetExcluded(record.FieldDatestamp)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Record.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(record.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *RecordUpsertOne) UpdateNewValues() *RecordUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(record.FieldID)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Record.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *RecordUpsertOne) Ignore() *RecordUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *RecordUpsertOne) DoNothing() *RecordUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the RecordCreate.OnConflict
+// documentation for more info.
+func (u *RecordUpsertOne) Update(set func(*RecordUpsert)) *RecordUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&RecordUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetMetadataFormatID sets the "metadata_format_id" field.
+func (u *RecordUpsertOne) SetMetadataFormatID(v int64) *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetMetadataFormatID(v)
+	})
+}
+
+// UpdateMetadataFormatID sets the "metadata_format_id" field to the value that was provided on create.
+func (u *RecordUpsertOne) UpdateMetadataFormatID() *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateMetadataFormatID()
+	})
+}
+
+// SetIdentifier sets the "identifier" field.
+func (u *RecordUpsertOne) SetIdentifier(v string) *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetIdentifier(v)
+	})
+}
+
+// UpdateIdentifier sets the "identifier" field to the value that was provided on create.
+func (u *RecordUpsertOne) UpdateIdentifier() *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateIdentifier()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *RecordUpsertOne) SetMetadata(v string) *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *RecordUpsertOne) UpdateMetadata() *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *RecordUpsertOne) ClearMetadata() *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetDeleted sets the "deleted" field.
+func (u *RecordUpsertOne) SetDeleted(v bool) *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetDeleted(v)
+	})
+}
+
+// UpdateDeleted sets the "deleted" field to the value that was provided on create.
+func (u *RecordUpsertOne) UpdateDeleted() *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateDeleted()
+	})
+}
+
+// SetDatestamp sets the "datestamp" field.
+func (u *RecordUpsertOne) SetDatestamp(v time.Time) *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetDatestamp(v)
+	})
+}
+
+// UpdateDatestamp sets the "datestamp" field to the value that was provided on create.
+func (u *RecordUpsertOne) UpdateDatestamp() *RecordUpsertOne {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateDatestamp()
+	})
+}
+
+// Exec executes the query.
+func (u *RecordUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for RecordCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *RecordUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *RecordUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *RecordUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // RecordCreateBulk is the builder for creating many Record entities in bulk.
 type RecordCreateBulk struct {
 	config
 	builders []*RecordCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Record entities in the database.
@@ -310,6 +604,7 @@ func (rcb *RecordCreateBulk) Save(ctx context.Context) ([]*Record, error) {
 					_, err = mutators[i+1].Mutate(root, rcb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = rcb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, rcb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -321,9 +616,9 @@ func (rcb *RecordCreateBulk) Save(ctx context.Context) ([]*Record, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				mutation.done = true
 				return nodes[i], nil
@@ -360,6 +655,194 @@ func (rcb *RecordCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (rcb *RecordCreateBulk) ExecX(ctx context.Context) {
 	if err := rcb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Record.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.RecordUpsert) {
+//			SetMetadataFormatID(v+v).
+//		}).
+//		Exec(ctx)
+func (rcb *RecordCreateBulk) OnConflict(opts ...sql.ConflictOption) *RecordUpsertBulk {
+	rcb.conflict = opts
+	return &RecordUpsertBulk{
+		create: rcb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Record.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (rcb *RecordCreateBulk) OnConflictColumns(columns ...string) *RecordUpsertBulk {
+	rcb.conflict = append(rcb.conflict, sql.ConflictColumns(columns...))
+	return &RecordUpsertBulk{
+		create: rcb,
+	}
+}
+
+// RecordUpsertBulk is the builder for "upsert"-ing
+// a bulk of Record nodes.
+type RecordUpsertBulk struct {
+	create *RecordCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Record.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(record.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *RecordUpsertBulk) UpdateNewValues() *RecordUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(record.FieldID)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Record.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *RecordUpsertBulk) Ignore() *RecordUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *RecordUpsertBulk) DoNothing() *RecordUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the RecordCreateBulk.OnConflict
+// documentation for more info.
+func (u *RecordUpsertBulk) Update(set func(*RecordUpsert)) *RecordUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&RecordUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetMetadataFormatID sets the "metadata_format_id" field.
+func (u *RecordUpsertBulk) SetMetadataFormatID(v int64) *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetMetadataFormatID(v)
+	})
+}
+
+// UpdateMetadataFormatID sets the "metadata_format_id" field to the value that was provided on create.
+func (u *RecordUpsertBulk) UpdateMetadataFormatID() *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateMetadataFormatID()
+	})
+}
+
+// SetIdentifier sets the "identifier" field.
+func (u *RecordUpsertBulk) SetIdentifier(v string) *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetIdentifier(v)
+	})
+}
+
+// UpdateIdentifier sets the "identifier" field to the value that was provided on create.
+func (u *RecordUpsertBulk) UpdateIdentifier() *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateIdentifier()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *RecordUpsertBulk) SetMetadata(v string) *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *RecordUpsertBulk) UpdateMetadata() *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (u *RecordUpsertBulk) ClearMetadata() *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.ClearMetadata()
+	})
+}
+
+// SetDeleted sets the "deleted" field.
+func (u *RecordUpsertBulk) SetDeleted(v bool) *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetDeleted(v)
+	})
+}
+
+// UpdateDeleted sets the "deleted" field to the value that was provided on create.
+func (u *RecordUpsertBulk) UpdateDeleted() *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateDeleted()
+	})
+}
+
+// SetDatestamp sets the "datestamp" field.
+func (u *RecordUpsertBulk) SetDatestamp(v time.Time) *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.SetDatestamp(v)
+	})
+}
+
+// UpdateDatestamp sets the "datestamp" field to the value that was provided on create.
+func (u *RecordUpsertBulk) UpdateDatestamp() *RecordUpsertBulk {
+	return u.Update(func(s *RecordUpsert) {
+		s.UpdateDatestamp()
+	})
+}
+
+// Exec executes the query.
+func (u *RecordUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the RecordCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for RecordCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *RecordUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

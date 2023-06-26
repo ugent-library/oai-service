@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/ugent-library/oai-service/ent/record"
@@ -18,6 +19,7 @@ type SetCreate struct {
 	config
 	mutation *SetMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetSpec sets the "spec" field.
@@ -46,15 +48,21 @@ func (sc *SetCreate) SetNillableDescription(s *string) *SetCreate {
 	return sc
 }
 
+// SetID sets the "id" field.
+func (sc *SetCreate) SetID(i int64) *SetCreate {
+	sc.mutation.SetID(i)
+	return sc
+}
+
 // AddRecordIDs adds the "records" edge to the Record entity by IDs.
-func (sc *SetCreate) AddRecordIDs(ids ...int) *SetCreate {
+func (sc *SetCreate) AddRecordIDs(ids ...int64) *SetCreate {
 	sc.mutation.AddRecordIDs(ids...)
 	return sc
 }
 
 // AddRecords adds the "records" edges to the Record entity.
 func (sc *SetCreate) AddRecords(r ...*Record) *SetCreate {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -154,8 +162,10 @@ func (sc *SetCreate) sqlSave(ctx context.Context) (*Set, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	return _node, nil
 }
 
@@ -165,11 +175,16 @@ func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: set.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: set.FieldID,
 			},
 		}
 	)
+	_spec.OnConflict = sc.conflict
+	if id, ok := sc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := sc.mutation.Spec(); ok {
 		_spec.SetField(set.FieldSpec, field.TypeString, value)
 		_node.Spec = value
@@ -191,7 +206,7 @@ func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -204,10 +219,232 @@ func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Set.Create().
+//		SetSpec(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.SetUpsert) {
+//			SetSpec(v+v).
+//		}).
+//		Exec(ctx)
+func (sc *SetCreate) OnConflict(opts ...sql.ConflictOption) *SetUpsertOne {
+	sc.conflict = opts
+	return &SetUpsertOne{
+		create: sc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Set.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (sc *SetCreate) OnConflictColumns(columns ...string) *SetUpsertOne {
+	sc.conflict = append(sc.conflict, sql.ConflictColumns(columns...))
+	return &SetUpsertOne{
+		create: sc,
+	}
+}
+
+type (
+	// SetUpsertOne is the builder for "upsert"-ing
+	//  one Set node.
+	SetUpsertOne struct {
+		create *SetCreate
+	}
+
+	// SetUpsert is the "OnConflict" setter.
+	SetUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetSpec sets the "spec" field.
+func (u *SetUpsert) SetSpec(v string) *SetUpsert {
+	u.Set(set.FieldSpec, v)
+	return u
+}
+
+// UpdateSpec sets the "spec" field to the value that was provided on create.
+func (u *SetUpsert) UpdateSpec() *SetUpsert {
+	u.SetExcluded(set.FieldSpec)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *SetUpsert) SetName(v string) *SetUpsert {
+	u.Set(set.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SetUpsert) UpdateName() *SetUpsert {
+	u.SetExcluded(set.FieldName)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *SetUpsert) SetDescription(v string) *SetUpsert {
+	u.Set(set.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *SetUpsert) UpdateDescription() *SetUpsert {
+	u.SetExcluded(set.FieldDescription)
+	return u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *SetUpsert) ClearDescription() *SetUpsert {
+	u.SetNull(set.FieldDescription)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Set.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(set.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *SetUpsertOne) UpdateNewValues() *SetUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(set.FieldID)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Set.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *SetUpsertOne) Ignore() *SetUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *SetUpsertOne) DoNothing() *SetUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the SetCreate.OnConflict
+// documentation for more info.
+func (u *SetUpsertOne) Update(set func(*SetUpsert)) *SetUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&SetUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetSpec sets the "spec" field.
+func (u *SetUpsertOne) SetSpec(v string) *SetUpsertOne {
+	return u.Update(func(s *SetUpsert) {
+		s.SetSpec(v)
+	})
+}
+
+// UpdateSpec sets the "spec" field to the value that was provided on create.
+func (u *SetUpsertOne) UpdateSpec() *SetUpsertOne {
+	return u.Update(func(s *SetUpsert) {
+		s.UpdateSpec()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *SetUpsertOne) SetName(v string) *SetUpsertOne {
+	return u.Update(func(s *SetUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SetUpsertOne) UpdateName() *SetUpsertOne {
+	return u.Update(func(s *SetUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *SetUpsertOne) SetDescription(v string) *SetUpsertOne {
+	return u.Update(func(s *SetUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *SetUpsertOne) UpdateDescription() *SetUpsertOne {
+	return u.Update(func(s *SetUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *SetUpsertOne) ClearDescription() *SetUpsertOne {
+	return u.Update(func(s *SetUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// Exec executes the query.
+func (u *SetUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for SetCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *SetUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *SetUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *SetUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // SetCreateBulk is the builder for creating many Set entities in bulk.
 type SetCreateBulk struct {
 	config
 	builders []*SetCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Set entities in the database.
@@ -233,6 +470,7 @@ func (scb *SetCreateBulk) Save(ctx context.Context) ([]*Set, error) {
 					_, err = mutators[i+1].Mutate(root, scb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = scb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, scb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -244,9 +482,9 @@ func (scb *SetCreateBulk) Save(ctx context.Context) ([]*Set, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				mutation.done = true
 				return nodes[i], nil
@@ -283,6 +521,166 @@ func (scb *SetCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (scb *SetCreateBulk) ExecX(ctx context.Context) {
 	if err := scb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Set.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.SetUpsert) {
+//			SetSpec(v+v).
+//		}).
+//		Exec(ctx)
+func (scb *SetCreateBulk) OnConflict(opts ...sql.ConflictOption) *SetUpsertBulk {
+	scb.conflict = opts
+	return &SetUpsertBulk{
+		create: scb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Set.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (scb *SetCreateBulk) OnConflictColumns(columns ...string) *SetUpsertBulk {
+	scb.conflict = append(scb.conflict, sql.ConflictColumns(columns...))
+	return &SetUpsertBulk{
+		create: scb,
+	}
+}
+
+// SetUpsertBulk is the builder for "upsert"-ing
+// a bulk of Set nodes.
+type SetUpsertBulk struct {
+	create *SetCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Set.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(set.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *SetUpsertBulk) UpdateNewValues() *SetUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(set.FieldID)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Set.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *SetUpsertBulk) Ignore() *SetUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *SetUpsertBulk) DoNothing() *SetUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the SetCreateBulk.OnConflict
+// documentation for more info.
+func (u *SetUpsertBulk) Update(set func(*SetUpsert)) *SetUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&SetUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetSpec sets the "spec" field.
+func (u *SetUpsertBulk) SetSpec(v string) *SetUpsertBulk {
+	return u.Update(func(s *SetUpsert) {
+		s.SetSpec(v)
+	})
+}
+
+// UpdateSpec sets the "spec" field to the value that was provided on create.
+func (u *SetUpsertBulk) UpdateSpec() *SetUpsertBulk {
+	return u.Update(func(s *SetUpsert) {
+		s.UpdateSpec()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *SetUpsertBulk) SetName(v string) *SetUpsertBulk {
+	return u.Update(func(s *SetUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SetUpsertBulk) UpdateName() *SetUpsertBulk {
+	return u.Update(func(s *SetUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *SetUpsertBulk) SetDescription(v string) *SetUpsertBulk {
+	return u.Update(func(s *SetUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *SetUpsertBulk) UpdateDescription() *SetUpsertBulk {
+	return u.Update(func(s *SetUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *SetUpsertBulk) ClearDescription() *SetUpsertBulk {
+	return u.Update(func(s *SetUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// Exec executes the query.
+func (u *SetUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the SetCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for SetCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *SetUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

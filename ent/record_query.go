@@ -132,8 +132,8 @@ func (rq *RecordQuery) FirstX(ctx context.Context) *Record {
 
 // FirstID returns the first Record ID from the query.
 // Returns a *NotFoundError when no Record ID was found.
-func (rq *RecordQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RecordQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = rq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -145,7 +145,7 @@ func (rq *RecordQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (rq *RecordQuery) FirstIDX(ctx context.Context) int {
+func (rq *RecordQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := rq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -183,8 +183,8 @@ func (rq *RecordQuery) OnlyX(ctx context.Context) *Record {
 // OnlyID is like Only, but returns the only Record ID in the query.
 // Returns a *NotSingularError when more than one Record ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (rq *RecordQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RecordQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = rq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -200,7 +200,7 @@ func (rq *RecordQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (rq *RecordQuery) OnlyIDX(ctx context.Context) int {
+func (rq *RecordQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := rq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -226,8 +226,8 @@ func (rq *RecordQuery) AllX(ctx context.Context) []*Record {
 }
 
 // IDs executes the query and returns a list of Record IDs.
-func (rq *RecordQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (rq *RecordQuery) IDs(ctx context.Context) ([]int64, error) {
+	var ids []int64
 	if err := rq.Select(record.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (rq *RecordQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (rq *RecordQuery) IDsX(ctx context.Context) []int {
+func (rq *RecordQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := rq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -326,7 +326,7 @@ func (rq *RecordQuery) WithSets(opts ...func(*SetQuery)) *RecordQuery {
 // Example:
 //
 //	var v []struct {
-//		MetadataFormatID int `json:"metadata_format_id,omitempty"`
+//		MetadataFormatID int64 `json:"metadata_format_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -354,7 +354,7 @@ func (rq *RecordQuery) GroupBy(field string, fields ...string) *RecordGroupBy {
 // Example:
 //
 //	var v []struct {
-//		MetadataFormatID int `json:"metadata_format_id,omitempty"`
+//		MetadataFormatID int64 `json:"metadata_format_id,omitempty"`
 //	}
 //
 //	client.Record.Query().
@@ -433,8 +433,8 @@ func (rq *RecordQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Recor
 }
 
 func (rq *RecordQuery) loadMetadataFormat(ctx context.Context, query *MetadataFormatQuery, nodes []*Record, init func(*Record), assign func(*Record, *MetadataFormat)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Record)
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Record)
 	for i := range nodes {
 		fk := nodes[i].MetadataFormatID
 		if _, ok := nodeids[fk]; !ok {
@@ -460,8 +460,8 @@ func (rq *RecordQuery) loadMetadataFormat(ctx context.Context, query *MetadataFo
 }
 func (rq *RecordQuery) loadSets(ctx context.Context, query *SetQuery, nodes []*Record, init func(*Record), assign func(*Record, *Set)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Record)
-	nids := make(map[int]map[*Record]struct{})
+	byID := make(map[int64]*Record)
+	nids := make(map[int64]map[*Record]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -492,8 +492,8 @@ func (rq *RecordQuery) loadSets(ctx context.Context, query *SetQuery, nodes []*R
 			return append([]any{new(sql.NullInt64)}, values...), nil
 		}
 		spec.Assign = func(columns []string, values []any) error {
-			outValue := int(values[0].(*sql.NullInt64).Int64)
-			inValue := int(values[1].(*sql.NullInt64).Int64)
+			outValue := values[0].(*sql.NullInt64).Int64
+			inValue := values[1].(*sql.NullInt64).Int64
 			if nids[inValue] == nil {
 				nids[inValue] = map[*Record]struct{}{byID[outValue]: {}}
 				return assign(columns[1:], values[1:])
@@ -543,7 +543,7 @@ func (rq *RecordQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   record.Table,
 			Columns: record.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: record.FieldID,
 			},
 		},

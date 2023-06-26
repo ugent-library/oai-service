@@ -177,7 +177,7 @@ func (c *MetadataFormatClient) UpdateOne(mf *MetadataFormat) *MetadataFormatUpda
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *MetadataFormatClient) UpdateOneID(id int) *MetadataFormatUpdateOne {
+func (c *MetadataFormatClient) UpdateOneID(id int64) *MetadataFormatUpdateOne {
 	mutation := newMetadataFormatMutation(c.config, OpUpdateOne, withMetadataFormatID(id))
 	return &MetadataFormatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -194,7 +194,7 @@ func (c *MetadataFormatClient) DeleteOne(mf *MetadataFormat) *MetadataFormatDele
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *MetadataFormatClient) DeleteOneID(id int) *MetadataFormatDeleteOne {
+func (c *MetadataFormatClient) DeleteOneID(id int64) *MetadataFormatDeleteOne {
 	builder := c.Delete().Where(metadataformat.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -209,12 +209,12 @@ func (c *MetadataFormatClient) Query() *MetadataFormatQuery {
 }
 
 // Get returns a MetadataFormat entity by its id.
-func (c *MetadataFormatClient) Get(ctx context.Context, id int) (*MetadataFormat, error) {
+func (c *MetadataFormatClient) Get(ctx context.Context, id int64) (*MetadataFormat, error) {
 	return c.Query().Where(metadataformat.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *MetadataFormatClient) GetX(ctx context.Context, id int) *MetadataFormat {
+func (c *MetadataFormatClient) GetX(ctx context.Context, id int64) *MetadataFormat {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -283,7 +283,7 @@ func (c *RecordClient) UpdateOne(r *Record) *RecordUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *RecordClient) UpdateOneID(id int) *RecordUpdateOne {
+func (c *RecordClient) UpdateOneID(id int64) *RecordUpdateOne {
 	mutation := newRecordMutation(c.config, OpUpdateOne, withRecordID(id))
 	return &RecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -300,7 +300,7 @@ func (c *RecordClient) DeleteOne(r *Record) *RecordDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *RecordClient) DeleteOneID(id int) *RecordDeleteOne {
+func (c *RecordClient) DeleteOneID(id int64) *RecordDeleteOne {
 	builder := c.Delete().Where(record.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -315,12 +315,12 @@ func (c *RecordClient) Query() *RecordQuery {
 }
 
 // Get returns a Record entity by its id.
-func (c *RecordClient) Get(ctx context.Context, id int) (*Record, error) {
+func (c *RecordClient) Get(ctx context.Context, id int64) (*Record, error) {
 	return c.Query().Where(record.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *RecordClient) GetX(ctx context.Context, id int) *Record {
+func (c *RecordClient) GetX(ctx context.Context, id int64) *Record {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -405,7 +405,7 @@ func (c *SetClient) UpdateOne(s *Set) *SetUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *SetClient) UpdateOneID(id int) *SetUpdateOne {
+func (c *SetClient) UpdateOneID(id int64) *SetUpdateOne {
 	mutation := newSetMutation(c.config, OpUpdateOne, withSetID(id))
 	return &SetUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -422,7 +422,7 @@ func (c *SetClient) DeleteOne(s *Set) *SetDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *SetClient) DeleteOneID(id int) *SetDeleteOne {
+func (c *SetClient) DeleteOneID(id int64) *SetDeleteOne {
 	builder := c.Delete().Where(set.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -437,12 +437,12 @@ func (c *SetClient) Query() *SetQuery {
 }
 
 // Get returns a Set entity by its id.
-func (c *SetClient) Get(ctx context.Context, id int) (*Set, error) {
+func (c *SetClient) Get(ctx context.Context, id int64) (*Set, error) {
 	return c.Query().Where(set.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *SetClient) GetX(ctx context.Context, id int) *Set {
+func (c *SetClient) GetX(ctx context.Context, id int64) *Set {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)

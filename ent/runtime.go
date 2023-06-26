@@ -16,11 +16,11 @@ func init() {
 	recordFields := schema.Record{}.Fields()
 	_ = recordFields
 	// recordDescDeleted is the schema descriptor for deleted field.
-	recordDescDeleted := recordFields[3].Descriptor()
+	recordDescDeleted := recordFields[4].Descriptor()
 	// record.DefaultDeleted holds the default value on creation for the deleted field.
 	record.DefaultDeleted = recordDescDeleted.Default.(bool)
 	// recordDescDatestamp is the schema descriptor for datestamp field.
-	recordDescDatestamp := recordFields[4].Descriptor()
+	recordDescDatestamp := recordFields[5].Descriptor()
 	// record.DefaultDatestamp holds the default value on creation for the datestamp field.
 	record.DefaultDatestamp = recordDescDatestamp.Default.(func() time.Time)
 	// record.UpdateDefaultDatestamp holds the default value on update for the datestamp field.

@@ -44,6 +44,7 @@ var serverCmd = &cobra.Command{
 			AdminEmails:    []string{"libservice@ugent.be"},
 			DeletedRecord:  "persistent",
 			Granularity:    "YYYY-MM-DDThh:mm:ssZ",
+			StyleSheet:     "/oai.xsl",
 
 			ListMetadataFormats: func(r *oaipmh.Request) ([]*oaipmh.MetadataFormat, error) {
 				ctx := context.TODO()
@@ -84,6 +85,14 @@ var serverCmd = &cobra.Command{
 			ListRecords: func(r *oaipmh.Request) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
 				ctx := context.TODO()
 
+				if r.ResumptionToken != "" {
+					recs, token, err := repo.GetMoreRecords(ctx, r.ResumptionToken)
+					if err != nil {
+						return nil, nil, err
+					}
+					return recs, token, nil
+				}
+
 				exists, err := repo.HasMetadataFormat(ctx, r.MetadataPrefix)
 				if err != nil {
 					return nil, nil, err
@@ -92,14 +101,10 @@ var serverCmd = &cobra.Command{
 					return nil, nil, oaipmh.ErrCannotDisseminateFormat
 				}
 
-				// if r.ResumptionToken != "" {
-				// }
-
 				recs, token, err := repo.GetRecords(ctx, r.MetadataPrefix)
 				if err != nil {
 					return nil, nil, err
 				}
-
 				return recs, token, nil
 			},
 		})
@@ -133,6 +138,9 @@ var serverCmd = &cobra.Command{
 				Branch: config.Source.Branch,
 				Commit: config.Source.Commit,
 			})
+		})
+		mux.Get("/oai.xsl", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "public/oai.xsl")
 		})
 		mux.Method("GET", "/", oaiProvider)
 		mux.Mount(apiPath, apiHandler)

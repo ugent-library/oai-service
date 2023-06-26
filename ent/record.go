@@ -16,9 +16,9 @@ import (
 type Record struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// MetadataFormatID holds the value of the "metadata_format_id" field.
-	MetadataFormatID int `json:"metadata_format_id,omitempty"`
+	MetadataFormatID int64 `json:"metadata_format_id,omitempty"`
 	// Identifier holds the value of the "identifier" field.
 	Identifier string `json:"identifier,omitempty"`
 	// Metadata holds the value of the "metadata" field.
@@ -98,12 +98,12 @@ func (r *Record) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			r.ID = int(value.Int64)
+			r.ID = int64(value.Int64)
 		case record.FieldMetadataFormatID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field metadata_format_id", values[i])
 			} else if value.Valid {
-				r.MetadataFormatID = int(value.Int64)
+				r.MetadataFormatID = value.Int64
 			}
 		case record.FieldIdentifier:
 			if value, ok := values[i].(*sql.NullString); !ok {

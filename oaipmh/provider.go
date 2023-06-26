@@ -168,6 +168,7 @@ type ProviderConfig struct {
 	Granularity         string
 	Compression         string
 	DeletedRecord       string
+	StyleSheet          string
 	Sets                []*Set // TODO callback
 	EarliestDatestamp   func() (time.Time, error)
 	ListMetadataFormats func(*Request) ([]*MetadataFormat, error)
@@ -375,6 +376,9 @@ func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/xml")
 	w.WriteHeader(status)
 	w.Write([]byte(xml.Header))
+	if p.StyleSheet != "" {
+		w.Write([]byte(`<?xml-stylesheet type="text/xsl" href="` + p.StyleSheet + `"?>` + "\n"))
+	}
 	w.Write(out)
 }
 

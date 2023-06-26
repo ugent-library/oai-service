@@ -20,6 +20,16 @@ func (s *Server) AddRecord(
 	ctx context.Context,
 	req *connect.Request[oaiv1.AddRecordRequest],
 ) (*connect.Response[oaiv1.AddRecordResponse], error) {
+	err := s.repo.AddRecord(ctx,
+		req.Msg.Identifier,
+		req.Msg.MetadataPrefix,
+		req.Msg.Metadata,
+		req.Msg.SetSpecs,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	res := connect.NewResponse(&oaiv1.AddRecordResponse{})
 	return res, nil
 }

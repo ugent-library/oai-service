@@ -108,8 +108,8 @@ func (sq *SetQuery) FirstX(ctx context.Context) *Set {
 
 // FirstID returns the first Set ID from the query.
 // Returns a *NotFoundError when no Set ID was found.
-func (sq *SetQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (sq *SetQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = sq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -121,7 +121,7 @@ func (sq *SetQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (sq *SetQuery) FirstIDX(ctx context.Context) int {
+func (sq *SetQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := sq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -159,8 +159,8 @@ func (sq *SetQuery) OnlyX(ctx context.Context) *Set {
 // OnlyID is like Only, but returns the only Set ID in the query.
 // Returns a *NotSingularError when more than one Set ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (sq *SetQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (sq *SetQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = sq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -176,7 +176,7 @@ func (sq *SetQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (sq *SetQuery) OnlyIDX(ctx context.Context) int {
+func (sq *SetQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := sq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -202,8 +202,8 @@ func (sq *SetQuery) AllX(ctx context.Context) []*Set {
 }
 
 // IDs executes the query and returns a list of Set IDs.
-func (sq *SetQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (sq *SetQuery) IDs(ctx context.Context) ([]int64, error) {
+	var ids []int64
 	if err := sq.Select(set.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (sq *SetQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (sq *SetQuery) IDsX(ctx context.Context) []int {
+func (sq *SetQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := sq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -391,8 +391,8 @@ func (sq *SetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Set, err
 
 func (sq *SetQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes []*Set, init func(*Set), assign func(*Set, *Record)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Set)
-	nids := make(map[int]map[*Set]struct{})
+	byID := make(map[int64]*Set)
+	nids := make(map[int64]map[*Set]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -423,8 +423,8 @@ func (sq *SetQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes [
 			return append([]any{new(sql.NullInt64)}, values...), nil
 		}
 		spec.Assign = func(columns []string, values []any) error {
-			outValue := int(values[0].(*sql.NullInt64).Int64)
-			inValue := int(values[1].(*sql.NullInt64).Int64)
+			outValue := values[0].(*sql.NullInt64).Int64
+			inValue := values[1].(*sql.NullInt64).Int64
 			if nids[inValue] == nil {
 				nids[inValue] = map[*Set]struct{}{byID[outValue]: {}}
 				return assign(columns[1:], values[1:])
@@ -474,7 +474,7 @@ func (sq *SetQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   set.Table,
 			Columns: set.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: set.FieldID,
 			},
 		},

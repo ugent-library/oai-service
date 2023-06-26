@@ -14,7 +14,7 @@ import (
 type MetadataFormat struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// Prefix holds the value of the "prefix" field.
 	Prefix string `json:"prefix,omitempty"`
 	// Schema holds the value of the "schema" field.
@@ -73,7 +73,7 @@ func (mf *MetadataFormat) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			mf.ID = int(value.Int64)
+			mf.ID = int64(value.Int64)
 		case metadataformat.FieldPrefix:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field prefix", values[i])

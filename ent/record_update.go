@@ -31,7 +31,7 @@ func (ru *RecordUpdate) Where(ps ...predicate.Record) *RecordUpdate {
 }
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (ru *RecordUpdate) SetMetadataFormatID(i int) *RecordUpdate {
+func (ru *RecordUpdate) SetMetadataFormatID(i int64) *RecordUpdate {
 	ru.mutation.SetMetadataFormatID(i)
 	return ru
 }
@@ -45,6 +45,20 @@ func (ru *RecordUpdate) SetIdentifier(s string) *RecordUpdate {
 // SetMetadata sets the "metadata" field.
 func (ru *RecordUpdate) SetMetadata(s string) *RecordUpdate {
 	ru.mutation.SetMetadata(s)
+	return ru
+}
+
+// SetNillableMetadata sets the "metadata" field if the given value is not nil.
+func (ru *RecordUpdate) SetNillableMetadata(s *string) *RecordUpdate {
+	if s != nil {
+		ru.SetMetadata(*s)
+	}
+	return ru
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (ru *RecordUpdate) ClearMetadata() *RecordUpdate {
+	ru.mutation.ClearMetadata()
 	return ru
 }
 
@@ -74,14 +88,14 @@ func (ru *RecordUpdate) SetMetadataFormat(m *MetadataFormat) *RecordUpdate {
 }
 
 // AddSetIDs adds the "sets" edge to the Set entity by IDs.
-func (ru *RecordUpdate) AddSetIDs(ids ...int) *RecordUpdate {
+func (ru *RecordUpdate) AddSetIDs(ids ...int64) *RecordUpdate {
 	ru.mutation.AddSetIDs(ids...)
 	return ru
 }
 
 // AddSets adds the "sets" edges to the Set entity.
 func (ru *RecordUpdate) AddSets(s ...*Set) *RecordUpdate {
-	ids := make([]int, len(s))
+	ids := make([]int64, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -106,14 +120,14 @@ func (ru *RecordUpdate) ClearSets() *RecordUpdate {
 }
 
 // RemoveSetIDs removes the "sets" edge to Set entities by IDs.
-func (ru *RecordUpdate) RemoveSetIDs(ids ...int) *RecordUpdate {
+func (ru *RecordUpdate) RemoveSetIDs(ids ...int64) *RecordUpdate {
 	ru.mutation.RemoveSetIDs(ids...)
 	return ru
 }
 
 // RemoveSets removes "sets" edges to Set entities.
 func (ru *RecordUpdate) RemoveSets(s ...*Set) *RecordUpdate {
-	ids := make([]int, len(s))
+	ids := make([]int64, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -203,7 +217,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   record.Table,
 			Columns: record.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: record.FieldID,
 			},
 		},
@@ -221,6 +235,9 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ru.mutation.Metadata(); ok {
 		_spec.SetField(record.FieldMetadata, field.TypeString, value)
 	}
+	if ru.mutation.MetadataCleared() {
+		_spec.ClearField(record.FieldMetadata, field.TypeString)
+	}
 	if value, ok := ru.mutation.Deleted(); ok {
 		_spec.SetField(record.FieldDeleted, field.TypeBool, value)
 	}
@@ -236,7 +253,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: metadataformat.FieldID,
 				},
 			},
@@ -252,7 +269,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: metadataformat.FieldID,
 				},
 			},
@@ -271,7 +288,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: set.FieldID,
 				},
 			},
@@ -287,7 +304,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: set.FieldID,
 				},
 			},
@@ -306,7 +323,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: set.FieldID,
 				},
 			},
@@ -336,7 +353,7 @@ type RecordUpdateOne struct {
 }
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (ruo *RecordUpdateOne) SetMetadataFormatID(i int) *RecordUpdateOne {
+func (ruo *RecordUpdateOne) SetMetadataFormatID(i int64) *RecordUpdateOne {
 	ruo.mutation.SetMetadataFormatID(i)
 	return ruo
 }
@@ -350,6 +367,20 @@ func (ruo *RecordUpdateOne) SetIdentifier(s string) *RecordUpdateOne {
 // SetMetadata sets the "metadata" field.
 func (ruo *RecordUpdateOne) SetMetadata(s string) *RecordUpdateOne {
 	ruo.mutation.SetMetadata(s)
+	return ruo
+}
+
+// SetNillableMetadata sets the "metadata" field if the given value is not nil.
+func (ruo *RecordUpdateOne) SetNillableMetadata(s *string) *RecordUpdateOne {
+	if s != nil {
+		ruo.SetMetadata(*s)
+	}
+	return ruo
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (ruo *RecordUpdateOne) ClearMetadata() *RecordUpdateOne {
+	ruo.mutation.ClearMetadata()
 	return ruo
 }
 
@@ -379,14 +410,14 @@ func (ruo *RecordUpdateOne) SetMetadataFormat(m *MetadataFormat) *RecordUpdateOn
 }
 
 // AddSetIDs adds the "sets" edge to the Set entity by IDs.
-func (ruo *RecordUpdateOne) AddSetIDs(ids ...int) *RecordUpdateOne {
+func (ruo *RecordUpdateOne) AddSetIDs(ids ...int64) *RecordUpdateOne {
 	ruo.mutation.AddSetIDs(ids...)
 	return ruo
 }
 
 // AddSets adds the "sets" edges to the Set entity.
 func (ruo *RecordUpdateOne) AddSets(s ...*Set) *RecordUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]int64, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -411,14 +442,14 @@ func (ruo *RecordUpdateOne) ClearSets() *RecordUpdateOne {
 }
 
 // RemoveSetIDs removes the "sets" edge to Set entities by IDs.
-func (ruo *RecordUpdateOne) RemoveSetIDs(ids ...int) *RecordUpdateOne {
+func (ruo *RecordUpdateOne) RemoveSetIDs(ids ...int64) *RecordUpdateOne {
 	ruo.mutation.RemoveSetIDs(ids...)
 	return ruo
 }
 
 // RemoveSets removes "sets" edges to Set entities.
 func (ruo *RecordUpdateOne) RemoveSets(s ...*Set) *RecordUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]int64, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -521,7 +552,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Table:   record.Table,
 			Columns: record.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: record.FieldID,
 			},
 		},
@@ -556,6 +587,9 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 	if value, ok := ruo.mutation.Metadata(); ok {
 		_spec.SetField(record.FieldMetadata, field.TypeString, value)
 	}
+	if ruo.mutation.MetadataCleared() {
+		_spec.ClearField(record.FieldMetadata, field.TypeString)
+	}
 	if value, ok := ruo.mutation.Deleted(); ok {
 		_spec.SetField(record.FieldDeleted, field.TypeBool, value)
 	}
@@ -571,7 +605,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: metadataformat.FieldID,
 				},
 			},
@@ -587,7 +621,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: metadataformat.FieldID,
 				},
 			},
@@ -606,7 +640,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: set.FieldID,
 				},
 			},
@@ -622,7 +656,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: set.FieldID,
 				},
 			},
@@ -641,7 +675,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: set.FieldID,
 				},
 			},

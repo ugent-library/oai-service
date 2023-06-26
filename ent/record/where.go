@@ -11,28 +11,28 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Record {
+func ID(id int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Record {
+func IDEQ(id int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Record {
+func IDNEQ(id int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Record {
+func IDIn(ids ...int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		v := make([]any, len(ids))
 		for i := range v {
@@ -43,7 +43,7 @@ func IDIn(ids ...int) predicate.Record {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Record {
+func IDNotIn(ids ...int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		v := make([]any, len(ids))
 		for i := range v {
@@ -54,35 +54,35 @@ func IDNotIn(ids ...int) predicate.Record {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Record {
+func IDGT(id int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Record {
+func IDGTE(id int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Record {
+func IDLT(id int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Record {
+func IDLTE(id int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
 	})
 }
 
 // MetadataFormatID applies equality check predicate on the "metadata_format_id" field. It's identical to MetadataFormatIDEQ.
-func MetadataFormatID(v int) predicate.Record {
+func MetadataFormatID(v int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldMetadataFormatID), v))
 	})
@@ -117,21 +117,21 @@ func Datestamp(v time.Time) predicate.Record {
 }
 
 // MetadataFormatIDEQ applies the EQ predicate on the "metadata_format_id" field.
-func MetadataFormatIDEQ(v int) predicate.Record {
+func MetadataFormatIDEQ(v int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldMetadataFormatID), v))
 	})
 }
 
 // MetadataFormatIDNEQ applies the NEQ predicate on the "metadata_format_id" field.
-func MetadataFormatIDNEQ(v int) predicate.Record {
+func MetadataFormatIDNEQ(v int64) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldMetadataFormatID), v))
 	})
 }
 
 // MetadataFormatIDIn applies the In predicate on the "metadata_format_id" field.
-func MetadataFormatIDIn(vs ...int) predicate.Record {
+func MetadataFormatIDIn(vs ...int64) predicate.Record {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -142,7 +142,7 @@ func MetadataFormatIDIn(vs ...int) predicate.Record {
 }
 
 // MetadataFormatIDNotIn applies the NotIn predicate on the "metadata_format_id" field.
-func MetadataFormatIDNotIn(vs ...int) predicate.Record {
+func MetadataFormatIDNotIn(vs ...int64) predicate.Record {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -333,6 +333,20 @@ func MetadataHasPrefix(v string) predicate.Record {
 func MetadataHasSuffix(v string) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		s.Where(sql.HasSuffix(s.C(FieldMetadata), v))
+	})
+}
+
+// MetadataIsNil applies the IsNil predicate on the "metadata" field.
+func MetadataIsNil() predicate.Record {
+	return predicate.Record(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldMetadata)))
+	})
+}
+
+// MetadataNotNil applies the NotNil predicate on the "metadata" field.
+func MetadataNotNil() predicate.Record {
+	return predicate.Record(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldMetadata)))
 	})
 }
 

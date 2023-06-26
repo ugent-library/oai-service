@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
@@ -18,6 +19,7 @@ type MetadataFormatCreate struct {
 	config
 	mutation *MetadataFormatMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetPrefix sets the "prefix" field.
@@ -38,15 +40,21 @@ func (mfc *MetadataFormatCreate) SetNamespace(s string) *MetadataFormatCreate {
 	return mfc
 }
 
+// SetID sets the "id" field.
+func (mfc *MetadataFormatCreate) SetID(i int64) *MetadataFormatCreate {
+	mfc.mutation.SetID(i)
+	return mfc
+}
+
 // AddRecordIDs adds the "records" edge to the Record entity by IDs.
-func (mfc *MetadataFormatCreate) AddRecordIDs(ids ...int) *MetadataFormatCreate {
+func (mfc *MetadataFormatCreate) AddRecordIDs(ids ...int64) *MetadataFormatCreate {
 	mfc.mutation.AddRecordIDs(ids...)
 	return mfc
 }
 
 // AddRecords adds the "records" edges to the Record entity.
 func (mfc *MetadataFormatCreate) AddRecords(r ...*Record) *MetadataFormatCreate {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -149,8 +157,10 @@ func (mfc *MetadataFormatCreate) sqlSave(ctx context.Context) (*MetadataFormat, 
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	return _node, nil
 }
 
@@ -160,11 +170,16 @@ func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.Create
 		_spec = &sqlgraph.CreateSpec{
 			Table: metadataformat.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: metadataformat.FieldID,
 			},
 		}
 	)
+	_spec.OnConflict = mfc.conflict
+	if id, ok := mfc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := mfc.mutation.Prefix(); ok {
 		_spec.SetField(metadataformat.FieldPrefix, field.TypeString, value)
 		_node.Prefix = value
@@ -186,7 +201,7 @@ func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.Create
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -199,10 +214,219 @@ func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.Create
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.MetadataFormat.Create().
+//		SetPrefix(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.MetadataFormatUpsert) {
+//			SetPrefix(v+v).
+//		}).
+//		Exec(ctx)
+func (mfc *MetadataFormatCreate) OnConflict(opts ...sql.ConflictOption) *MetadataFormatUpsertOne {
+	mfc.conflict = opts
+	return &MetadataFormatUpsertOne{
+		create: mfc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.MetadataFormat.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (mfc *MetadataFormatCreate) OnConflictColumns(columns ...string) *MetadataFormatUpsertOne {
+	mfc.conflict = append(mfc.conflict, sql.ConflictColumns(columns...))
+	return &MetadataFormatUpsertOne{
+		create: mfc,
+	}
+}
+
+type (
+	// MetadataFormatUpsertOne is the builder for "upsert"-ing
+	//  one MetadataFormat node.
+	MetadataFormatUpsertOne struct {
+		create *MetadataFormatCreate
+	}
+
+	// MetadataFormatUpsert is the "OnConflict" setter.
+	MetadataFormatUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetPrefix sets the "prefix" field.
+func (u *MetadataFormatUpsert) SetPrefix(v string) *MetadataFormatUpsert {
+	u.Set(metadataformat.FieldPrefix, v)
+	return u
+}
+
+// UpdatePrefix sets the "prefix" field to the value that was provided on create.
+func (u *MetadataFormatUpsert) UpdatePrefix() *MetadataFormatUpsert {
+	u.SetExcluded(metadataformat.FieldPrefix)
+	return u
+}
+
+// SetSchema sets the "schema" field.
+func (u *MetadataFormatUpsert) SetSchema(v string) *MetadataFormatUpsert {
+	u.Set(metadataformat.FieldSchema, v)
+	return u
+}
+
+// UpdateSchema sets the "schema" field to the value that was provided on create.
+func (u *MetadataFormatUpsert) UpdateSchema() *MetadataFormatUpsert {
+	u.SetExcluded(metadataformat.FieldSchema)
+	return u
+}
+
+// SetNamespace sets the "namespace" field.
+func (u *MetadataFormatUpsert) SetNamespace(v string) *MetadataFormatUpsert {
+	u.Set(metadataformat.FieldNamespace, v)
+	return u
+}
+
+// UpdateNamespace sets the "namespace" field to the value that was provided on create.
+func (u *MetadataFormatUpsert) UpdateNamespace() *MetadataFormatUpsert {
+	u.SetExcluded(metadataformat.FieldNamespace)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.MetadataFormat.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(metadataformat.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *MetadataFormatUpsertOne) UpdateNewValues() *MetadataFormatUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(metadataformat.FieldID)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.MetadataFormat.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *MetadataFormatUpsertOne) Ignore() *MetadataFormatUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *MetadataFormatUpsertOne) DoNothing() *MetadataFormatUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the MetadataFormatCreate.OnConflict
+// documentation for more info.
+func (u *MetadataFormatUpsertOne) Update(set func(*MetadataFormatUpsert)) *MetadataFormatUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&MetadataFormatUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetPrefix sets the "prefix" field.
+func (u *MetadataFormatUpsertOne) SetPrefix(v string) *MetadataFormatUpsertOne {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.SetPrefix(v)
+	})
+}
+
+// UpdatePrefix sets the "prefix" field to the value that was provided on create.
+func (u *MetadataFormatUpsertOne) UpdatePrefix() *MetadataFormatUpsertOne {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.UpdatePrefix()
+	})
+}
+
+// SetSchema sets the "schema" field.
+func (u *MetadataFormatUpsertOne) SetSchema(v string) *MetadataFormatUpsertOne {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.SetSchema(v)
+	})
+}
+
+// UpdateSchema sets the "schema" field to the value that was provided on create.
+func (u *MetadataFormatUpsertOne) UpdateSchema() *MetadataFormatUpsertOne {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.UpdateSchema()
+	})
+}
+
+// SetNamespace sets the "namespace" field.
+func (u *MetadataFormatUpsertOne) SetNamespace(v string) *MetadataFormatUpsertOne {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.SetNamespace(v)
+	})
+}
+
+// UpdateNamespace sets the "namespace" field to the value that was provided on create.
+func (u *MetadataFormatUpsertOne) UpdateNamespace() *MetadataFormatUpsertOne {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.UpdateNamespace()
+	})
+}
+
+// Exec executes the query.
+func (u *MetadataFormatUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for MetadataFormatCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *MetadataFormatUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *MetadataFormatUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *MetadataFormatUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // MetadataFormatCreateBulk is the builder for creating many MetadataFormat entities in bulk.
 type MetadataFormatCreateBulk struct {
 	config
 	builders []*MetadataFormatCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the MetadataFormat entities in the database.
@@ -228,6 +452,7 @@ func (mfcb *MetadataFormatCreateBulk) Save(ctx context.Context) ([]*MetadataForm
 					_, err = mutators[i+1].Mutate(root, mfcb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = mfcb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, mfcb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -239,9 +464,9 @@ func (mfcb *MetadataFormatCreateBulk) Save(ctx context.Context) ([]*MetadataForm
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				mutation.done = true
 				return nodes[i], nil
@@ -278,6 +503,159 @@ func (mfcb *MetadataFormatCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (mfcb *MetadataFormatCreateBulk) ExecX(ctx context.Context) {
 	if err := mfcb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.MetadataFormat.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.MetadataFormatUpsert) {
+//			SetPrefix(v+v).
+//		}).
+//		Exec(ctx)
+func (mfcb *MetadataFormatCreateBulk) OnConflict(opts ...sql.ConflictOption) *MetadataFormatUpsertBulk {
+	mfcb.conflict = opts
+	return &MetadataFormatUpsertBulk{
+		create: mfcb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.MetadataFormat.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (mfcb *MetadataFormatCreateBulk) OnConflictColumns(columns ...string) *MetadataFormatUpsertBulk {
+	mfcb.conflict = append(mfcb.conflict, sql.ConflictColumns(columns...))
+	return &MetadataFormatUpsertBulk{
+		create: mfcb,
+	}
+}
+
+// MetadataFormatUpsertBulk is the builder for "upsert"-ing
+// a bulk of MetadataFormat nodes.
+type MetadataFormatUpsertBulk struct {
+	create *MetadataFormatCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.MetadataFormat.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(metadataformat.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *MetadataFormatUpsertBulk) UpdateNewValues() *MetadataFormatUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(metadataformat.FieldID)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.MetadataFormat.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *MetadataFormatUpsertBulk) Ignore() *MetadataFormatUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *MetadataFormatUpsertBulk) DoNothing() *MetadataFormatUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the MetadataFormatCreateBulk.OnConflict
+// documentation for more info.
+func (u *MetadataFormatUpsertBulk) Update(set func(*MetadataFormatUpsert)) *MetadataFormatUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&MetadataFormatUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetPrefix sets the "prefix" field.
+func (u *MetadataFormatUpsertBulk) SetPrefix(v string) *MetadataFormatUpsertBulk {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.SetPrefix(v)
+	})
+}
+
+// UpdatePrefix sets the "prefix" field to the value that was provided on create.
+func (u *MetadataFormatUpsertBulk) UpdatePrefix() *MetadataFormatUpsertBulk {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.UpdatePrefix()
+	})
+}
+
+// SetSchema sets the "schema" field.
+func (u *MetadataFormatUpsertBulk) SetSchema(v string) *MetadataFormatUpsertBulk {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.SetSchema(v)
+	})
+}
+
+// UpdateSchema sets the "schema" field to the value that was provided on create.
+func (u *MetadataFormatUpsertBulk) UpdateSchema() *MetadataFormatUpsertBulk {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.UpdateSchema()
+	})
+}
+
+// SetNamespace sets the "namespace" field.
+func (u *MetadataFormatUpsertBulk) SetNamespace(v string) *MetadataFormatUpsertBulk {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.SetNamespace(v)
+	})
+}
+
+// UpdateNamespace sets the "namespace" field to the value that was provided on create.
+func (u *MetadataFormatUpsertBulk) UpdateNamespace() *MetadataFormatUpsertBulk {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.UpdateNamespace()
+	})
+}
+
+// Exec executes the query.
+func (u *MetadataFormatUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the MetadataFormatCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for MetadataFormatCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *MetadataFormatUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

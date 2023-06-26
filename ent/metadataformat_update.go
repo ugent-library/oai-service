@@ -47,14 +47,14 @@ func (mfu *MetadataFormatUpdate) SetNamespace(s string) *MetadataFormatUpdate {
 }
 
 // AddRecordIDs adds the "records" edge to the Record entity by IDs.
-func (mfu *MetadataFormatUpdate) AddRecordIDs(ids ...int) *MetadataFormatUpdate {
+func (mfu *MetadataFormatUpdate) AddRecordIDs(ids ...int64) *MetadataFormatUpdate {
 	mfu.mutation.AddRecordIDs(ids...)
 	return mfu
 }
 
 // AddRecords adds the "records" edges to the Record entity.
 func (mfu *MetadataFormatUpdate) AddRecords(r ...*Record) *MetadataFormatUpdate {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -73,14 +73,14 @@ func (mfu *MetadataFormatUpdate) ClearRecords() *MetadataFormatUpdate {
 }
 
 // RemoveRecordIDs removes the "records" edge to Record entities by IDs.
-func (mfu *MetadataFormatUpdate) RemoveRecordIDs(ids ...int) *MetadataFormatUpdate {
+func (mfu *MetadataFormatUpdate) RemoveRecordIDs(ids ...int64) *MetadataFormatUpdate {
 	mfu.mutation.RemoveRecordIDs(ids...)
 	return mfu
 }
 
 // RemoveRecords removes "records" edges to Record entities.
 func (mfu *MetadataFormatUpdate) RemoveRecords(r ...*Record) *MetadataFormatUpdate {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -147,7 +147,7 @@ func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error)
 			Table:   metadataformat.Table,
 			Columns: metadataformat.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: metadataformat.FieldID,
 			},
 		},
@@ -177,7 +177,7 @@ func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -193,7 +193,7 @@ func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -212,7 +212,7 @@ func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -260,14 +260,14 @@ func (mfuo *MetadataFormatUpdateOne) SetNamespace(s string) *MetadataFormatUpdat
 }
 
 // AddRecordIDs adds the "records" edge to the Record entity by IDs.
-func (mfuo *MetadataFormatUpdateOne) AddRecordIDs(ids ...int) *MetadataFormatUpdateOne {
+func (mfuo *MetadataFormatUpdateOne) AddRecordIDs(ids ...int64) *MetadataFormatUpdateOne {
 	mfuo.mutation.AddRecordIDs(ids...)
 	return mfuo
 }
 
 // AddRecords adds the "records" edges to the Record entity.
 func (mfuo *MetadataFormatUpdateOne) AddRecords(r ...*Record) *MetadataFormatUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -286,14 +286,14 @@ func (mfuo *MetadataFormatUpdateOne) ClearRecords() *MetadataFormatUpdateOne {
 }
 
 // RemoveRecordIDs removes the "records" edge to Record entities by IDs.
-func (mfuo *MetadataFormatUpdateOne) RemoveRecordIDs(ids ...int) *MetadataFormatUpdateOne {
+func (mfuo *MetadataFormatUpdateOne) RemoveRecordIDs(ids ...int64) *MetadataFormatUpdateOne {
 	mfuo.mutation.RemoveRecordIDs(ids...)
 	return mfuo
 }
 
 // RemoveRecords removes "records" edges to Record entities.
 func (mfuo *MetadataFormatUpdateOne) RemoveRecords(r ...*Record) *MetadataFormatUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -373,7 +373,7 @@ func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *Metada
 			Table:   metadataformat.Table,
 			Columns: metadataformat.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: metadataformat.FieldID,
 			},
 		},
@@ -420,7 +420,7 @@ func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *Metada
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -436,7 +436,7 @@ func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *Metada
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},
@@ -455,7 +455,7 @@ func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *Metada
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeInt64,
 					Column: record.FieldID,
 				},
 			},

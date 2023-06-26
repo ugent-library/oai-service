@@ -108,8 +108,8 @@ func (mfq *MetadataFormatQuery) FirstX(ctx context.Context) *MetadataFormat {
 
 // FirstID returns the first MetadataFormat ID from the query.
 // Returns a *NotFoundError when no MetadataFormat ID was found.
-func (mfq *MetadataFormatQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (mfq *MetadataFormatQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = mfq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -121,7 +121,7 @@ func (mfq *MetadataFormatQuery) FirstID(ctx context.Context) (id int, err error)
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (mfq *MetadataFormatQuery) FirstIDX(ctx context.Context) int {
+func (mfq *MetadataFormatQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := mfq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -159,8 +159,8 @@ func (mfq *MetadataFormatQuery) OnlyX(ctx context.Context) *MetadataFormat {
 // OnlyID is like Only, but returns the only MetadataFormat ID in the query.
 // Returns a *NotSingularError when more than one MetadataFormat ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (mfq *MetadataFormatQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (mfq *MetadataFormatQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = mfq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -176,7 +176,7 @@ func (mfq *MetadataFormatQuery) OnlyID(ctx context.Context) (id int, err error) 
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (mfq *MetadataFormatQuery) OnlyIDX(ctx context.Context) int {
+func (mfq *MetadataFormatQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := mfq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -202,8 +202,8 @@ func (mfq *MetadataFormatQuery) AllX(ctx context.Context) []*MetadataFormat {
 }
 
 // IDs executes the query and returns a list of MetadataFormat IDs.
-func (mfq *MetadataFormatQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (mfq *MetadataFormatQuery) IDs(ctx context.Context) ([]int64, error) {
+	var ids []int64
 	if err := mfq.Select(metadataformat.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (mfq *MetadataFormatQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (mfq *MetadataFormatQuery) IDsX(ctx context.Context) []int {
+func (mfq *MetadataFormatQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := mfq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -391,7 +391,7 @@ func (mfq *MetadataFormatQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 
 func (mfq *MetadataFormatQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes []*MetadataFormat, init func(*MetadataFormat), assign func(*MetadataFormat, *Record)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*MetadataFormat)
+	nodeids := make(map[int64]*MetadataFormat)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -443,7 +443,7 @@ func (mfq *MetadataFormatQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   metadataformat.Table,
 			Columns: metadataformat.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: metadataformat.FieldID,
 			},
 		},

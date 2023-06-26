@@ -10,7 +10,7 @@ import (
 var (
 	// MetadataFormatsColumns holds the columns for the "metadata_formats" table.
 	MetadataFormatsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "prefix", Type: field.TypeString, Unique: true},
 		{Name: "schema", Type: field.TypeString},
 		{Name: "namespace", Type: field.TypeString},
@@ -23,12 +23,12 @@ var (
 	}
 	// RecordsColumns holds the columns for the "records" table.
 	RecordsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "identifier", Type: field.TypeString},
-		{Name: "metadata", Type: field.TypeString},
+		{Name: "metadata", Type: field.TypeString, Nullable: true},
 		{Name: "deleted", Type: field.TypeBool, Default: false},
 		{Name: "datestamp", Type: field.TypeTime},
-		{Name: "metadata_format_id", Type: field.TypeInt},
+		{Name: "metadata_format_id", Type: field.TypeInt64},
 	}
 	// RecordsTable holds the schema information for the "records" table.
 	RecordsTable = &schema.Table{
@@ -43,10 +43,17 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "record_identifier_metadata_format_id",
+				Unique:  true,
+				Columns: []*schema.Column{RecordsColumns[1], RecordsColumns[5]},
+			},
+		},
 	}
 	// SetsColumns holds the columns for the "sets" table.
 	SetsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "spec", Type: field.TypeString, Unique: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
@@ -59,8 +66,8 @@ var (
 	}
 	// SetRecordsColumns holds the columns for the "set_records" table.
 	SetRecordsColumns = []*schema.Column{
-		{Name: "set_id", Type: field.TypeInt},
-		{Name: "record_id", Type: field.TypeInt},
+		{Name: "set_id", Type: field.TypeInt64},
+		{Name: "record_id", Type: field.TypeInt64},
 	}
 	// SetRecordsTable holds the schema information for the "set_records" table.
 	SetRecordsTable = &schema.Table{
