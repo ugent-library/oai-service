@@ -70,6 +70,12 @@ func (r *Repo) GetMetadataFormats(ctx context.Context) ([]*oaipmh.MetadataFormat
 	return formats, nil
 }
 
+func (r *Repo) HasSet(ctx context.Context, spec string) (bool, error) {
+	return r.client.Set.Query().
+		Where(set.SpecEQ(spec)).
+		Exist(ctx)
+}
+
 func (r *Repo) HasRecord(ctx context.Context, identifier string) (bool, error) {
 	return r.client.Record.Query().
 		Where(record.IdentifierEQ(identifier)).
@@ -113,7 +119,6 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string)
 	return rec, nil
 }
 
-// TODO set, date from until
 func (r *Repo) GetRecords(ctx context.Context,
 	metadataPrefix string,
 	set string,
@@ -141,24 +146,11 @@ func (r *Repo) GetMoreRecords(ctx context.Context, tokenValue string) ([]*oaipmh
 
 // TODO set
 func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec, from, until string, lastID int64) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
-	// TODO ent can't do count and select in one query
-	n, err := r.client.Record.Query().
-		Where(
-			record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
-		).
-		Count(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	if n == 0 {
-		return nil, nil, nil
-	}
-
 	where := []predicate.Record{
 		record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
 	}
-	if lastID > 0 {
-		where = append(where, record.IDGT(lastID))
+	if setSpec != "" {
+		where = append(where, record.HasSetsWith(set.SpecEQ(setSpec)))
 	}
 	if from != "" {
 		dt, err := time.Parse(time.RFC3339, from)
@@ -173,6 +165,21 @@ func (r *Repo) getRecords(ctx context.Context, metadataPrefix, setSpec, from, un
 			return nil, nil, err
 		}
 		where = append(where, record.DatestampLTE(dt))
+	}
+
+	// TODO ent can't do count and select in one query
+	n, err := r.client.Record.Query().
+		Where(where...).
+		Count(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	if n == 0 {
+		return nil, nil, nil
+	}
+
+	if lastID > 0 {
+		where = append(where, record.IDGT(lastID))
 	}
 
 	rows, err := r.client.Record.Query().

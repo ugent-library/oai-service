@@ -169,7 +169,7 @@ type ProviderConfig struct {
 	Compression         string
 	DeletedRecord       string
 	StyleSheet          string
-	Sets                []*Set // TODO callback
+	Sets                bool
 	EarliestDatestamp   func() (time.Time, error)
 	ListMetadataFormats func(*Request) ([]*MetadataFormat, error)
 	GetRecord           func(*Request) (*Record, error)
@@ -197,10 +197,6 @@ func NewProvider(conf ProviderConfig) (*Provider, error) {
 
 	if p.DeletedRecord == "" {
 		p.DeletedRecord = "persistent"
-	}
-
-	for _, set := range p.Sets {
-		p.setMap[set.Name] = struct{}{}
 	}
 
 	return p, nil
@@ -241,13 +237,13 @@ func (p *Provider) listMetadataFormats(r *response) error {
 
 // TODO resumptionToken, badResumptionToken
 func (p *Provider) listSets(r *response) error {
-	if len(p.Sets) == 0 {
-		r.Errors = append(r.Errors, ErrNoSetHierarchy)
-		return nil
-	}
-	r.Body = &ListSets{
-		Sets: p.Sets,
-	}
+	// if len(p.Sets) == 0 {
+	// 	r.Errors = append(r.Errors, ErrNoSetHierarchy)
+	// 	return nil
+	// }
+	// r.Body = &ListSets{
+	// 	Sets: p.Sets,
+	// }
 	return nil
 }
 
@@ -456,15 +452,15 @@ func (r *response) setSet(q url.Values) {
 			return
 		}
 
-		if len(r.provider.Sets) == 0 {
+		if !r.provider.Sets {
 			r.Errors = append(r.Errors, ErrNoSetHierarchy)
 			return
 		}
 
-		if _, ok := r.provider.setMap[val]; !ok {
-			r.Errors = append(r.Errors, ErrSetDoesNotExist)
-			return
-		}
+		// if _, ok := r.provider.setMap[val]; !ok {
+		// 	r.Errors = append(r.Errors, ErrSetDoesNotExist)
+		// 	return
+		// }
 
 		r.Request.Set = val
 	}

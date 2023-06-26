@@ -45,6 +45,7 @@ var serverCmd = &cobra.Command{
 			DeletedRecord:  "persistent",
 			Granularity:    "YYYY-MM-DDThh:mm:ssZ",
 			StyleSheet:     "/oai.xsl",
+			Sets:           true, // TODO
 
 			ListMetadataFormats: func(r *oaipmh.Request) ([]*oaipmh.MetadataFormat, error) {
 				ctx := context.TODO()
