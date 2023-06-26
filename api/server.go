@@ -16,6 +16,23 @@ func NewServer(repo *repository.Repo) *Server {
 	return &Server{repo: repo}
 }
 
+func (s *Server) AddSet(
+	ctx context.Context,
+	req *connect.Request[oaiv1.AddSetRequest],
+) (*connect.Response[oaiv1.AddSetResponse], error) {
+	err := s.repo.AddSet(ctx,
+		req.Msg.Spec,
+		req.Msg.Name,
+		req.Msg.Description,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := connect.NewResponse(&oaiv1.AddSetResponse{})
+	return res, nil
+}
+
 func (s *Server) AddRecord(
 	ctx context.Context,
 	req *connect.Request[oaiv1.AddRecordRequest],

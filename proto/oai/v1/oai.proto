@@ -2,6 +2,15 @@ syntax = "proto3";
 
 package oai.v1;
 
+message AddSetRequest {
+  string spec = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message AddSetResponse {
+}
+
 message AddRecordRequest {
   string identifier = 1;
   string metadata_prefix = 2;
@@ -20,6 +29,7 @@ message DeleteRecordResponse {
 }
 
 service OaiService {
+  rpc AddSet(AddSetRequest) returns (AddSetResponse) {}
   rpc AddRecord(AddRecordRequest) returns (AddRecordResponse) {}
   rpc DeleteRecord(DeleteRecordRequest) returns (DeleteRecordResponse) {}
 }

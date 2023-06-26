@@ -33,6 +33,8 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// OaiServiceAddSetProcedure is the fully-qualified name of the OaiService's AddSet RPC.
+	OaiServiceAddSetProcedure = "/oai.v1.OaiService/AddSet"
 	// OaiServiceAddRecordProcedure is the fully-qualified name of the OaiService's AddRecord RPC.
 	OaiServiceAddRecordProcedure = "/oai.v1.OaiService/AddRecord"
 	// OaiServiceDeleteRecordProcedure is the fully-qualified name of the OaiService's DeleteRecord RPC.
@@ -41,6 +43,7 @@ const (
 
 // OaiServiceClient is a client for the oai.v1.OaiService service.
 type OaiServiceClient interface {
+	AddSet(context.Context, *connect_go.Request[v1.AddSetRequest]) (*connect_go.Response[v1.AddSetResponse], error)
 	AddRecord(context.Context, *connect_go.Request[v1.AddRecordRequest]) (*connect_go.Response[v1.AddRecordResponse], error)
 	DeleteRecord(context.Context, *connect_go.Request[v1.DeleteRecordRequest]) (*connect_go.Response[v1.DeleteRecordResponse], error)
 }
@@ -55,6 +58,11 @@ type OaiServiceClient interface {
 func NewOaiServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) OaiServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &oaiServiceClient{
+		addSet: connect_go.NewClient[v1.AddSetRequest, v1.AddSetResponse](
+			httpClient,
+			baseURL+OaiServiceAddSetProcedure,
+			opts...,
+		),
 		addRecord: connect_go.NewClient[v1.AddRecordRequest, v1.AddRecordResponse](
 			httpClient,
 			baseURL+OaiServiceAddRecordProcedure,
@@ -70,8 +78,14 @@ func NewOaiServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts 
 
 // oaiServiceClient implements OaiServiceClient.
 type oaiServiceClient struct {
+	addSet       *connect_go.Client[v1.AddSetRequest, v1.AddSetResponse]
 	addRecord    *connect_go.Client[v1.AddRecordRequest, v1.AddRecordResponse]
 	deleteRecord *connect_go.Client[v1.DeleteRecordRequest, v1.DeleteRecordResponse]
+}
+
+// AddSet calls oai.v1.OaiService.AddSet.
+func (c *oaiServiceClient) AddSet(ctx context.Context, req *connect_go.Request[v1.AddSetRequest]) (*connect_go.Response[v1.AddSetResponse], error) {
+	return c.addSet.CallUnary(ctx, req)
 }
 
 // AddRecord calls oai.v1.OaiService.AddRecord.
@@ -86,6 +100,7 @@ func (c *oaiServiceClient) DeleteRecord(ctx context.Context, req *connect_go.Req
 
 // OaiServiceHandler is an implementation of the oai.v1.OaiService service.
 type OaiServiceHandler interface {
+	AddSet(context.Context, *connect_go.Request[v1.AddSetRequest]) (*connect_go.Response[v1.AddSetResponse], error)
 	AddRecord(context.Context, *connect_go.Request[v1.AddRecordRequest]) (*connect_go.Response[v1.AddRecordResponse], error)
 	DeleteRecord(context.Context, *connect_go.Request[v1.DeleteRecordRequest]) (*connect_go.Response[v1.DeleteRecordResponse], error)
 }
@@ -97,6 +112,11 @@ type OaiServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewOaiServiceHandler(svc OaiServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
+	mux.Handle(OaiServiceAddSetProcedure, connect_go.NewUnaryHandler(
+		OaiServiceAddSetProcedure,
+		svc.AddSet,
+		opts...,
+	))
 	mux.Handle(OaiServiceAddRecordProcedure, connect_go.NewUnaryHandler(
 		OaiServiceAddRecordProcedure,
 		svc.AddRecord,
@@ -112,6 +132,10 @@ func NewOaiServiceHandler(svc OaiServiceHandler, opts ...connect_go.HandlerOptio
 
 // UnimplementedOaiServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedOaiServiceHandler struct{}
+
+func (UnimplementedOaiServiceHandler) AddSet(context.Context, *connect_go.Request[v1.AddSetRequest]) (*connect_go.Response[v1.AddSetResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("oai.v1.OaiService.AddSet is not implemented"))
+}
 
 func (UnimplementedOaiServiceHandler) AddRecord(context.Context, *connect_go.Request[v1.AddRecordRequest]) (*connect_go.Response[v1.AddRecordResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("oai.v1.OaiService.AddRecord is not implemented"))

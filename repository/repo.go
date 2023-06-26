@@ -162,6 +162,16 @@ func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh
 	return sets, token, nil
 }
 
+func (r *Repo) AddSet(ctx context.Context, spec, name, description string) error {
+	return r.client.Set.Create().
+		SetSpec(spec).
+		SetName(name).
+		SetDescription(description).
+		OnConflictColumns(set.FieldSpec).
+		UpdateNewValues().
+		Exec(ctx)
+}
+
 func (r *Repo) HasRecord(ctx context.Context, identifier string) (bool, error) {
 	return r.client.Record.Query().
 		Where(record.IdentifierEQ(identifier)).
