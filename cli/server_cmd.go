@@ -66,15 +66,9 @@ var serverCmd = &cobra.Command{
 
 			ListSets: func(r *oaipmh.Request) ([]*oaipmh.Set, *oaipmh.ResumptionToken, error) {
 				ctx := context.TODO()
-
 				if r.ResumptionToken != "" {
-					headers, token, err := repo.GetMoreSets(ctx, r.ResumptionToken)
-					if err != nil {
-						return nil, nil, err
-					}
-					return headers, token, nil
+					return repo.GetMoreSets(ctx, r.ResumptionToken)
 				}
-
 				return repo.GetSets(ctx)
 			},
 
@@ -104,11 +98,7 @@ var serverCmd = &cobra.Command{
 				ctx := context.TODO()
 
 				if r.ResumptionToken != "" {
-					headers, token, err := repo.GetMoreIdentifiers(ctx, r.ResumptionToken)
-					if err != nil {
-						return nil, nil, err
-					}
-					return headers, token, nil
+					return repo.GetMoreIdentifiers(ctx, r.ResumptionToken)
 				}
 
 				exists, err := repo.HasMetadataFormat(ctx, r.MetadataPrefix)
@@ -136,11 +126,7 @@ var serverCmd = &cobra.Command{
 				ctx := context.TODO()
 
 				if r.ResumptionToken != "" {
-					recs, token, err := repo.GetMoreRecords(ctx, r.ResumptionToken)
-					if err != nil {
-						return nil, nil, err
-					}
-					return recs, token, nil
+					return repo.GetMoreRecords(ctx, r.ResumptionToken)
 				}
 
 				exists, err := repo.HasMetadataFormat(ctx, r.MetadataPrefix)
