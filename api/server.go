@@ -16,6 +16,23 @@ func NewServer(repo *repository.Repo) *Server {
 	return &Server{repo: repo}
 }
 
+func (s *Server) AddMetadataFormat(
+	ctx context.Context,
+	req *connect.Request[oaiv1.AddMetadataFormatRequest],
+) (*connect.Response[oaiv1.AddMetadataFormatResponse], error) {
+	err := s.repo.AddMetadataFormat(ctx,
+		req.Msg.Prefix,
+		req.Msg.Schema,
+		req.Msg.Namespace,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := connect.NewResponse(&oaiv1.AddMetadataFormatResponse{})
+	return res, nil
+}
+
 func (s *Server) AddSet(
 	ctx context.Context,
 	req *connect.Request[oaiv1.AddSetRequest],

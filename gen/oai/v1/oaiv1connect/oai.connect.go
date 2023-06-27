@@ -33,6 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// OaiServiceAddMetadataFormatProcedure is the fully-qualified name of the OaiService's
+	// AddMetadataFormat RPC.
+	OaiServiceAddMetadataFormatProcedure = "/oai.v1.OaiService/AddMetadataFormat"
 	// OaiServiceAddSetProcedure is the fully-qualified name of the OaiService's AddSet RPC.
 	OaiServiceAddSetProcedure = "/oai.v1.OaiService/AddSet"
 	// OaiServiceAddRecordProcedure is the fully-qualified name of the OaiService's AddRecord RPC.
@@ -43,6 +46,7 @@ const (
 
 // OaiServiceClient is a client for the oai.v1.OaiService service.
 type OaiServiceClient interface {
+	AddMetadataFormat(context.Context, *connect_go.Request[v1.AddMetadataFormatRequest]) (*connect_go.Response[v1.AddMetadataFormatResponse], error)
 	AddSet(context.Context, *connect_go.Request[v1.AddSetRequest]) (*connect_go.Response[v1.AddSetResponse], error)
 	AddRecord(context.Context, *connect_go.Request[v1.AddRecordRequest]) (*connect_go.Response[v1.AddRecordResponse], error)
 	DeleteRecord(context.Context, *connect_go.Request[v1.DeleteRecordRequest]) (*connect_go.Response[v1.DeleteRecordResponse], error)
@@ -58,6 +62,11 @@ type OaiServiceClient interface {
 func NewOaiServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) OaiServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &oaiServiceClient{
+		addMetadataFormat: connect_go.NewClient[v1.AddMetadataFormatRequest, v1.AddMetadataFormatResponse](
+			httpClient,
+			baseURL+OaiServiceAddMetadataFormatProcedure,
+			opts...,
+		),
 		addSet: connect_go.NewClient[v1.AddSetRequest, v1.AddSetResponse](
 			httpClient,
 			baseURL+OaiServiceAddSetProcedure,
@@ -78,9 +87,15 @@ func NewOaiServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts 
 
 // oaiServiceClient implements OaiServiceClient.
 type oaiServiceClient struct {
-	addSet       *connect_go.Client[v1.AddSetRequest, v1.AddSetResponse]
-	addRecord    *connect_go.Client[v1.AddRecordRequest, v1.AddRecordResponse]
-	deleteRecord *connect_go.Client[v1.DeleteRecordRequest, v1.DeleteRecordResponse]
+	addMetadataFormat *connect_go.Client[v1.AddMetadataFormatRequest, v1.AddMetadataFormatResponse]
+	addSet            *connect_go.Client[v1.AddSetRequest, v1.AddSetResponse]
+	addRecord         *connect_go.Client[v1.AddRecordRequest, v1.AddRecordResponse]
+	deleteRecord      *connect_go.Client[v1.DeleteRecordRequest, v1.DeleteRecordResponse]
+}
+
+// AddMetadataFormat calls oai.v1.OaiService.AddMetadataFormat.
+func (c *oaiServiceClient) AddMetadataFormat(ctx context.Context, req *connect_go.Request[v1.AddMetadataFormatRequest]) (*connect_go.Response[v1.AddMetadataFormatResponse], error) {
+	return c.addMetadataFormat.CallUnary(ctx, req)
 }
 
 // AddSet calls oai.v1.OaiService.AddSet.
@@ -100,6 +115,7 @@ func (c *oaiServiceClient) DeleteRecord(ctx context.Context, req *connect_go.Req
 
 // OaiServiceHandler is an implementation of the oai.v1.OaiService service.
 type OaiServiceHandler interface {
+	AddMetadataFormat(context.Context, *connect_go.Request[v1.AddMetadataFormatRequest]) (*connect_go.Response[v1.AddMetadataFormatResponse], error)
 	AddSet(context.Context, *connect_go.Request[v1.AddSetRequest]) (*connect_go.Response[v1.AddSetResponse], error)
 	AddRecord(context.Context, *connect_go.Request[v1.AddRecordRequest]) (*connect_go.Response[v1.AddRecordResponse], error)
 	DeleteRecord(context.Context, *connect_go.Request[v1.DeleteRecordRequest]) (*connect_go.Response[v1.DeleteRecordResponse], error)
@@ -112,6 +128,11 @@ type OaiServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewOaiServiceHandler(svc OaiServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
+	mux.Handle(OaiServiceAddMetadataFormatProcedure, connect_go.NewUnaryHandler(
+		OaiServiceAddMetadataFormatProcedure,
+		svc.AddMetadataFormat,
+		opts...,
+	))
 	mux.Handle(OaiServiceAddSetProcedure, connect_go.NewUnaryHandler(
 		OaiServiceAddSetProcedure,
 		svc.AddSet,
@@ -132,6 +153,10 @@ func NewOaiServiceHandler(svc OaiServiceHandler, opts ...connect_go.HandlerOptio
 
 // UnimplementedOaiServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedOaiServiceHandler struct{}
+
+func (UnimplementedOaiServiceHandler) AddMetadataFormat(context.Context, *connect_go.Request[v1.AddMetadataFormatRequest]) (*connect_go.Response[v1.AddMetadataFormatResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("oai.v1.OaiService.AddMetadataFormat is not implemented"))
+}
 
 func (UnimplementedOaiServiceHandler) AddSet(context.Context, *connect_go.Request[v1.AddSetRequest]) (*connect_go.Response[v1.AddSetResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("oai.v1.OaiService.AddSet is not implemented"))

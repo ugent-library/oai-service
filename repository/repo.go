@@ -92,6 +92,16 @@ func (r *Repo) GetMetadataFormats(ctx context.Context) ([]*oaipmh.MetadataFormat
 	return formats, nil
 }
 
+func (r *Repo) AddMetadataFormat(ctx context.Context, prefix, schema, namespace string) error {
+	return r.client.MetadataFormat.Create().
+		SetPrefix(prefix).
+		SetSchema(schema).
+		SetNamespace(namespace).
+		OnConflictColumns(metadataformat.FieldPrefix).
+		UpdateNewValues().
+		Exec(ctx)
+}
+
 func (r *Repo) HasSet(ctx context.Context, spec string) (bool, error) {
 	return r.client.Set.Query().
 		Where(set.SpecEQ(spec)).
