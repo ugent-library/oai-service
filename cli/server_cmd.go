@@ -14,7 +14,7 @@ import (
 	"github.com/ugent-library/oai-service/api"
 	"github.com/ugent-library/oai-service/gen/oai/v1/oaiv1connect"
 	"github.com/ugent-library/oai-service/oaipmh"
-	"github.com/ugent-library/oai-service/repository"
+	"github.com/ugent-library/oai-service/repositories"
 	"github.com/ugent-library/zaphttp"
 	"github.com/ugent-library/zaphttp/zapchi"
 	"golang.org/x/net/http2"
@@ -30,7 +30,7 @@ var serverCmd = &cobra.Command{
 	Short: "Start the server",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// setup services
-		repo, err := repository.New(repository.Config{
+		repo, err := repositories.New(repositories.Config{
 			Conn:   config.Repo.Conn,
 			Secret: []byte(config.Repo.Secret),
 		})
@@ -55,7 +55,7 @@ var serverCmd = &cobra.Command{
 
 				if r.Identifier != "" {
 					formats, err := repo.GetRecordMetadataFormats(ctx, r.Identifier)
-					if err == repository.ErrNotFound {
+					if err == repositories.ErrNotFound {
 						return nil, oaipmh.ErrIDDoesNotExist
 					}
 					return formats, err
@@ -84,7 +84,7 @@ var serverCmd = &cobra.Command{
 				}
 
 				rec, err := repo.GetRecord(ctx, r.Identifier, r.MetadataPrefix)
-				if err == repository.ErrNotFound {
+				if err == repositories.ErrNotFound {
 					return nil, oaipmh.ErrCannotDisseminateFormat
 				}
 				if err != nil {

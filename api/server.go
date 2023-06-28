@@ -5,14 +5,14 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	oaiv1 "github.com/ugent-library/oai-service/gen/oai/v1"
-	"github.com/ugent-library/oai-service/repository"
+	"github.com/ugent-library/oai-service/repositories"
 )
 
 type Server struct {
-	repo *repository.Repo
+	repo *repositories.Repo
 }
 
-func NewServer(repo *repository.Repo) *Server {
+func NewServer(repo *repositories.Repo) *Server {
 	return &Server{repo: repo}
 }
 
