@@ -199,6 +199,16 @@ func (r *Repo) GetEarliestRecordDatestamp(ctx context.Context) (time.Time, error
 }
 
 func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string) (*oaipmh.Record, error) {
+	exists, err := r.client.Record.Query().
+		Where(record.IdentifierEQ(identifier)).
+		Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, oaipmh.ErrIDDoesNotExist
+	}
+
 	row, err := r.client.Record.Query().
 		Where(
 			record.IdentifierEQ(identifier),
@@ -209,7 +219,7 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string)
 		}).
 		First(ctx)
 	if ent.IsNotFound(err) {
-		return nil, ErrNotFound
+		return nil, oaipmh.ErrCannotDisseminateFormat
 	}
 	if err != nil {
 		return nil, err
@@ -391,6 +401,9 @@ func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) 
 	rows, err := r.client.Record.Query().
 		Where(record.IdentifierEQ(identifier)).
 		QueryMetadataFormat().All(ctx)
+	if ent.IsNotFound(err) {
+		return nil, oaipmh.ErrIDDoesNotExist
+	}
 	if err != nil {
 		return nil, err
 	}

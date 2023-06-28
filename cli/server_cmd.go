@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"net/http"
 	"time"
 
@@ -43,9 +42,7 @@ var serverCmd = &cobra.Command{
 		}
 
 		// setup oai provider
-		// TODO simpler verb request and response types
 		oaiProvider, err := oaipmh.NewProvider(oaipmh.ProviderConfig{
-			ErrorHandler:   func(err error) { logger.Error(err) },
 			RepositoryName: "Ghent University Institutional Archive",
 			BaseURL:        "https://biblio.ugent.be/oai",
 			AdminEmails:    []string{"libservice@ugent.be"},
@@ -53,108 +50,8 @@ var serverCmd = &cobra.Command{
 			Granularity:    "YYYY-MM-DDThh:mm:ssZ",
 			StyleSheet:     "/oai.xsl",
 			Sets:           true, // TODO
-
-			EarliestDatestamp: repo.GetEarliestRecordDatestamp,
-
-			ListMetadataFormats: func(r *oaipmh.Request) ([]*oaipmh.MetadataFormat, error) {
-				ctx := context.TODO()
-
-				if r.Identifier != "" {
-					formats, err := repo.GetRecordMetadataFormats(ctx, r.Identifier)
-					if err == repositories.ErrNotFound {
-						return nil, oaipmh.ErrIDDoesNotExist
-					}
-					return formats, err
-				}
-
-				return repo.GetMetadataFormats(ctx)
-			},
-
-			ListSets: func(r *oaipmh.Request) ([]*oaipmh.Set, *oaipmh.ResumptionToken, error) {
-				ctx := context.TODO()
-				if r.ResumptionToken != "" {
-					return repo.GetMoreSets(ctx, r.ResumptionToken)
-				}
-				return repo.GetSets(ctx)
-			},
-
-			GetRecord: func(r *oaipmh.Request) (*oaipmh.Record, error) {
-				ctx := context.TODO()
-
-				exists, err := repo.HasRecord(ctx, r.Identifier)
-				if err != nil {
-					return nil, err
-				}
-				if !exists {
-					return nil, oaipmh.ErrIDDoesNotExist
-				}
-
-				rec, err := repo.GetRecord(ctx, r.Identifier, r.MetadataPrefix)
-				if err == repositories.ErrNotFound {
-					return nil, oaipmh.ErrCannotDisseminateFormat
-				}
-				if err != nil {
-					return nil, err
-				}
-
-				return rec, nil
-			},
-
-			ListIdentifiers: func(r *oaipmh.Request) ([]*oaipmh.Header, *oaipmh.ResumptionToken, error) {
-				ctx := context.TODO()
-
-				if r.ResumptionToken != "" {
-					return repo.GetMoreIdentifiers(ctx, r.ResumptionToken)
-				}
-
-				exists, err := repo.HasMetadataFormat(ctx, r.MetadataPrefix)
-				if err != nil {
-					return nil, nil, err
-				}
-				if !exists {
-					return nil, nil, oaipmh.ErrCannotDisseminateFormat
-				}
-
-				if r.Set != "" {
-					exists, err := repo.HasSet(ctx, r.Set)
-					if err != nil {
-						return nil, nil, err
-					}
-					if !exists {
-						return nil, nil, oaipmh.ErrSetDoesNotExist
-					}
-				}
-
-				return repo.GetIdentifiers(ctx, r.MetadataPrefix, r.Set, r.From, r.Until)
-			},
-
-			ListRecords: func(r *oaipmh.Request) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
-				ctx := context.TODO()
-
-				if r.ResumptionToken != "" {
-					return repo.GetMoreRecords(ctx, r.ResumptionToken)
-				}
-
-				exists, err := repo.HasMetadataFormat(ctx, r.MetadataPrefix)
-				if err != nil {
-					return nil, nil, err
-				}
-				if !exists {
-					return nil, nil, oaipmh.ErrCannotDisseminateFormat
-				}
-
-				if r.Set != "" {
-					exists, err := repo.HasSet(ctx, r.Set)
-					if err != nil {
-						return nil, nil, err
-					}
-					if !exists {
-						return nil, nil, oaipmh.ErrSetDoesNotExist
-					}
-				}
-
-				return repo.GetRecords(ctx, r.MetadataPrefix, r.Set, r.From, r.Until)
-			},
+			ErrorHandler:   func(err error) { logger.Error(err) },
+			Backend:        repo,
 		})
 		if err != nil {
 			return err

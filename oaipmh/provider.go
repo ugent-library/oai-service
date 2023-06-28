@@ -47,7 +47,7 @@ var (
 	ErrSetDoesNotExist          = &Error{Code: "badArgument", Value: "set is unknown"}
 )
 
-type Request struct {
+type request struct {
 	XMLName         xml.Name `xml:"request"`
 	URL             string   `xml:",chardata"`
 	Verb            string   `xml:"verb,attr,omitempty"`
@@ -60,12 +60,12 @@ type Request struct {
 }
 
 type response struct {
-	provider          *Provider
-	XMLName           xml.Name `xml:"http://www.openarchives.org/OAI/2.0/ OAI-PMH"`
-	XmlnsXsi          string   `xml:"xmlns:xsi,attr"`
-	XsiSchemaLocation string   `xml:"xsi:schemaLocation,attr"`
-	ResponseDate      string   `xml:"responseDate"`
-	Request           Request
+	provider          *Provider // TODO remove from response
+	XMLName           xml.Name  `xml:"http://www.openarchives.org/OAI/2.0/ OAI-PMH"`
+	XmlnsXsi          string    `xml:"xmlns:xsi,attr"`
+	XsiSchemaLocation string    `xml:"xsi:schemaLocation,attr"`
+	ResponseDate      string    `xml:"responseDate"`
+	Request           request
 	Errors            []*Error
 	Body              any
 }
@@ -162,21 +162,32 @@ type Provider struct {
 
 // TODO use context in callbacks
 type ProviderConfig struct {
-	ErrorHandler        func(error)
-	RepositoryName      string
-	BaseURL             string
-	AdminEmails         []string
-	Granularity         string
-	Compression         string
-	DeletedRecord       string
-	StyleSheet          string
-	Sets                bool
-	EarliestDatestamp   func(context.Context) (time.Time, error)
-	ListMetadataFormats func(*Request) ([]*MetadataFormat, error)
-	ListSets            func(*Request) ([]*Set, *ResumptionToken, error)
-	GetRecord           func(*Request) (*Record, error)
-	ListIdentifiers     func(*Request) ([]*Header, *ResumptionToken, error)
-	ListRecords         func(*Request) ([]*Record, *ResumptionToken, error)
+	RepositoryName string
+	BaseURL        string
+	AdminEmails    []string
+	Granularity    string
+	Compression    string
+	DeletedRecord  string
+	StyleSheet     string
+	ErrorHandler   func(error)
+	Sets           bool
+	Backend        ProviderBackend
+}
+
+type ProviderBackend interface {
+	GetEarliestRecordDatestamp(context.Context) (time.Time, error)
+	HasMetadataFormat(context.Context, string) (bool, error)
+	HasSet(context.Context, string) (bool, error)
+	GetMetadataFormats(context.Context) ([]*MetadataFormat, error)
+	GetRecordMetadataFormats(context.Context, string) ([]*MetadataFormat, error)
+	GetSets(context.Context) ([]*Set, *ResumptionToken, error)
+	GetMoreSets(context.Context, string) ([]*Set, *ResumptionToken, error)
+	// TODO pass from, until as time objects
+	GetIdentifiers(context.Context, string, string, string, string) ([]*Header, *ResumptionToken, error)
+	GetMoreIdentifiers(context.Context, string) ([]*Header, *ResumptionToken, error)
+	GetRecords(context.Context, string, string, string, string) ([]*Record, *ResumptionToken, error)
+	GetMoreRecords(context.Context, string) ([]*Record, *ResumptionToken, error)
+	GetRecord(context.Context, string, string) (*Record, error)
 }
 
 func NewProvider(conf ProviderConfig) (*Provider, error) {
@@ -204,8 +215,8 @@ func NewProvider(conf ProviderConfig) (*Provider, error) {
 }
 
 // TODO description
-func (p *Provider) identify(r *response) error {
-	t, err := p.EarliestDatestamp(context.TODO())
+func (p *Provider) identify(ctx context.Context, r *response) error {
+	t, err := p.Backend.GetEarliestRecordDatestamp(ctx)
 	if err != nil {
 		return err
 	}
@@ -224,87 +235,180 @@ func (p *Provider) identify(r *response) error {
 	return nil
 }
 
-func (p *Provider) listMetadataFormats(r *response) error {
-	formats, err := p.ListMetadataFormats(&r.Request)
-	if err == ErrIDDoesNotExist {
-		r.Errors = append(r.Errors, err.(*Error))
-		return nil
+func (p *Provider) listMetadataFormats(ctx context.Context, r *response) error {
+	var formats []*MetadataFormat
+	var err error
+	if identifier := r.Request.Identifier; identifier != "" {
+		formats, err = p.Backend.GetRecordMetadataFormats(ctx, identifier)
+		if err == ErrIDDoesNotExist {
+			r.Errors = append(r.Errors, err.(*Error))
+			return nil
+		}
+	} else {
+		formats, err = p.Backend.GetMetadataFormats(ctx)
 	}
+
 	if err != nil {
 		return err
 	}
+
 	if len(formats) == 0 {
 		r.Errors = append(r.Errors, ErrNoMetadataFormats)
 		return nil
 	}
+
 	r.Body = &ListMetadataFormats{
 		MetadataFormats: formats,
 	}
+
 	return nil
 }
 
-func (p *Provider) listSets(r *response) error {
-	sets, token, err := p.ListSets(&r.Request)
-	if err == ErrBadResumptionToken {
-		r.Errors = append(r.Errors, err.(*Error))
-		return nil
+func (p *Provider) listSets(ctx context.Context, r *response) error {
+	var sets []*Set
+	var token *ResumptionToken
+	var err error
+	if rt := r.Request.ResumptionToken; rt != "" {
+		sets, token, err = p.Backend.GetMoreSets(ctx, rt)
+		if err == ErrBadResumptionToken {
+			r.Errors = append(r.Errors, err.(*Error))
+			return nil
+		}
+	} else {
+		sets, token, err = p.Backend.GetSets(ctx)
 	}
+
 	if err != nil {
 		return err
 	}
+
 	if len(sets) == 0 {
 		r.Errors = append(r.Errors, ErrNoSetHierarchy)
 		return nil
 	}
+
 	r.Body = &ListSets{
 		Sets:            sets,
 		ResumptionToken: token,
 	}
+
 	return nil
 }
 
-func (p *Provider) listIdentifiers(r *response) error {
-	headers, token, err := p.ListIdentifiers(&r.Request)
-	if err == ErrBadResumptionToken || err == ErrCannotDisseminateFormat {
-		r.Errors = append(r.Errors, err.(*Error))
-		return nil
+func (p *Provider) listIdentifiers(ctx context.Context, r *response) error {
+	var headers []*Header
+	var token *ResumptionToken
+	var err error
+	if rt := r.Request.ResumptionToken; rt != "" {
+		headers, token, err = p.Backend.GetMoreIdentifiers(ctx, rt)
+		if err == ErrBadResumptionToken {
+			r.Errors = append(r.Errors, err.(*Error))
+			return nil
+		}
+	} else {
+		var exists bool
+		exists, err = p.Backend.HasMetadataFormat(ctx, r.Request.MetadataPrefix)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			r.Errors = append(r.Errors, ErrCannotDisseminateFormat)
+			return nil
+		}
+		if set := r.Request.Set; set != "" {
+			exists, err := p.Backend.HasSet(ctx, set)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				r.Errors = append(r.Errors, ErrSetDoesNotExist)
+				return nil
+			}
+		}
+
+		headers, token, err = p.Backend.GetIdentifiers(ctx,
+			r.Request.MetadataPrefix,
+			r.Request.Set,
+			r.Request.From,
+			r.Request.Until,
+		)
 	}
+
 	if err != nil {
 		return err
 	}
+
 	if len(headers) == 0 {
 		r.Errors = append(r.Errors, ErrNoRecordsMatch)
 		return nil
 	}
+
 	r.Body = &ListIdentifiers{
 		Headers:         headers,
 		ResumptionToken: token,
 	}
+
 	return nil
 }
 
-func (p *Provider) listRecords(r *response) error {
-	recs, token, err := p.ListRecords(&r.Request)
-	if err == ErrBadResumptionToken || err == ErrCannotDisseminateFormat {
-		r.Errors = append(r.Errors, err.(*Error))
-		return nil
+func (p *Provider) listRecords(ctx context.Context, r *response) error {
+	var records []*Record
+	var token *ResumptionToken
+	var err error
+	if rt := r.Request.ResumptionToken; rt != "" {
+		records, token, err = p.Backend.GetMoreRecords(ctx, rt)
+		if err == ErrBadResumptionToken {
+			r.Errors = append(r.Errors, err.(*Error))
+			return nil
+		}
+	} else {
+		var exists bool
+		exists, err = p.Backend.HasMetadataFormat(ctx, r.Request.MetadataPrefix)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			r.Errors = append(r.Errors, ErrCannotDisseminateFormat)
+			return nil
+		}
+		if set := r.Request.Set; set != "" {
+			exists, err := p.Backend.HasSet(ctx, set)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				r.Errors = append(r.Errors, ErrSetDoesNotExist)
+				return nil
+			}
+		}
+
+		records, token, err = p.Backend.GetRecords(ctx,
+			r.Request.MetadataPrefix,
+			r.Request.Set,
+			r.Request.From,
+			r.Request.Until,
+		)
 	}
+
 	if err != nil {
 		return err
 	}
-	if len(recs) == 0 {
+
+	if len(records) == 0 {
 		r.Errors = append(r.Errors, ErrNoRecordsMatch)
 		return nil
 	}
+
 	r.Body = &ListRecords{
-		Records:         recs,
+		Records:         records,
 		ResumptionToken: token,
 	}
+
 	return nil
 }
 
-func (p *Provider) getRecord(r *response) error {
-	rec, err := p.GetRecord(&r.Request)
+func (p *Provider) getRecord(ctx context.Context, r *response) error {
+	rec, err := p.Backend.GetRecord(ctx, r.Request.MetadataPrefix, r.Request.Identifier)
 	if err == ErrIDDoesNotExist || err == ErrCannotDisseminateFormat {
 		r.Errors = append(r.Errors, err.(*Error))
 		return nil
@@ -319,12 +423,14 @@ func (p *Provider) getRecord(r *response) error {
 }
 
 func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	res := &response{
 		provider:          p,
 		XmlnsXsi:          xmlnsXsi,
 		XsiSchemaLocation: xsiSchemaLocation,
 		ResponseDate:      time.Now().UTC().Format(time.RFC3339),
-		Request: Request{
+		Request: request{
 			URL: p.BaseURL,
 		},
 	}
@@ -333,7 +439,7 @@ func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	res.setVerb(args)
 
-	var handler func(*response) error
+	var handler func(context.Context, *response) error
 
 	switch res.Request.Verb {
 	case "Identify":
@@ -371,7 +477,7 @@ func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status := 200
 
 	if len(res.Errors) == 0 {
-		if err := handler(res); err != nil {
+		if err := handler(ctx, res); err != nil {
 			p.handleError(w, err)
 			return
 		}
