@@ -16,6 +16,9 @@ type Config struct {
 		Conn   string `env:"CONN,notEmpty"`
 		Secret string `env:"SECRET,notEmpty"`
 	} `envPrefix:"OAI_REPO_"`
+	GRPC struct {
+		Secret string `env:"SECRET,notEmpty"`
+	} `envPrefix:"OAI_GRPC_"`
 }
 
 func (c Config) Addr() string {

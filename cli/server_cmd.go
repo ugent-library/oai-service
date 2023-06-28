@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/alexliesenfeld/health"
+	"github.com/bufbuild/connect-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/ory/graceful"
 	"github.com/spf13/cobra"
 	"github.com/ugent-library/httpx/render"
-	"github.com/ugent-library/oai-service/api"
 	"github.com/ugent-library/oai-service/gen/oai/v1/oaiv1connect"
+	"github.com/ugent-library/oai-service/grpcserver"
 	"github.com/ugent-library/oai-service/oaipmh"
 	"github.com/ugent-library/oai-service/repositories"
 	"github.com/ugent-library/zaphttp"
@@ -154,8 +155,15 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
-		// setup api server
-		apiPath, apiHandler := oaiv1connect.NewOaiServiceHandler(api.NewServer(repo))
+		// setup grpc api server
+		apiPath, apiHandler := oaiv1connect.NewOaiServiceHandler(
+			grpcserver.NewServer(repo),
+			connect.WithInterceptors(
+				grpcserver.NewAuthInterceptor(grpcserver.AuthConfig{
+					Token: config.GRPC.Secret,
+				}),
+			),
+		)
 
 		// setup health checker
 		// TODO add checkers
