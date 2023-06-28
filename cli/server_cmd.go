@@ -54,6 +54,8 @@ var serverCmd = &cobra.Command{
 			StyleSheet:     "/oai.xsl",
 			Sets:           true, // TODO
 
+			EarliestDatestamp: repo.GetEarliestRecordDatestamp,
+
 			ListMetadataFormats: func(r *oaipmh.Request) ([]*oaipmh.MetadataFormat, error) {
 				ctx := context.TODO()
 

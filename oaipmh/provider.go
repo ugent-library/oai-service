@@ -1,6 +1,7 @@
 package oaipmh
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -170,7 +171,7 @@ type ProviderConfig struct {
 	DeletedRecord       string
 	StyleSheet          string
 	Sets                bool
-	EarliestDatestamp   func() (time.Time, error)
+	EarliestDatestamp   func(context.Context) (time.Time, error)
 	ListMetadataFormats func(*Request) ([]*MetadataFormat, error)
 	ListSets            func(*Request) ([]*Set, *ResumptionToken, error)
 	GetRecord           func(*Request) (*Record, error)
@@ -202,17 +203,24 @@ func NewProvider(conf ProviderConfig) (*Provider, error) {
 	return p, nil
 }
 
-// TODO description, earliestDatestamp
+// TODO description
 func (p *Provider) identify(r *response) error {
-	r.Body = &Identify{
-		RepositoryName:  p.RepositoryName,
-		BaseURL:         p.BaseURL,
-		ProtocolVersion: "2.0",
-		AdminEmails:     p.AdminEmails,
-		Granularity:     p.Granularity,
-		Compression:     p.Compression,
-		DeletedRecord:   p.DeletedRecord,
+	t, err := p.EarliestDatestamp(context.TODO())
+	if err != nil {
+		return err
 	}
+
+	r.Body = &Identify{
+		RepositoryName:    p.RepositoryName,
+		BaseURL:           p.BaseURL,
+		ProtocolVersion:   "2.0",
+		AdminEmails:       p.AdminEmails,
+		Granularity:       p.Granularity,
+		Compression:       p.Compression,
+		DeletedRecord:     p.DeletedRecord,
+		EarliestDatestamp: t.Format(p.dateFormat),
+	}
+
 	return nil
 }
 
@@ -235,7 +243,6 @@ func (p *Provider) listMetadataFormats(r *response) error {
 	return nil
 }
 
-// TODO resumptionToken, badResumptionToken
 func (p *Provider) listSets(r *response) error {
 	sets, token, err := p.ListSets(&r.Request)
 	if err == ErrBadResumptionToken {

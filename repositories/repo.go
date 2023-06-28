@@ -188,6 +188,16 @@ func (r *Repo) HasRecord(ctx context.Context, identifier string) (bool, error) {
 		Exist(ctx)
 }
 
+func (r *Repo) GetEarliestRecordDatestamp(ctx context.Context) (time.Time, error) {
+	row, err := r.client.Record.Query().
+		Order(ent.Asc(record.FieldID)).
+		First(ctx)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return row.Datestamp, nil
+}
+
 func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string) (*oaipmh.Record, error) {
 	row, err := r.client.Record.Query().
 		Where(
