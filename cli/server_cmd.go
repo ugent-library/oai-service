@@ -7,6 +7,9 @@ import (
 
 	"github.com/alexliesenfeld/health"
 	"github.com/bufbuild/connect-go"
+
+	grpchealth "github.com/bufbuild/connect-grpchealth-go"
+	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/ory/graceful"
@@ -155,16 +158,6 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
-		// setup grpc api server
-		apiPath, apiHandler := oaiv1connect.NewOaiServiceHandler(
-			grpcserver.NewServer(repo),
-			connect.WithInterceptors(
-				grpcserver.NewAuthInterceptor(grpcserver.AuthConfig{
-					Token: config.GRPC.Secret,
-				}),
-			),
-		)
-
 		// setup health checker
 		// TODO add checkers
 		healthChecker := health.NewChecker()
@@ -189,18 +182,31 @@ var serverCmd = &cobra.Command{
 				Commit: config.Source.Commit,
 			})
 		})
+
 		mux.Get("/oai.xsl", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, "public/oai.xsl")
 		})
 		mux.Method("GET", "/", oaiProvider)
-		mux.Mount(apiPath, apiHandler)
 
-		handler := h2c.NewHandler(mux, &http2.Server{})
+		// grpc
+		grpcReflector := grpcreflect.NewStaticReflector(oaiv1connect.OaiServiceName)
+		grpcChecker := grpchealth.NewStaticChecker(oaiv1connect.OaiServiceName)
+		mux.Mount(oaiv1connect.NewOaiServiceHandler(
+			grpcserver.NewServer(repo),
+			connect.WithInterceptors(
+				grpcserver.NewAuthInterceptor(grpcserver.AuthConfig{
+					Token: config.GRPC.Secret,
+				}),
+			),
+		))
+		mux.Mount(grpcreflect.NewHandlerV1(grpcReflector))
+		mux.Mount(grpcreflect.NewHandlerV1Alpha(grpcReflector))
+		mux.Mount(grpchealth.NewHandler(grpcChecker))
 
 		// start server
 		server := graceful.WithDefaults(&http.Server{
 			Addr:         config.Addr(),
-			Handler:      handler,
+			Handler:      h2c.NewHandler(mux, &http2.Server{}),
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
 		})

@@ -34,6 +34,8 @@ require (
 
 require (
 	github.com/alexliesenfeld/health v0.7.0
+	github.com/bufbuild/connect-grpchealth-go v1.1.1
+	github.com/bufbuild/connect-grpcreflect-go v1.1.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/jackc/pgx/v5 v5.4.1
 	github.com/ory/graceful v0.1.3
