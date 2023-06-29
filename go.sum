@@ -80,6 +80,10 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.2 h1:+h33VjcLVPDHtOdpUCuF+7gSuG3yGIftsP1YvFihtJ8=
 github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
+github.com/ugent-library/crypt v0.0.0-20230629134647-482e4eaf0caf h1:sEKOQJdrZrEanMHDGOihtZiuVVwthh/W0qYdT5cDeNo=
+github.com/ugent-library/crypt v0.0.0-20230629134647-482e4eaf0caf/go.mod h1:kamafwnieKPUZiNvnyN0/kBjhO9tzCzSrPY069QBBwk=
+github.com/ugent-library/crypt v0.0.0-20230629141409-123bcb99fde2 h1:keRwKl9AVHHWt1oo3Sxd2xT0kueJ+5WEOPUsZVMR6vc=
+github.com/ugent-library/crypt v0.0.0-20230629141409-123bcb99fde2/go.mod h1:kamafwnieKPUZiNvnyN0/kBjhO9tzCzSrPY069QBBwk=
 github.com/ugent-library/httpx v0.0.0-20230522072608-fba7bb4a066d h1:j+m9h1q80/D8oikAxVYDfnCfjM0SOuSdoHBhylp4AJg=
 github.com/ugent-library/httpx v0.0.0-20230522072608-fba7bb4a066d/go.mod h1:+m4mWcYSpZknAPTanWib+3cehzEyTDxz9ipf3NG3ezM=
 github.com/ugent-library/zaphttp v0.0.0-20230513174723-52c27d21c5ce h1:+TNoKsfMTTveEe1RQRaJ7TZnHVh1k98Nk+4gTg2mENA=

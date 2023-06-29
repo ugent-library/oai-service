@@ -40,6 +40,7 @@ require (
 	github.com/jackc/pgx/v5 v5.4.1
 	github.com/ory/graceful v0.1.3
 	github.com/spf13/cobra v1.7.0
+	github.com/ugent-library/crypt v0.0.0-20230629141409-123bcb99fde2
 	github.com/ugent-library/httpx v0.0.0-20230522072608-fba7bb4a066d
 	github.com/ugent-library/zaphttp v0.0.0-20230513174723-52c27d21c5ce
 	go.uber.org/atomic v1.10.0 // indirect
