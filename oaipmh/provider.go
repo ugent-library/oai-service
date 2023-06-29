@@ -63,22 +63,22 @@ var (
 		},
 	}
 
-	// TODO not all errors should be public
-	ErrVerbMissing              = &Error{Code: "badVerb", Value: "verb is missing"}
-	ErrVerbRepeated             = &Error{Code: "badVerb", Value: "verb can't be repeated"}
-	ErrVerbInvalid              = &Error{Code: "badVerb", Value: "verb is invalid"}
-	ErrNoSetHierarchy           = &Error{Code: "noSetHierarchy", Value: "sets are not supported"}
+	// TODO make all errors private and remove Error method
+	errVerbMissing              = &Error{Code: "badVerb", Value: "verb is missing"}
+	errVerbRepeated             = &Error{Code: "badVerb", Value: "verb can't be repeated"}
+	errVerbInvalid              = &Error{Code: "badVerb", Value: "verb is invalid"}
+	errNoSetHierarchy           = &Error{Code: "noSetHierarchy", Value: "sets are not supported"}
 	ErrIDDoesNotExist           = &Error{Code: "idDoesNotExist", Value: "identifier is unknown or illegal"}
-	ErrNoRecordsMatch           = &Error{Code: "noRecordsMatch", Value: "no records match"}
-	ErrNoMetadataFormats        = &Error{Code: "noMetadataFormats", Value: "there are no metadata formats available for the specified item"}
+	errNoRecordsMatch           = &Error{Code: "noRecordsMatch", Value: "no records match"}
+	errNoMetadataFormats        = &Error{Code: "noMetadataFormats", Value: "there are no metadata formats available for the specified item"}
 	ErrCannotDisseminateFormat  = &Error{Code: "cannotDisseminateFormat", Value: "the metadata format identified by the value given for the metadataPrefix argument is not supported by the item or by the repository"}
 	ErrBadResumptionToken       = &Error{Code: "badResumptionToken", Value: "the value of the resumptionToken argument is invalid or expired"}
-	ErrResumptiontokenExclusive = &Error{Code: "badArgument", Value: "resumptionToken cannot be combined with other attributes"}
-	ErrMetadataPrefixMissing    = &Error{Code: "badArgument", Value: "metadataPrefix is missing"}
-	ErrIdentifierMissing        = &Error{Code: "badArgument", Value: "identifier is missing"}
-	ErrFromInvalid              = &Error{Code: "badArgument", Value: "from is not a valid datestamp"}
-	ErrUntilInvalid             = &Error{Code: "badArgument", Value: "until is not a valid datestamp"}
-	ErrSetDoesNotExist          = &Error{Code: "badArgument", Value: "set is unknown"}
+	errResumptiontokenExclusive = &Error{Code: "badArgument", Value: "resumptionToken cannot be combined with other attributes"}
+	errMetadataPrefixMissing    = &Error{Code: "badArgument", Value: "metadataPrefix is missing"}
+	errIdentifierMissing        = &Error{Code: "badArgument", Value: "identifier is missing"}
+	errFromInvalid              = &Error{Code: "badArgument", Value: "from is not a valid datestamp"}
+	errUntilInvalid             = &Error{Code: "badArgument", Value: "until is not a valid datestamp"}
+	errSetDoesNotExist          = &Error{Code: "badArgument", Value: "set is unknown"}
 )
 
 type request struct {
@@ -263,12 +263,12 @@ func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	verbs, ok := args["verb"]
 	if !ok {
-		res.Errors = append(res.Errors, ErrVerbMissing)
+		res.Errors = append(res.Errors, errVerbMissing)
 		p.writeResponse(w, res)
 		return
 	}
 	if len(verbs) > 1 {
-		res.Errors = append(res.Errors, ErrVerbRepeated)
+		res.Errors = append(res.Errors, errVerbRepeated)
 		p.writeResponse(w, res)
 		return
 	}
@@ -278,7 +278,7 @@ func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handlers, ok := verbHandlers[verbs[0]]
 
 	if !ok {
-		res.Errors = append(res.Errors, ErrVerbInvalid)
+		res.Errors = append(res.Errors, errVerbInvalid)
 		return
 	}
 
@@ -364,7 +364,7 @@ func listMetadataFormats(ctx context.Context, p *Provider, res *response, q url.
 	}
 
 	if len(formats) == 0 {
-		res.Errors = append(res.Errors, ErrNoMetadataFormats)
+		res.Errors = append(res.Errors, errNoMetadataFormats)
 		return nil
 	}
 
@@ -394,7 +394,7 @@ func listSets(ctx context.Context, p *Provider, res *response, args url.Values) 
 	}
 
 	if len(sets) == 0 {
-		res.Errors = append(res.Errors, ErrNoSetHierarchy)
+		res.Errors = append(res.Errors, errNoSetHierarchy)
 		return nil
 	}
 
@@ -430,7 +430,7 @@ func listIdentifiers(ctx context.Context, p *Provider, res *response, args url.V
 	}
 
 	if len(headers) == 0 {
-		res.Errors = append(res.Errors, ErrNoRecordsMatch)
+		res.Errors = append(res.Errors, errNoRecordsMatch)
 		return nil
 	}
 
@@ -466,7 +466,7 @@ func listRecords(ctx context.Context, p *Provider, res *response, args url.Value
 	}
 
 	if len(records) == 0 {
-		res.Errors = append(res.Errors, ErrNoRecordsMatch)
+		res.Errors = append(res.Errors, errNoRecordsMatch)
 		return nil
 	}
 
@@ -516,7 +516,7 @@ func setResumptionToken(ctx context.Context, p *Provider, res *response, args ur
 	res.Request.ResumptionToken = getArg(res, args, "resumptionToken")
 	// only verb and resumptionToken can be set
 	if res.Request.ResumptionToken != "" && len(args) > 2 {
-		res.Errors = append(res.Errors, ErrResumptiontokenExclusive)
+		res.Errors = append(res.Errors, errResumptiontokenExclusive)
 	}
 	return nil
 }
@@ -534,7 +534,7 @@ func setRequiredMetadataPrefix(ctx context.Context, p *Provider, res *response, 
 	val := getArg(res, args, "metadataPrefix")
 
 	if val == "" {
-		res.Errors = append(res.Errors, ErrMetadataPrefixMissing)
+		res.Errors = append(res.Errors, errMetadataPrefixMissing)
 		return nil
 	}
 
@@ -555,7 +555,7 @@ func setRequiredMetadataPrefix(ctx context.Context, p *Provider, res *response, 
 func setRequiredIdentifier(ctx context.Context, p *Provider, res *response, args url.Values) error {
 	res.Request.Identifier = getArg(res, args, "identifier")
 	if res.Request.Identifier == "" {
-		res.Errors = append(res.Errors, ErrIdentifierMissing)
+		res.Errors = append(res.Errors, errIdentifierMissing)
 	}
 	return nil
 }
@@ -569,7 +569,7 @@ func setSet(ctx context.Context, p *Provider, res *response, args url.Values) er
 
 	if val != "" {
 		if !p.Sets {
-			res.Errors = append(res.Errors, ErrNoSetHierarchy)
+			res.Errors = append(res.Errors, errNoSetHierarchy)
 			return nil
 		}
 
@@ -578,7 +578,7 @@ func setSet(ctx context.Context, p *Provider, res *response, args url.Values) er
 			return err
 		}
 		if !exists {
-			res.Errors = append(res.Errors, ErrSetDoesNotExist)
+			res.Errors = append(res.Errors, errSetDoesNotExist)
 			return nil
 		}
 
@@ -601,14 +601,14 @@ func setFromUntil(ctx context.Context, p *Provider, res *response, args url.Valu
 		if _, err := time.Parse(p.dateFormat, f); err == nil {
 			res.Request.From = f
 		} else {
-			res.Errors = append(res.Errors, ErrFromInvalid)
+			res.Errors = append(res.Errors, errFromInvalid)
 		}
 	}
 	if u != "" {
 		if _, err := time.Parse(p.dateFormat, u); err == nil {
 			res.Request.Until = u
 		} else {
-			res.Errors = append(res.Errors, ErrUntilInvalid)
+			res.Errors = append(res.Errors, errUntilInvalid)
 		}
 	}
 
