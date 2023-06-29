@@ -102,6 +102,10 @@ func (r *Repo) AddMetadataFormat(ctx context.Context, prefix, schema, namespace 
 		Exec(ctx)
 }
 
+func (r *Repo) HasSets(ctx context.Context) (bool, error) {
+	return r.client.Set.Query().Exist(ctx)
+}
+
 func (r *Repo) HasSet(ctx context.Context, spec string) (bool, error) {
 	return r.client.Set.Query().
 		Where(set.SpecEQ(spec)).

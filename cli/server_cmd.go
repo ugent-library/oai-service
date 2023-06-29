@@ -49,7 +49,6 @@ var serverCmd = &cobra.Command{
 			DeletedRecord:  "persistent",
 			Granularity:    "YYYY-MM-DDThh:mm:ssZ",
 			StyleSheet:     "/oai.xsl",
-			Sets:           true,
 			ErrorHandler:   func(err error) { logger.Error(err) },
 			Backend:        repo,
 		})

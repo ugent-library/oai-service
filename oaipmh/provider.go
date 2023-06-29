@@ -203,13 +203,13 @@ type ProviderConfig struct {
 	DeletedRecord  string
 	StyleSheet     string
 	ErrorHandler   func(error)
-	Sets           bool // TODO remove need for this
 	Backend        ProviderBackend
 }
 
 type ProviderBackend interface {
 	GetEarliestRecordDatestamp(context.Context) (time.Time, error)
 	HasMetadataFormat(context.Context, string) (bool, error)
+	HasSets(context.Context) (bool, error)
 	HasSet(context.Context, string) (bool, error)
 	GetMetadataFormats(context.Context) ([]*MetadataFormat, error)
 	GetRecordMetadataFormats(context.Context, string) ([]*MetadataFormat, error)
@@ -568,16 +568,20 @@ func setSet(ctx context.Context, p *Provider, res *response, args url.Values) er
 	val := getArg(res, args, "set")
 
 	if val != "" {
-		if !p.Sets {
+		hasSets, err := p.Backend.HasSets(ctx)
+		if err != nil {
+			return err
+		}
+		if !hasSets {
 			res.Errors = append(res.Errors, errNoSetHierarchy)
 			return nil
 		}
 
-		exists, err := p.Backend.HasSet(ctx, val)
+		setExists, err := p.Backend.HasSet(ctx, val)
 		if err != nil {
 			return err
 		}
-		if !exists {
+		if !setExists {
 			res.Errors = append(res.Errors, errSetDoesNotExist)
 			return nil
 		}
