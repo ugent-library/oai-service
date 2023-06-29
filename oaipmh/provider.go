@@ -275,7 +275,7 @@ func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	res.Request.Verb = verbs[0]
 
-	handlers, ok := verbHandlers[verbs[0]]
+	handlers, ok := verbHandlers[res.Request.Verb]
 
 	if !ok {
 		res.Errors = append(res.Errors, errVerbInvalid)
