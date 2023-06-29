@@ -32,7 +32,7 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Start the server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// setup services
+		// setup repo
 		repo, err := repositories.New(repositories.Config{
 			Conn:   config.Repo.Conn,
 			Secret: []byte(config.Repo.Secret),
@@ -49,17 +49,13 @@ var serverCmd = &cobra.Command{
 			DeletedRecord:  "persistent",
 			Granularity:    "YYYY-MM-DDThh:mm:ssZ",
 			StyleSheet:     "/oai.xsl",
-			Sets:           true, // TODO
+			Sets:           true,
 			ErrorHandler:   func(err error) { logger.Error(err) },
 			Backend:        repo,
 		})
 		if err != nil {
 			return err
 		}
-
-		// setup health checker
-		// TODO add checkers
-		healthChecker := health.NewChecker()
 
 		// setup mux
 		mux := chi.NewMux()
@@ -71,7 +67,8 @@ var serverCmd = &cobra.Command{
 		mux.Use(middleware.RequestLogger(zapchi.LogFormatter()))
 		mux.Use(middleware.Recoverer)
 
-		mux.Get("/health", health.NewHandler(healthChecker))
+		// mount health and info
+		mux.Get("/health", health.NewHandler(health.NewChecker())) // TODO add checkers
 		mux.Get("/info", func(w http.ResponseWriter, r *http.Request) {
 			render.JSON(w, http.StatusOK, &struct {
 				Branch string `json:"branch,omitempty"`
@@ -82,12 +79,13 @@ var serverCmd = &cobra.Command{
 			})
 		})
 
+		// mount oai provider
 		mux.Get("/oai.xsl", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, "public/oai.xsl")
 		})
 		mux.Method("GET", "/", oaiProvider)
 
-		// grpc
+		// mount grpc server
 		grpcReflector := grpcreflect.NewStaticReflector(oaiv1connect.OaiServiceName)
 		grpcChecker := grpchealth.NewStaticChecker(oaiv1connect.OaiServiceName)
 		mux.Mount(oaiv1connect.NewOaiServiceHandler(
