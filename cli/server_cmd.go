@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -21,6 +23,15 @@ import (
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
+}
+
+type apiSecurityHandler struct{}
+
+func (s *apiSecurityHandler) HandleApiKey(ctx context.Context, operationName string, t api.ApiKey) (context.Context, error) {
+	if t.APIKey == "123" {
+		return ctx, nil
+	}
+	return ctx, errors.New("go away")
 }
 
 var serverCmd = &cobra.Command{
@@ -52,7 +63,7 @@ var serverCmd = &cobra.Command{
 		}
 
 		// setup api
-		apiServer, err := api.NewServer(api.NewService(repo))
+		apiServer, err := api.NewServer(api.NewService(repo), &apiSecurityHandler{})
 		if err != nil {
 			return err
 		}
