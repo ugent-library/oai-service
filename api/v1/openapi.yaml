@@ -5,6 +5,48 @@ info:
   version: 0.0.1
 
 paths:
+  /add-metadata-format:
+    post:
+      summary: Add a metadata format
+      description: Add a metadata format
+      operationId: addMetadataFormat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMetadataFormatRequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /add-set:
+    post:
+      summary: Add a set
+      description: Add a set
+      operationId: addSet
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSetRequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /add-record:
     post:
       summary: Add a record
@@ -18,19 +60,59 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AddRecordResponse'
+          description: Success
         default:
-          description: General Error
+          description: Error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /delete-record:
+    post:
+      summary: Delete a record
+      description: Delete a record
+      operationId: deleteRecord
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteRecordRequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
+    AddMetadataFormatRequest:
+      type: object
+      properties:
+        prefix:
+          type: string
+        schema:
+          type: string
+        namespace:
+          type: string
+      required: [prefix, schema, namespace]
+
+    AddSetRequest:
+      type: object
+      properties:
+        spec:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+      required: [spec, name]
+
     AddRecordRequest:
       type: object
       properties:
@@ -45,13 +127,15 @@ components:
           items:
             type: string
       required: [identifier, metadata_prefix, metadata]
-    AddRecordResponse:
+
+    DeleteRecordRequest:
       type: object
       properties:
         identifier:
           type: string
+      required: [identifier]
+
     Error:
-      description: Represents error object
       type: object
       properties:
         code:

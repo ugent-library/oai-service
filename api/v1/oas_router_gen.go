@@ -43,23 +43,101 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/add-record"
-			if l := len("/add-record"); len(elem) >= l && elem[0:l] == "/add-record" {
+		case '/': // Prefix: "/"
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				// Leaf node.
-				switch r.Method {
-				case "POST":
-					s.handleAddRecordRequest([0]string{}, elemIsEscaped, w, r)
-				default:
-					s.notAllowed(w, r, "POST")
+				break
+			}
+			switch elem[0] {
+			case 'a': // Prefix: "add-"
+				if l := len("add-"); len(elem) >= l && elem[0:l] == "add-" {
+					elem = elem[l:]
+				} else {
+					break
 				}
 
-				return
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'm': // Prefix: "metadata-format"
+					if l := len("metadata-format"); len(elem) >= l && elem[0:l] == "metadata-format" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleAddMetadataFormatRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+				case 'r': // Prefix: "record"
+					if l := len("record"); len(elem) >= l && elem[0:l] == "record" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleAddRecordRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+				case 's': // Prefix: "set"
+					if l := len("set"); len(elem) >= l && elem[0:l] == "set" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleAddSetRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+				}
+			case 'd': // Prefix: "delete-record"
+				if l := len("delete-record"); len(elem) >= l && elem[0:l] == "delete-record" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleDeleteRecordRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
 			}
 		}
 	}
@@ -130,25 +208,112 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/add-record"
-			if l := len("/add-record"); len(elem) >= l && elem[0:l] == "/add-record" {
+		case '/': // Prefix: "/"
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				switch method {
-				case "POST":
-					// Leaf: AddRecord
-					r.name = "AddRecord"
-					r.operationID = "addRecord"
-					r.pathPattern = "/add-record"
-					r.args = args
-					r.count = 0
-					return r, true
-				default:
-					return
+				break
+			}
+			switch elem[0] {
+			case 'a': // Prefix: "add-"
+				if l := len("add-"); len(elem) >= l && elem[0:l] == "add-" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'm': // Prefix: "metadata-format"
+					if l := len("metadata-format"); len(elem) >= l && elem[0:l] == "metadata-format" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: AddMetadataFormat
+							r.name = "AddMetadataFormat"
+							r.operationID = "addMetadataFormat"
+							r.pathPattern = "/add-metadata-format"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+				case 'r': // Prefix: "record"
+					if l := len("record"); len(elem) >= l && elem[0:l] == "record" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: AddRecord
+							r.name = "AddRecord"
+							r.operationID = "addRecord"
+							r.pathPattern = "/add-record"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+				case 's': // Prefix: "set"
+					if l := len("set"); len(elem) >= l && elem[0:l] == "set" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: AddSet
+							r.name = "AddSet"
+							r.operationID = "addSet"
+							r.pathPattern = "/add-set"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+				}
+			case 'd': // Prefix: "delete-record"
+				if l := len("delete-record"); len(elem) >= l && elem[0:l] == "delete-record" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "POST":
+						// Leaf: DeleteRecord
+						r.name = "DeleteRecord"
+						r.operationID = "deleteRecord"
+						r.pathPattern = "/delete-record"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 			}
 		}

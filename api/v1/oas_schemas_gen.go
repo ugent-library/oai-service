@@ -10,6 +10,49 @@ func (s *ErrorStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
+// AddMetadataFormatOK is response for AddMetadataFormat operation.
+type AddMetadataFormatOK struct{}
+
+// Ref: #/components/schemas/AddMetadataFormatRequest
+type AddMetadataFormatRequest struct {
+	Prefix    string `json:"prefix"`
+	Schema    string `json:"schema"`
+	Namespace string `json:"namespace"`
+}
+
+// GetPrefix returns the value of Prefix.
+func (s *AddMetadataFormatRequest) GetPrefix() string {
+	return s.Prefix
+}
+
+// GetSchema returns the value of Schema.
+func (s *AddMetadataFormatRequest) GetSchema() string {
+	return s.Schema
+}
+
+// GetNamespace returns the value of Namespace.
+func (s *AddMetadataFormatRequest) GetNamespace() string {
+	return s.Namespace
+}
+
+// SetPrefix sets the value of Prefix.
+func (s *AddMetadataFormatRequest) SetPrefix(val string) {
+	s.Prefix = val
+}
+
+// SetSchema sets the value of Schema.
+func (s *AddMetadataFormatRequest) SetSchema(val string) {
+	s.Schema = val
+}
+
+// SetNamespace sets the value of Namespace.
+func (s *AddMetadataFormatRequest) SetNamespace(val string) {
+	s.Namespace = val
+}
+
+// AddRecordOK is response for AddRecord operation.
+type AddRecordOK struct{}
+
 // Ref: #/components/schemas/AddRecordRequest
 type AddRecordRequest struct {
 	Identifier     string   `json:"identifier"`
@@ -58,22 +101,64 @@ func (s *AddRecordRequest) SetSetSpecs(val []string) {
 	s.SetSpecs = val
 }
 
-// Ref: #/components/schemas/AddRecordResponse
-type AddRecordResponse struct {
-	Identifier OptString `json:"identifier"`
+// AddSetOK is response for AddSet operation.
+type AddSetOK struct{}
+
+// Ref: #/components/schemas/AddSetRequest
+type AddSetRequest struct {
+	Spec        string    `json:"spec"`
+	Name        string    `json:"name"`
+	Description OptString `json:"description"`
+}
+
+// GetSpec returns the value of Spec.
+func (s *AddSetRequest) GetSpec() string {
+	return s.Spec
+}
+
+// GetName returns the value of Name.
+func (s *AddSetRequest) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *AddSetRequest) GetDescription() OptString {
+	return s.Description
+}
+
+// SetSpec sets the value of Spec.
+func (s *AddSetRequest) SetSpec(val string) {
+	s.Spec = val
+}
+
+// SetName sets the value of Name.
+func (s *AddSetRequest) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *AddSetRequest) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// DeleteRecordOK is response for DeleteRecord operation.
+type DeleteRecordOK struct{}
+
+// Ref: #/components/schemas/DeleteRecordRequest
+type DeleteRecordRequest struct {
+	Identifier string `json:"identifier"`
 }
 
 // GetIdentifier returns the value of Identifier.
-func (s *AddRecordResponse) GetIdentifier() OptString {
+func (s *DeleteRecordRequest) GetIdentifier() string {
 	return s.Identifier
 }
 
 // SetIdentifier sets the value of Identifier.
-func (s *AddRecordResponse) SetIdentifier(val OptString) {
+func (s *DeleteRecordRequest) SetIdentifier(val string) {
 	s.Identifier = val
 }
 
-// Represents error object.
 // Ref: #/components/schemas/Error
 type Error struct {
 	Code    int64  `json:"code"`

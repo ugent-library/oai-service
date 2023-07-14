@@ -16,17 +16,39 @@ func NewService(repo *repositories.Repo) *Service {
 	}
 }
 
-func (s *Service) AddRecord(ctx context.Context, req *AddRecordRequest) (*AddRecordResponse, error) {
+func (s *Service) AddMetadataFormat(ctx context.Context, req *AddMetadataFormatRequest) error {
+	err := s.repo.AddMetadataFormat(ctx,
+		req.Prefix,
+		req.Schema,
+		req.Namespace,
+	)
+	return err
+}
+
+func (s *Service) AddSet(ctx context.Context, req *AddSetRequest) error {
+	err := s.repo.AddSet(ctx,
+		req.Spec,
+		req.Name,
+		req.Description.Or(""),
+	)
+	return err
+}
+
+func (s *Service) AddRecord(ctx context.Context, req *AddRecordRequest) error {
 	err := s.repo.AddRecord(ctx,
 		req.Identifier,
 		req.MetadataPrefix,
 		req.Metadata,
 		req.SetSpecs,
 	)
-	if err != nil {
-		return nil, err
-	}
-	return &AddRecordResponse{}, nil
+	return err
+}
+
+func (s *Service) DeleteRecord(ctx context.Context, req *DeleteRecordRequest) error {
+	err := s.repo.DeleteRecord(ctx,
+		req.Identifier,
+	)
+	return err
 }
 
 func (s *Service) NewError(ctx context.Context, err error) *ErrorStatusCode {

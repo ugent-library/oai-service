@@ -71,18 +71,92 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 	return u
 }
 
+// AddMetadataFormat invokes addMetadataFormat operation.
+//
+// Add a metadata format.
+//
+// POST /add-metadata-format
+func (c *Client) AddMetadataFormat(ctx context.Context, request *AddMetadataFormatRequest) error {
+	res, err := c.sendAddMetadataFormat(ctx, request)
+	_ = res
+	return err
+}
+
+func (c *Client) sendAddMetadataFormat(ctx context.Context, request *AddMetadataFormatRequest) (res *AddMetadataFormatOK, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("addMetadataFormat"),
+	}
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(float64(elapsedDuration)/float64(time.Millisecond)), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, "AddMetadataFormat",
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/add-metadata-format"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeAddMetadataFormatRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeAddMetadataFormatResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // AddRecord invokes addRecord operation.
 //
 // Add a record.
 //
 // POST /add-record
-func (c *Client) AddRecord(ctx context.Context, request *AddRecordRequest) (*AddRecordResponse, error) {
+func (c *Client) AddRecord(ctx context.Context, request *AddRecordRequest) error {
 	res, err := c.sendAddRecord(ctx, request)
 	_ = res
-	return res, err
+	return err
 }
 
-func (c *Client) sendAddRecord(ctx context.Context, request *AddRecordRequest) (res *AddRecordResponse, err error) {
+func (c *Client) sendAddRecord(ctx context.Context, request *AddRecordRequest) (res *AddRecordOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("addRecord"),
 	}
@@ -138,6 +212,154 @@ func (c *Client) sendAddRecord(ctx context.Context, request *AddRecordRequest) (
 
 	stage = "DecodeResponse"
 	result, err := decodeAddRecordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// AddSet invokes addSet operation.
+//
+// Add a set.
+//
+// POST /add-set
+func (c *Client) AddSet(ctx context.Context, request *AddSetRequest) error {
+	res, err := c.sendAddSet(ctx, request)
+	_ = res
+	return err
+}
+
+func (c *Client) sendAddSet(ctx context.Context, request *AddSetRequest) (res *AddSetOK, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("addSet"),
+	}
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(float64(elapsedDuration)/float64(time.Millisecond)), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, "AddSet",
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/add-set"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeAddSetRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeAddSetResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// DeleteRecord invokes deleteRecord operation.
+//
+// Delete a record.
+//
+// POST /delete-record
+func (c *Client) DeleteRecord(ctx context.Context, request *DeleteRecordRequest) error {
+	res, err := c.sendDeleteRecord(ctx, request)
+	_ = res
+	return err
+}
+
+func (c *Client) sendDeleteRecord(ctx context.Context, request *DeleteRecordRequest) (res *DeleteRecordOK, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("deleteRecord"),
+	}
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(float64(elapsedDuration)/float64(time.Millisecond)), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, "DeleteRecord",
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/delete-record"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeDeleteRecordRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeDeleteRecordResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

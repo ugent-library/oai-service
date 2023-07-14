@@ -8,12 +8,30 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// AddMetadataFormat implements addMetadataFormat operation.
+	//
+	// Add a metadata format.
+	//
+	// POST /add-metadata-format
+	AddMetadataFormat(ctx context.Context, req *AddMetadataFormatRequest) error
 	// AddRecord implements addRecord operation.
 	//
 	// Add a record.
 	//
 	// POST /add-record
-	AddRecord(ctx context.Context, req *AddRecordRequest) (*AddRecordResponse, error)
+	AddRecord(ctx context.Context, req *AddRecordRequest) error
+	// AddSet implements addSet operation.
+	//
+	// Add a set.
+	//
+	// POST /add-set
+	AddSet(ctx context.Context, req *AddSetRequest) error
+	// DeleteRecord implements deleteRecord operation.
+	//
+	// Delete a record.
+	//
+	// POST /delete-record
+	DeleteRecord(ctx context.Context, req *DeleteRecordRequest) error
 	// NewError creates *ErrorStatusCode from error returned by handler.
 	//
 	// Used for common default response.
