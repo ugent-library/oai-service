@@ -141,6 +141,20 @@ func (s *AddSetRequest) SetDescription(val OptString) {
 	s.Description = val
 }
 
+type ApiKey struct {
+	APIKey string
+}
+
+// GetAPIKey returns the value of APIKey.
+func (s *ApiKey) GetAPIKey() string {
+	return s.APIKey
+}
+
+// SetAPIKey sets the value of APIKey.
+func (s *ApiKey) SetAPIKey(val string) {
+	s.APIKey = val
+}
+
 // DeleteRecordOK is response for DeleteRecord operation.
 type DeleteRecordOK struct{}
 

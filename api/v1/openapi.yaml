@@ -20,11 +20,7 @@ paths:
         '200':
           description: Success
         default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
   /add-set:
     post:
@@ -41,11 +37,7 @@ paths:
         '200':
           description: Success
         default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
   /add-record:
     post:
@@ -62,11 +54,7 @@ paths:
         '200':
           description: Success
         default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: '#/components/responses/Error'
 
   /delete-record:
     post:
@@ -83,13 +71,26 @@ paths:
         '200':
           description: Success
         default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: '#/components/responses/Error'
+
+security:
+  - apiKey: []
 
 components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
   schemas:
     AddMetadataFormatRequest:
       type: object
