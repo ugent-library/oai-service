@@ -5,17 +5,12 @@ import (
 	"time"
 
 	"github.com/alexliesenfeld/health"
-	"github.com/bufbuild/connect-go"
-	grpchealth "github.com/bufbuild/connect-grpchealth-go"
-	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/ory/graceful"
 	"github.com/spf13/cobra"
 	"github.com/ugent-library/httpx/render"
 	"github.com/ugent-library/oai-service/api/v1"
-	"github.com/ugent-library/oai-service/gen/oai/v1/oaiv1connect"
-	"github.com/ugent-library/oai-service/grpcserver"
 	"github.com/ugent-library/oai-service/oaipmh"
 	"github.com/ugent-library/oai-service/repositories"
 	"github.com/ugent-library/zaphttp"
@@ -88,27 +83,16 @@ var serverCmd = &cobra.Command{
 
 		// mount api
 		mux.Mount("/api/v1", http.StripPrefix("/api/v1", apiServer))
+		mux.Get("/api/v1/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "api/v1/openapi.yaml")
+		})
+		mux.Mount("/swagger/", http.StripPrefix("/swagger/", http.FileServer(http.Dir("public/swagger-ui-5.1.0"))))
 
 		// mount oai provider
+		mux.Method("GET", "/", oaiProvider)
 		mux.Get("/oai.xsl", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, "public/oai.xsl")
 		})
-		mux.Method("GET", "/", oaiProvider)
-
-		// mount grpc server
-		grpcReflector := grpcreflect.NewStaticReflector(oaiv1connect.OaiServiceName)
-		grpcChecker := grpchealth.NewStaticChecker(oaiv1connect.OaiServiceName)
-		mux.Mount(oaiv1connect.NewOaiServiceHandler(
-			grpcserver.NewServer(repo),
-			connect.WithInterceptors(
-				grpcserver.NewAuthInterceptor(grpcserver.AuthConfig{
-					Token: config.GRPC.Secret,
-				}),
-			),
-		))
-		mux.Mount(grpcreflect.NewHandlerV1(grpcReflector))
-		mux.Mount(grpcreflect.NewHandlerV1Alpha(grpcReflector))
-		mux.Mount(grpchealth.NewHandler(grpcChecker))
 
 		// start server
 		server := graceful.WithDefaults(&http.Server{

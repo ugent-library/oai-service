@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	entgo.io/ent v0.12.3
-	github.com/bufbuild/connect-go v1.8.0
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/go-faster/errors v0.6.1
 	github.com/go-faster/jx v1.0.0
@@ -14,7 +13,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.16.0
 	go.opentelemetry.io/otel/trace v1.16.0
 	go.uber.org/zap v1.24.0
-	google.golang.org/protobuf v1.30.0
 )
 
 require (
@@ -30,6 +28,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/go-test/deep v1.0.8 // indirect
+	github.com/golang/protobuf v1.5.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.16.1 // indirect
@@ -53,13 +52,12 @@ require (
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
+	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 require (
 	github.com/alexliesenfeld/health v0.7.0
-	github.com/bufbuild/connect-grpchealth-go v1.1.1
-	github.com/bufbuild/connect-grpcreflect-go v1.1.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/jackc/pgx/v5 v5.4.1
 	github.com/ory/graceful v0.1.3
