@@ -19,11 +19,9 @@ import (
 // MetadataFormatQuery is the builder for querying MetadataFormat entities.
 type MetadataFormatQuery struct {
 	config
-	limit       *int
-	offset      *int
-	unique      *bool
-	order       []OrderFunc
-	fields      []string
+	ctx         *QueryContext
+	order       []metadataformat.OrderOption
+	inters      []Interceptor
 	predicates  []predicate.MetadataFormat
 	withRecords *RecordQuery
 	// intermediate query (i.e. traversal path).
@@ -37,34 +35,34 @@ func (mfq *MetadataFormatQuery) Where(ps ...predicate.MetadataFormat) *MetadataF
 	return mfq
 }
 
-// Limit adds a limit step to the query.
+// Limit the number of records to be returned by this query.
 func (mfq *MetadataFormatQuery) Limit(limit int) *MetadataFormatQuery {
-	mfq.limit = &limit
+	mfq.ctx.Limit = &limit
 	return mfq
 }
 
-// Offset adds an offset step to the query.
+// Offset to start from.
 func (mfq *MetadataFormatQuery) Offset(offset int) *MetadataFormatQuery {
-	mfq.offset = &offset
+	mfq.ctx.Offset = &offset
 	return mfq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (mfq *MetadataFormatQuery) Unique(unique bool) *MetadataFormatQuery {
-	mfq.unique = &unique
+	mfq.ctx.Unique = &unique
 	return mfq
 }
 
-// Order adds an order step to the query.
-func (mfq *MetadataFormatQuery) Order(o ...OrderFunc) *MetadataFormatQuery {
+// Order specifies how the records should be ordered.
+func (mfq *MetadataFormatQuery) Order(o ...metadataformat.OrderOption) *MetadataFormatQuery {
 	mfq.order = append(mfq.order, o...)
 	return mfq
 }
 
 // QueryRecords chains the current query on the "records" edge.
 func (mfq *MetadataFormatQuery) QueryRecords() *RecordQuery {
-	query := &RecordQuery{config: mfq.config}
+	query := (&RecordClient{config: mfq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := mfq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -87,7 +85,7 @@ func (mfq *MetadataFormatQuery) QueryRecords() *RecordQuery {
 // First returns the first MetadataFormat entity from the query.
 // Returns a *NotFoundError when no MetadataFormat was found.
 func (mfq *MetadataFormatQuery) First(ctx context.Context) (*MetadataFormat, error) {
-	nodes, err := mfq.Limit(1).All(ctx)
+	nodes, err := mfq.Limit(1).All(setContextOp(ctx, mfq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +108,7 @@ func (mfq *MetadataFormatQuery) FirstX(ctx context.Context) *MetadataFormat {
 // Returns a *NotFoundError when no MetadataFormat ID was found.
 func (mfq *MetadataFormatQuery) FirstID(ctx context.Context) (id int64, err error) {
 	var ids []int64
-	if ids, err = mfq.Limit(1).IDs(ctx); err != nil {
+	if ids, err = mfq.Limit(1).IDs(setContextOp(ctx, mfq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -133,7 +131,7 @@ func (mfq *MetadataFormatQuery) FirstIDX(ctx context.Context) int64 {
 // Returns a *NotSingularError when more than one MetadataFormat entity is found.
 // Returns a *NotFoundError when no MetadataFormat entities are found.
 func (mfq *MetadataFormatQuery) Only(ctx context.Context) (*MetadataFormat, error) {
-	nodes, err := mfq.Limit(2).All(ctx)
+	nodes, err := mfq.Limit(2).All(setContextOp(ctx, mfq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +159,7 @@ func (mfq *MetadataFormatQuery) OnlyX(ctx context.Context) *MetadataFormat {
 // Returns a *NotFoundError when no entities are found.
 func (mfq *MetadataFormatQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	var ids []int64
-	if ids, err = mfq.Limit(2).IDs(ctx); err != nil {
+	if ids, err = mfq.Limit(2).IDs(setContextOp(ctx, mfq.ctx, "OnlyID")); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -186,10 +184,12 @@ func (mfq *MetadataFormatQuery) OnlyIDX(ctx context.Context) int64 {
 
 // All executes the query and returns a list of MetadataFormats.
 func (mfq *MetadataFormatQuery) All(ctx context.Context) ([]*MetadataFormat, error) {
+	ctx = setContextOp(ctx, mfq.ctx, "All")
 	if err := mfq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	return mfq.sqlAll(ctx)
+	qr := querierAll[[]*MetadataFormat, *MetadataFormatQuery]()
+	return withInterceptors[[]*MetadataFormat](ctx, mfq, qr, mfq.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
@@ -202,9 +202,12 @@ func (mfq *MetadataFormatQuery) AllX(ctx context.Context) []*MetadataFormat {
 }
 
 // IDs executes the query and returns a list of MetadataFormat IDs.
-func (mfq *MetadataFormatQuery) IDs(ctx context.Context) ([]int64, error) {
-	var ids []int64
-	if err := mfq.Select(metadataformat.FieldID).Scan(ctx, &ids); err != nil {
+func (mfq *MetadataFormatQuery) IDs(ctx context.Context) (ids []int64, err error) {
+	if mfq.ctx.Unique == nil && mfq.path != nil {
+		mfq.Unique(true)
+	}
+	ctx = setContextOp(ctx, mfq.ctx, "IDs")
+	if err = mfq.Select(metadataformat.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -221,10 +224,11 @@ func (mfq *MetadataFormatQuery) IDsX(ctx context.Context) []int64 {
 
 // Count returns the count of the given query.
 func (mfq *MetadataFormatQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, mfq.ctx, "Count")
 	if err := mfq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return mfq.sqlCount(ctx)
+	return withInterceptors[int](ctx, mfq, querierCount[*MetadataFormatQuery](), mfq.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
@@ -238,10 +242,15 @@ func (mfq *MetadataFormatQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (mfq *MetadataFormatQuery) Exist(ctx context.Context) (bool, error) {
-	if err := mfq.prepareQuery(ctx); err != nil {
-		return false, err
+	ctx = setContextOp(ctx, mfq.ctx, "Exist")
+	switch _, err := mfq.FirstID(ctx); {
+	case IsNotFound(err):
+		return false, nil
+	case err != nil:
+		return false, fmt.Errorf("ent: check existence: %w", err)
+	default:
+		return true, nil
 	}
-	return mfq.sqlExist(ctx)
 }
 
 // ExistX is like Exist, but panics if an error occurs.
@@ -261,22 +270,21 @@ func (mfq *MetadataFormatQuery) Clone() *MetadataFormatQuery {
 	}
 	return &MetadataFormatQuery{
 		config:      mfq.config,
-		limit:       mfq.limit,
-		offset:      mfq.offset,
-		order:       append([]OrderFunc{}, mfq.order...),
+		ctx:         mfq.ctx.Clone(),
+		order:       append([]metadataformat.OrderOption{}, mfq.order...),
+		inters:      append([]Interceptor{}, mfq.inters...),
 		predicates:  append([]predicate.MetadataFormat{}, mfq.predicates...),
 		withRecords: mfq.withRecords.Clone(),
 		// clone intermediate query.
-		sql:    mfq.sql.Clone(),
-		path:   mfq.path,
-		unique: mfq.unique,
+		sql:  mfq.sql.Clone(),
+		path: mfq.path,
 	}
 }
 
 // WithRecords tells the query-builder to eager-load the nodes that are connected to
 // the "records" edge. The optional arguments are used to configure the query builder of the edge.
 func (mfq *MetadataFormatQuery) WithRecords(opts ...func(*RecordQuery)) *MetadataFormatQuery {
-	query := &RecordQuery{config: mfq.config}
+	query := (&RecordClient{config: mfq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
@@ -299,16 +307,11 @@ func (mfq *MetadataFormatQuery) WithRecords(opts ...func(*RecordQuery)) *Metadat
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (mfq *MetadataFormatQuery) GroupBy(field string, fields ...string) *MetadataFormatGroupBy {
-	grbuild := &MetadataFormatGroupBy{config: mfq.config}
-	grbuild.fields = append([]string{field}, fields...)
-	grbuild.path = func(ctx context.Context) (prev *sql.Selector, err error) {
-		if err := mfq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		return mfq.sqlQuery(ctx), nil
-	}
+	mfq.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &MetadataFormatGroupBy{build: mfq}
+	grbuild.flds = &mfq.ctx.Fields
 	grbuild.label = metadataformat.Label
-	grbuild.flds, grbuild.scan = &grbuild.fields, grbuild.Scan
+	grbuild.scan = grbuild.Scan
 	return grbuild
 }
 
@@ -325,11 +328,11 @@ func (mfq *MetadataFormatQuery) GroupBy(field string, fields ...string) *Metadat
 //		Select(metadataformat.FieldPrefix).
 //		Scan(ctx, &v)
 func (mfq *MetadataFormatQuery) Select(fields ...string) *MetadataFormatSelect {
-	mfq.fields = append(mfq.fields, fields...)
-	selbuild := &MetadataFormatSelect{MetadataFormatQuery: mfq}
-	selbuild.label = metadataformat.Label
-	selbuild.flds, selbuild.scan = &mfq.fields, selbuild.Scan
-	return selbuild
+	mfq.ctx.Fields = append(mfq.ctx.Fields, fields...)
+	sbuild := &MetadataFormatSelect{MetadataFormatQuery: mfq}
+	sbuild.label = metadataformat.Label
+	sbuild.flds, sbuild.scan = &mfq.ctx.Fields, sbuild.Scan
+	return sbuild
 }
 
 // Aggregate returns a MetadataFormatSelect configured with the given aggregations.
@@ -338,7 +341,17 @@ func (mfq *MetadataFormatQuery) Aggregate(fns ...AggregateFunc) *MetadataFormatS
 }
 
 func (mfq *MetadataFormatQuery) prepareQuery(ctx context.Context) error {
-	for _, f := range mfq.fields {
+	for _, inter := range mfq.inters {
+		if inter == nil {
+			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
+		}
+		if trv, ok := inter.(Traverser); ok {
+			if err := trv.Traverse(ctx, mfq); err != nil {
+				return err
+			}
+		}
+	}
+	for _, f := range mfq.ctx.Fields {
 		if !metadataformat.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -399,8 +412,11 @@ func (mfq *MetadataFormatQuery) loadRecords(ctx context.Context, query *RecordQu
 			init(nodes[i])
 		}
 	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(record.FieldMetadataFormatID)
+	}
 	query.Where(predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.InValues(metadataformat.RecordsColumn, fks...))
+		s.Where(sql.InValues(s.C(metadataformat.RecordsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -410,7 +426,7 @@ func (mfq *MetadataFormatQuery) loadRecords(ctx context.Context, query *RecordQu
 		fk := n.MetadataFormatID
 		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "metadata_format_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "metadata_format_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -419,41 +435,22 @@ func (mfq *MetadataFormatQuery) loadRecords(ctx context.Context, query *RecordQu
 
 func (mfq *MetadataFormatQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := mfq.querySpec()
-	_spec.Node.Columns = mfq.fields
-	if len(mfq.fields) > 0 {
-		_spec.Unique = mfq.unique != nil && *mfq.unique
+	_spec.Node.Columns = mfq.ctx.Fields
+	if len(mfq.ctx.Fields) > 0 {
+		_spec.Unique = mfq.ctx.Unique != nil && *mfq.ctx.Unique
 	}
 	return sqlgraph.CountNodes(ctx, mfq.driver, _spec)
 }
 
-func (mfq *MetadataFormatQuery) sqlExist(ctx context.Context) (bool, error) {
-	switch _, err := mfq.FirstID(ctx); {
-	case IsNotFound(err):
-		return false, nil
-	case err != nil:
-		return false, fmt.Errorf("ent: check existence: %w", err)
-	default:
-		return true, nil
-	}
-}
-
 func (mfq *MetadataFormatQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   metadataformat.Table,
-			Columns: metadataformat.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
-				Column: metadataformat.FieldID,
-			},
-		},
-		From:   mfq.sql,
-		Unique: true,
-	}
-	if unique := mfq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(metadataformat.Table, metadataformat.Columns, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64))
+	_spec.From = mfq.sql
+	if unique := mfq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if mfq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := mfq.fields; len(fields) > 0 {
+	if fields := mfq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, metadataformat.FieldID)
 		for i := range fields {
@@ -469,10 +466,10 @@ func (mfq *MetadataFormatQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := mfq.limit; limit != nil {
+	if limit := mfq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := mfq.offset; offset != nil {
+	if offset := mfq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := mfq.order; len(ps) > 0 {
@@ -488,7 +485,7 @@ func (mfq *MetadataFormatQuery) querySpec() *sqlgraph.QuerySpec {
 func (mfq *MetadataFormatQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(mfq.driver.Dialect())
 	t1 := builder.Table(metadataformat.Table)
-	columns := mfq.fields
+	columns := mfq.ctx.Fields
 	if len(columns) == 0 {
 		columns = metadataformat.Columns
 	}
@@ -497,7 +494,7 @@ func (mfq *MetadataFormatQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = mfq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if mfq.unique != nil && *mfq.unique {
+	if mfq.ctx.Unique != nil && *mfq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, p := range mfq.predicates {
@@ -506,12 +503,12 @@ func (mfq *MetadataFormatQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range mfq.order {
 		p(selector)
 	}
-	if offset := mfq.offset; offset != nil {
+	if offset := mfq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := mfq.limit; limit != nil {
+	if limit := mfq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -519,13 +516,8 @@ func (mfq *MetadataFormatQuery) sqlQuery(ctx context.Context) *sql.Selector {
 
 // MetadataFormatGroupBy is the group-by builder for MetadataFormat entities.
 type MetadataFormatGroupBy struct {
-	config
 	selector
-	fields []string
-	fns    []AggregateFunc
-	// intermediate query (i.e. traversal path).
-	sql  *sql.Selector
-	path func(context.Context) (*sql.Selector, error)
+	build *MetadataFormatQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
@@ -534,58 +526,46 @@ func (mfgb *MetadataFormatGroupBy) Aggregate(fns ...AggregateFunc) *MetadataForm
 	return mfgb
 }
 
-// Scan applies the group-by query and scans the result into the given value.
+// Scan applies the selector query and scans the result into the given value.
 func (mfgb *MetadataFormatGroupBy) Scan(ctx context.Context, v any) error {
-	query, err := mfgb.path(ctx)
-	if err != nil {
+	ctx = setContextOp(ctx, mfgb.build.ctx, "GroupBy")
+	if err := mfgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	mfgb.sql = query
-	return mfgb.sqlScan(ctx, v)
+	return scanWithInterceptors[*MetadataFormatQuery, *MetadataFormatGroupBy](ctx, mfgb.build, mfgb, mfgb.build.inters, v)
 }
 
-func (mfgb *MetadataFormatGroupBy) sqlScan(ctx context.Context, v any) error {
-	for _, f := range mfgb.fields {
-		if !metadataformat.ValidColumn(f) {
-			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
-		}
+func (mfgb *MetadataFormatGroupBy) sqlScan(ctx context.Context, root *MetadataFormatQuery, v any) error {
+	selector := root.sqlQuery(ctx).Select()
+	aggregation := make([]string, 0, len(mfgb.fns))
+	for _, fn := range mfgb.fns {
+		aggregation = append(aggregation, fn(selector))
 	}
-	selector := mfgb.sqlQuery()
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(*mfgb.flds)+len(mfgb.fns))
+		for _, f := range *mfgb.flds {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	selector.GroupBy(selector.Columns(*mfgb.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := mfgb.driver.Query(ctx, query, args, rows); err != nil {
+	if err := mfgb.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
 }
 
-func (mfgb *MetadataFormatGroupBy) sqlQuery() *sql.Selector {
-	selector := mfgb.sql.Select()
-	aggregation := make([]string, 0, len(mfgb.fns))
-	for _, fn := range mfgb.fns {
-		aggregation = append(aggregation, fn(selector))
-	}
-	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(mfgb.fields)+len(mfgb.fns))
-		for _, f := range mfgb.fields {
-			columns = append(columns, selector.C(f))
-		}
-		columns = append(columns, aggregation...)
-		selector.Select(columns...)
-	}
-	return selector.GroupBy(selector.Columns(mfgb.fields...)...)
-}
-
 // MetadataFormatSelect is the builder for selecting fields of MetadataFormat entities.
 type MetadataFormatSelect struct {
 	*MetadataFormatQuery
 	selector
-	// intermediate query (i.e. traversal path).
-	sql *sql.Selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
@@ -596,26 +576,27 @@ func (mfs *MetadataFormatSelect) Aggregate(fns ...AggregateFunc) *MetadataFormat
 
 // Scan applies the selector query and scans the result into the given value.
 func (mfs *MetadataFormatSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, mfs.ctx, "Select")
 	if err := mfs.prepareQuery(ctx); err != nil {
 		return err
 	}
-	mfs.sql = mfs.MetadataFormatQuery.sqlQuery(ctx)
-	return mfs.sqlScan(ctx, v)
+	return scanWithInterceptors[*MetadataFormatQuery, *MetadataFormatSelect](ctx, mfs.MetadataFormatQuery, mfs, mfs.inters, v)
 }
 
-func (mfs *MetadataFormatSelect) sqlScan(ctx context.Context, v any) error {
+func (mfs *MetadataFormatSelect) sqlScan(ctx context.Context, root *MetadataFormatQuery, v any) error {
+	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(mfs.fns))
 	for _, fn := range mfs.fns {
-		aggregation = append(aggregation, fn(mfs.sql))
+		aggregation = append(aggregation, fn(selector))
 	}
 	switch n := len(*mfs.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
-		mfs.sql.Select(aggregation...)
+		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
-		mfs.sql.AppendSelect(aggregation...)
+		selector.AppendSelect(aggregation...)
 	}
 	rows := &sql.Rows{}
-	query, args := mfs.sql.Query()
+	query, args := selector.Query()
 	if err := mfs.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}

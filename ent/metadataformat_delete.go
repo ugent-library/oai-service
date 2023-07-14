@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"fmt"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -28,34 +27,7 @@ func (mfd *MetadataFormatDelete) Where(ps ...predicate.MetadataFormat) *Metadata
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (mfd *MetadataFormatDelete) Exec(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(mfd.hooks) == 0 {
-		affected, err = mfd.sqlExec(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*MetadataFormatMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			mfd.mutation = mutation
-			affected, err = mfd.sqlExec(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(mfd.hooks) - 1; i >= 0; i-- {
-			if mfd.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = mfd.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, mfd.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, mfd.sqlExec, mfd.mutation, mfd.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -68,15 +40,7 @@ func (mfd *MetadataFormatDelete) ExecX(ctx context.Context) int {
 }
 
 func (mfd *MetadataFormatDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table: metadataformat.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
-				Column: metadataformat.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewDeleteSpec(metadataformat.Table, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64))
 	if ps := mfd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -88,12 +52,19 @@ func (mfd *MetadataFormatDelete) sqlExec(ctx context.Context) (int, error) {
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
+	mfd.mutation.done = true
 	return affected, err
 }
 
 // MetadataFormatDeleteOne is the builder for deleting a single MetadataFormat entity.
 type MetadataFormatDeleteOne struct {
 	mfd *MetadataFormatDelete
+}
+
+// Where appends a list predicates to the MetadataFormatDelete builder.
+func (mfdo *MetadataFormatDeleteOne) Where(ps ...predicate.MetadataFormat) *MetadataFormatDeleteOne {
+	mfdo.mfd.mutation.Where(ps...)
+	return mfdo
 }
 
 // Exec executes the deletion query.
@@ -111,5 +82,7 @@ func (mfdo *MetadataFormatDeleteOne) Exec(ctx context.Context) error {
 
 // ExecX is like Exec, but panics if an error occurs.
 func (mfdo *MetadataFormatDeleteOne) ExecX(ctx context.Context) {
-	mfdo.mfd.ExecX(ctx)
+	if err := mfdo.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

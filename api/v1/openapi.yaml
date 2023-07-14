@@ -1,0 +1,64 @@
+openapi: 3.0.3
+
+info:
+  title: OAI Service
+  version: 0.0.1
+
+paths:
+  /add-record:
+    post:
+      summary: Add a record
+      description: Add a record
+      operationId: addRecord
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRecordRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddRecordResponse'
+        default:
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    AddRecordRequest:
+      type: object
+      properties:
+        identifier:
+          type: string
+        metadata_prefix:
+          type: string
+        metadata:
+          type: string
+        set_specs:
+          type: array
+          items:
+            type: string
+      required: [identifier, metadata_prefix, metadata]
+    AddRecordResponse:
+      type: object
+      properties:
+        identifier:
+          type: string
+    Error:
+      description: Represents error object
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int64
+        message:
+          type: string
+      required:
+        - code
+        - message

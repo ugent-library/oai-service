@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
 )
@@ -23,7 +24,8 @@ type MetadataFormat struct {
 	Namespace string `json:"namespace,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MetadataFormatQuery when eager-loading is set.
-	Edges MetadataFormatEdges `json:"edges"`
+	Edges        MetadataFormatEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // MetadataFormatEdges holds the relations/edges for other nodes in the graph.
@@ -54,7 +56,7 @@ func (*MetadataFormat) scanValues(columns []string) ([]any, error) {
 		case metadataformat.FieldPrefix, metadataformat.FieldSchema, metadataformat.FieldNamespace:
 			values[i] = new(sql.NullString)
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type MetadataFormat", columns[i])
+			values[i] = new(sql.UnknownType)
 		}
 	}
 	return values, nil
@@ -92,21 +94,29 @@ func (mf *MetadataFormat) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				mf.Namespace = value.String
 			}
+		default:
+			mf.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
 }
 
+// Value returns the ent.Value that was dynamically selected and assigned to the MetadataFormat.
+// This includes values selected through modifiers, order, etc.
+func (mf *MetadataFormat) Value(name string) (ent.Value, error) {
+	return mf.selectValues.Get(name)
+}
+
 // QueryRecords queries the "records" edge of the MetadataFormat entity.
 func (mf *MetadataFormat) QueryRecords() *RecordQuery {
-	return (&MetadataFormatClient{config: mf.config}).QueryRecords(mf)
+	return NewMetadataFormatClient(mf.config).QueryRecords(mf)
 }
 
 // Update returns a builder for updating this MetadataFormat.
 // Note that you need to call MetadataFormat.Unwrap() before calling this method if this MetadataFormat
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (mf *MetadataFormat) Update() *MetadataFormatUpdateOne {
-	return (&MetadataFormatClient{config: mf.config}).UpdateOne(mf)
+	return NewMetadataFormatClient(mf.config).UpdateOne(mf)
 }
 
 // Unwrap unwraps the MetadataFormat entity that was returned from a transaction after it was closed,
@@ -139,9 +149,3 @@ func (mf *MetadataFormat) String() string {
 
 // MetadataFormats is a parsable slice of MetadataFormat.
 type MetadataFormats []*MetadataFormat
-
-func (mf MetadataFormats) config(cfg config) {
-	for _i := range mf {
-		mf[_i].config = cfg
-	}
-}

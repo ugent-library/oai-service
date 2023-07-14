@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/ugent-library/oai-service/ent/set"
 )
@@ -23,7 +24,8 @@ type Set struct {
 	Description string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SetQuery when eager-loading is set.
-	Edges SetEdges `json:"edges"`
+	Edges        SetEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // SetEdges holds the relations/edges for other nodes in the graph.
@@ -54,7 +56,7 @@ func (*Set) scanValues(columns []string) ([]any, error) {
 		case set.FieldSpec, set.FieldName, set.FieldDescription:
 			values[i] = new(sql.NullString)
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type Set", columns[i])
+			values[i] = new(sql.UnknownType)
 		}
 	}
 	return values, nil
@@ -92,21 +94,29 @@ func (s *Set) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.Description = value.String
 			}
+		default:
+			s.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
 }
 
+// Value returns the ent.Value that was dynamically selected and assigned to the Set.
+// This includes values selected through modifiers, order, etc.
+func (s *Set) Value(name string) (ent.Value, error) {
+	return s.selectValues.Get(name)
+}
+
 // QueryRecords queries the "records" edge of the Set entity.
 func (s *Set) QueryRecords() *RecordQuery {
-	return (&SetClient{config: s.config}).QueryRecords(s)
+	return NewSetClient(s.config).QueryRecords(s)
 }
 
 // Update returns a builder for updating this Set.
 // Note that you need to call Set.Unwrap() before calling this method if this Set
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (s *Set) Update() *SetUpdateOne {
-	return (&SetClient{config: s.config}).UpdateOne(s)
+	return NewSetClient(s.config).UpdateOne(s)
 }
 
 // Unwrap unwraps the Set entity that was returned from a transaction after it was closed,
@@ -139,9 +149,3 @@ func (s *Set) String() string {
 
 // Sets is a parsable slice of Set.
 type Sets []*Set
-
-func (s Sets) config(cfg config) {
-	for _i := range s {
-		s[_i].config = cfg
-	}
-}

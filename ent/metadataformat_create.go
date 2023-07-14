@@ -68,49 +68,7 @@ func (mfc *MetadataFormatCreate) Mutation() *MetadataFormatMutation {
 
 // Save creates the MetadataFormat in the database.
 func (mfc *MetadataFormatCreate) Save(ctx context.Context) (*MetadataFormat, error) {
-	var (
-		err  error
-		node *MetadataFormat
-	)
-	if len(mfc.hooks) == 0 {
-		if err = mfc.check(); err != nil {
-			return nil, err
-		}
-		node, err = mfc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*MetadataFormatMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = mfc.check(); err != nil {
-				return nil, err
-			}
-			mfc.mutation = mutation
-			if node, err = mfc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			mutation.id = &node.ID
-			mutation.done = true
-			return node, err
-		})
-		for i := len(mfc.hooks) - 1; i >= 0; i-- {
-			if mfc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = mfc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, mfc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*MetadataFormat)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from MetadataFormatMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, mfc.sqlSave, mfc.mutation, mfc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -150,6 +108,9 @@ func (mfc *MetadataFormatCreate) check() error {
 }
 
 func (mfc *MetadataFormatCreate) sqlSave(ctx context.Context) (*MetadataFormat, error) {
+	if err := mfc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := mfc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, mfc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -161,19 +122,15 @@ func (mfc *MetadataFormatCreate) sqlSave(ctx context.Context) (*MetadataFormat, 
 		id := _spec.ID.Value.(int64)
 		_node.ID = int64(id)
 	}
+	mfc.mutation.id = &_node.ID
+	mfc.mutation.done = true
 	return _node, nil
 }
 
 func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.CreateSpec) {
 	var (
 		_node = &MetadataFormat{config: mfc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: metadataformat.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
-				Column: metadataformat.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(metadataformat.Table, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = mfc.conflict
 	if id, ok := mfc.mutation.ID(); ok {
@@ -200,10 +157,7 @@ func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.Create
 			Columns: []string{metadataformat.RecordsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: record.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -446,8 +400,8 @@ func (mfcb *MetadataFormatCreateBulk) Save(ctx context.Context) ([]*MetadataForm
 					return nil, err
 				}
 				builder.mutation = mutation
-				nodes[i], specs[i] = builder.createSpec()
 				var err error
+				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
 					_, err = mutators[i+1].Mutate(root, mfcb.builders[i+1].mutation)
 				} else {

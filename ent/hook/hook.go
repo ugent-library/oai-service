@@ -15,11 +15,10 @@ type MetadataFormatFunc func(context.Context, *ent.MetadataFormatMutation) (ent.
 
 // Mutate calls f(ctx, m).
 func (f MetadataFormatFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.MetadataFormatMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MetadataFormatMutation", m)
+	if mv, ok := m.(*ent.MetadataFormatMutation); ok {
+		return f(ctx, mv)
 	}
-	return f(ctx, mv)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MetadataFormatMutation", m)
 }
 
 // The RecordFunc type is an adapter to allow the use of ordinary
@@ -28,11 +27,10 @@ type RecordFunc func(context.Context, *ent.RecordMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
 func (f RecordFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.RecordMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RecordMutation", m)
+	if mv, ok := m.(*ent.RecordMutation); ok {
+		return f(ctx, mv)
 	}
-	return f(ctx, mv)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RecordMutation", m)
 }
 
 // The SetFunc type is an adapter to allow the use of ordinary
@@ -41,11 +39,10 @@ type SetFunc func(context.Context, *ent.SetMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
 func (f SetFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.SetMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SetMutation", m)
+	if mv, ok := m.(*ent.SetMutation); ok {
+		return f(ctx, mv)
 	}
-	return f(ctx, mv)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SetMutation", m)
 }
 
 // Condition is a hook condition function.

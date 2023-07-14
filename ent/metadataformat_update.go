@@ -89,34 +89,7 @@ func (mfu *MetadataFormatUpdate) RemoveRecords(r ...*Record) *MetadataFormatUpda
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (mfu *MetadataFormatUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(mfu.hooks) == 0 {
-		affected, err = mfu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*MetadataFormatMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			mfu.mutation = mutation
-			affected, err = mfu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(mfu.hooks) - 1; i >= 0; i-- {
-			if mfu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = mfu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, mfu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, mfu.sqlSave, mfu.mutation, mfu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -142,16 +115,7 @@ func (mfu *MetadataFormatUpdate) ExecX(ctx context.Context) {
 }
 
 func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   metadataformat.Table,
-			Columns: metadataformat.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
-				Column: metadataformat.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(metadataformat.Table, metadataformat.Columns, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64))
 	if ps := mfu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -176,10 +140,7 @@ func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error)
 			Columns: []string{metadataformat.RecordsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: record.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -192,10 +153,7 @@ func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error)
 			Columns: []string{metadataformat.RecordsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: record.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -211,10 +169,7 @@ func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error)
 			Columns: []string{metadataformat.RecordsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: record.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -230,6 +185,7 @@ func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		return 0, err
 	}
+	mfu.mutation.done = true
 	return n, nil
 }
 
@@ -300,6 +256,12 @@ func (mfuo *MetadataFormatUpdateOne) RemoveRecords(r ...*Record) *MetadataFormat
 	return mfuo.RemoveRecordIDs(ids...)
 }
 
+// Where appends a list predicates to the MetadataFormatUpdate builder.
+func (mfuo *MetadataFormatUpdateOne) Where(ps ...predicate.MetadataFormat) *MetadataFormatUpdateOne {
+	mfuo.mutation.Where(ps...)
+	return mfuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (mfuo *MetadataFormatUpdateOne) Select(field string, fields ...string) *MetadataFormatUpdateOne {
@@ -309,40 +271,7 @@ func (mfuo *MetadataFormatUpdateOne) Select(field string, fields ...string) *Met
 
 // Save executes the query and returns the updated MetadataFormat entity.
 func (mfuo *MetadataFormatUpdateOne) Save(ctx context.Context) (*MetadataFormat, error) {
-	var (
-		err  error
-		node *MetadataFormat
-	)
-	if len(mfuo.hooks) == 0 {
-		node, err = mfuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*MetadataFormatMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			mfuo.mutation = mutation
-			node, err = mfuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(mfuo.hooks) - 1; i >= 0; i-- {
-			if mfuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = mfuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, mfuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*MetadataFormat)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from MetadataFormatMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, mfuo.sqlSave, mfuo.mutation, mfuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -368,16 +297,7 @@ func (mfuo *MetadataFormatUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *MetadataFormat, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   metadataformat.Table,
-			Columns: metadataformat.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
-				Column: metadataformat.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(metadataformat.Table, metadataformat.Columns, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64))
 	id, ok := mfuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "MetadataFormat.id" for update`)}
@@ -419,10 +339,7 @@ func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *Metada
 			Columns: []string{metadataformat.RecordsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: record.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -435,10 +352,7 @@ func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *Metada
 			Columns: []string{metadataformat.RecordsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: record.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -454,10 +368,7 @@ func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *Metada
 			Columns: []string{metadataformat.RecordsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: record.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -476,5 +387,6 @@ func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *Metada
 		}
 		return nil, err
 	}
+	mfuo.mutation.done = true
 	return _node, nil
 }

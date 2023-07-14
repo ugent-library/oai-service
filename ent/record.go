@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
 	"github.com/ugent-library/oai-service/ent/record"
@@ -29,7 +30,8 @@ type Record struct {
 	Datestamp time.Time `json:"datestamp,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RecordQuery when eager-loading is set.
-	Edges RecordEdges `json:"edges"`
+	Edges        RecordEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // RecordEdges holds the relations/edges for other nodes in the graph.
@@ -79,7 +81,7 @@ func (*Record) scanValues(columns []string) ([]any, error) {
 		case record.FieldDatestamp:
 			values[i] = new(sql.NullTime)
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type Record", columns[i])
+			values[i] = new(sql.UnknownType)
 		}
 	}
 	return values, nil
@@ -129,26 +131,34 @@ func (r *Record) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				r.Datestamp = value.Time
 			}
+		default:
+			r.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
 }
 
+// Value returns the ent.Value that was dynamically selected and assigned to the Record.
+// This includes values selected through modifiers, order, etc.
+func (r *Record) Value(name string) (ent.Value, error) {
+	return r.selectValues.Get(name)
+}
+
 // QueryMetadataFormat queries the "metadata_format" edge of the Record entity.
 func (r *Record) QueryMetadataFormat() *MetadataFormatQuery {
-	return (&RecordClient{config: r.config}).QueryMetadataFormat(r)
+	return NewRecordClient(r.config).QueryMetadataFormat(r)
 }
 
 // QuerySets queries the "sets" edge of the Record entity.
 func (r *Record) QuerySets() *SetQuery {
-	return (&RecordClient{config: r.config}).QuerySets(r)
+	return NewRecordClient(r.config).QuerySets(r)
 }
 
 // Update returns a builder for updating this Record.
 // Note that you need to call Record.Unwrap() before calling this method if this Record
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (r *Record) Update() *RecordUpdateOne {
-	return (&RecordClient{config: r.config}).UpdateOne(r)
+	return NewRecordClient(r.config).UpdateOne(r)
 }
 
 // Unwrap unwraps the Record entity that was returned from a transaction after it was closed,
@@ -187,9 +197,3 @@ func (r *Record) String() string {
 
 // Records is a parsable slice of Record.
 type Records []*Record
-
-func (r Records) config(cfg config) {
-	for _i := range r {
-		r[_i].config = cfg
-	}
-}

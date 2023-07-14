@@ -10,13 +10,13 @@ import (
 
 	"github.com/ugent-library/oai-service/ent/migrate"
 
-	"github.com/ugent-library/oai-service/ent/metadataformat"
-	"github.com/ugent-library/oai-service/ent/record"
-	"github.com/ugent-library/oai-service/ent/set"
-
+	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/ugent-library/oai-service/ent/metadataformat"
+	"github.com/ugent-library/oai-service/ent/record"
+	"github.com/ugent-library/oai-service/ent/set"
 )
 
 // Client is the client that holds all ent builders.
@@ -34,7 +34,7 @@ type Client struct {
 
 // NewClient creates a new client configured with the given options.
 func NewClient(opts ...Option) *Client {
-	cfg := config{log: log.Println, hooks: &hooks{}}
+	cfg := config{log: log.Println, hooks: &hooks{}, inters: &inters{}}
 	cfg.options(opts...)
 	client := &Client{config: cfg}
 	client.init()
@@ -46,6 +46,55 @@ func (c *Client) init() {
 	c.MetadataFormat = NewMetadataFormatClient(c.config)
 	c.Record = NewRecordClient(c.config)
 	c.Set = NewSetClient(c.config)
+}
+
+type (
+	// config is the configuration for the client and its builder.
+	config struct {
+		// driver used for executing database requests.
+		driver dialect.Driver
+		// debug enable a debug logging.
+		debug bool
+		// log used for logging on debug mode.
+		log func(...any)
+		// hooks to execute on mutations.
+		hooks *hooks
+		// interceptors to execute on queries.
+		inters *inters
+	}
+	// Option function to configure the client.
+	Option func(*config)
+)
+
+// options applies the options on the config object.
+func (c *config) options(opts ...Option) {
+	for _, opt := range opts {
+		opt(c)
+	}
+	if c.debug {
+		c.driver = dialect.Debug(c.driver, c.log)
+	}
+}
+
+// Debug enables debug logging on the ent.Driver.
+func Debug() Option {
+	return func(c *config) {
+		c.debug = true
+	}
+}
+
+// Log sets the logging function for debug mode.
+func Log(fn func(...any)) Option {
+	return func(c *config) {
+		c.log = fn
+	}
+}
+
+// Driver configures the client driver.
+func Driver(driver dialect.Driver) Option {
+	return func(c *config) {
+		c.driver = driver
+	}
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -137,6 +186,28 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Set.Use(hooks...)
 }
 
+// Intercept adds the query interceptors to all the entity clients.
+// In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
+func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.MetadataFormat.Intercept(interceptors...)
+	c.Record.Intercept(interceptors...)
+	c.Set.Intercept(interceptors...)
+}
+
+// Mutate implements the ent.Mutator interface.
+func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
+	switch m := m.(type) {
+	case *MetadataFormatMutation:
+		return c.MetadataFormat.mutate(ctx, m)
+	case *RecordMutation:
+		return c.Record.mutate(ctx, m)
+	case *SetMutation:
+		return c.Set.mutate(ctx, m)
+	default:
+		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
 // MetadataFormatClient is a client for the MetadataFormat schema.
 type MetadataFormatClient struct {
 	config
@@ -151,6 +222,12 @@ func NewMetadataFormatClient(c config) *MetadataFormatClient {
 // A call to `Use(f, g, h)` equals to `metadataformat.Hooks(f(g(h())))`.
 func (c *MetadataFormatClient) Use(hooks ...Hook) {
 	c.hooks.MetadataFormat = append(c.hooks.MetadataFormat, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `metadataformat.Intercept(f(g(h())))`.
+func (c *MetadataFormatClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MetadataFormat = append(c.inters.MetadataFormat, interceptors...)
 }
 
 // Create returns a builder for creating a MetadataFormat entity.
@@ -205,6 +282,8 @@ func (c *MetadataFormatClient) DeleteOneID(id int64) *MetadataFormatDeleteOne {
 func (c *MetadataFormatClient) Query() *MetadataFormatQuery {
 	return &MetadataFormatQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeMetadataFormat},
+		inters: c.Interceptors(),
 	}
 }
 
@@ -224,7 +303,7 @@ func (c *MetadataFormatClient) GetX(ctx context.Context, id int64) *MetadataForm
 
 // QueryRecords queries the records edge of a MetadataFormat.
 func (c *MetadataFormatClient) QueryRecords(mf *MetadataFormat) *RecordQuery {
-	query := &RecordQuery{config: c.config}
+	query := (&RecordClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := mf.ID
 		step := sqlgraph.NewStep(
@@ -243,6 +322,26 @@ func (c *MetadataFormatClient) Hooks() []Hook {
 	return c.hooks.MetadataFormat
 }
 
+// Interceptors returns the client interceptors.
+func (c *MetadataFormatClient) Interceptors() []Interceptor {
+	return c.inters.MetadataFormat
+}
+
+func (c *MetadataFormatClient) mutate(ctx context.Context, m *MetadataFormatMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MetadataFormatCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MetadataFormatUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MetadataFormatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MetadataFormatDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown MetadataFormat mutation op: %q", m.Op())
+	}
+}
+
 // RecordClient is a client for the Record schema.
 type RecordClient struct {
 	config
@@ -257,6 +356,12 @@ func NewRecordClient(c config) *RecordClient {
 // A call to `Use(f, g, h)` equals to `record.Hooks(f(g(h())))`.
 func (c *RecordClient) Use(hooks ...Hook) {
 	c.hooks.Record = append(c.hooks.Record, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `record.Intercept(f(g(h())))`.
+func (c *RecordClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Record = append(c.inters.Record, interceptors...)
 }
 
 // Create returns a builder for creating a Record entity.
@@ -311,6 +416,8 @@ func (c *RecordClient) DeleteOneID(id int64) *RecordDeleteOne {
 func (c *RecordClient) Query() *RecordQuery {
 	return &RecordQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeRecord},
+		inters: c.Interceptors(),
 	}
 }
 
@@ -330,7 +437,7 @@ func (c *RecordClient) GetX(ctx context.Context, id int64) *Record {
 
 // QueryMetadataFormat queries the metadata_format edge of a Record.
 func (c *RecordClient) QueryMetadataFormat(r *Record) *MetadataFormatQuery {
-	query := &MetadataFormatQuery{config: c.config}
+	query := (&MetadataFormatClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := r.ID
 		step := sqlgraph.NewStep(
@@ -346,7 +453,7 @@ func (c *RecordClient) QueryMetadataFormat(r *Record) *MetadataFormatQuery {
 
 // QuerySets queries the sets edge of a Record.
 func (c *RecordClient) QuerySets(r *Record) *SetQuery {
-	query := &SetQuery{config: c.config}
+	query := (&SetClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := r.ID
 		step := sqlgraph.NewStep(
@@ -365,6 +472,26 @@ func (c *RecordClient) Hooks() []Hook {
 	return c.hooks.Record
 }
 
+// Interceptors returns the client interceptors.
+func (c *RecordClient) Interceptors() []Interceptor {
+	return c.inters.Record
+}
+
+func (c *RecordClient) mutate(ctx context.Context, m *RecordMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RecordCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RecordUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RecordDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Record mutation op: %q", m.Op())
+	}
+}
+
 // SetClient is a client for the Set schema.
 type SetClient struct {
 	config
@@ -379,6 +506,12 @@ func NewSetClient(c config) *SetClient {
 // A call to `Use(f, g, h)` equals to `set.Hooks(f(g(h())))`.
 func (c *SetClient) Use(hooks ...Hook) {
 	c.hooks.Set = append(c.hooks.Set, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `set.Intercept(f(g(h())))`.
+func (c *SetClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Set = append(c.inters.Set, interceptors...)
 }
 
 // Create returns a builder for creating a Set entity.
@@ -433,6 +566,8 @@ func (c *SetClient) DeleteOneID(id int64) *SetDeleteOne {
 func (c *SetClient) Query() *SetQuery {
 	return &SetQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeSet},
+		inters: c.Interceptors(),
 	}
 }
 
@@ -452,7 +587,7 @@ func (c *SetClient) GetX(ctx context.Context, id int64) *Set {
 
 // QueryRecords queries the records edge of a Set.
 func (c *SetClient) QueryRecords(s *Set) *RecordQuery {
-	query := &RecordQuery{config: c.config}
+	query := (&RecordClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := s.ID
 		step := sqlgraph.NewStep(
@@ -470,3 +605,33 @@ func (c *SetClient) QueryRecords(s *Set) *RecordQuery {
 func (c *SetClient) Hooks() []Hook {
 	return c.hooks.Set
 }
+
+// Interceptors returns the client interceptors.
+func (c *SetClient) Interceptors() []Interceptor {
+	return c.inters.Set
+}
+
+func (c *SetClient) mutate(ctx context.Context, m *SetMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SetCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SetUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SetUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SetDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Set mutation op: %q", m.Op())
+	}
+}
+
+// hooks and interceptors per client, for fast access.
+type (
+	hooks struct {
+		MetadataFormat, Record, Set []ent.Hook
+	}
+	inters struct {
+		MetadataFormat, Record, Set []ent.Interceptor
+	}
+)

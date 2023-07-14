@@ -1,2 +1,4 @@
 # restart app server when a .go file changes
 -s -r '\.go$' -- sh -c 'go run main.go server'
+# restart service server when a .go file changes
+-s -r '\.go$' -- sh -c 'go run main.go service'

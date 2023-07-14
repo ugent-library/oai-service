@@ -2,6 +2,11 @@
 
 package metadataformat
 
+import (
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+)
+
 const (
 	// Label holds the string label denoting the metadataformat type in the database.
 	Label = "metadata_format"
@@ -42,4 +47,48 @@ func ValidColumn(column string) bool {
 		}
 	}
 	return false
+}
+
+// OrderOption defines the ordering options for the MetadataFormat queries.
+type OrderOption func(*sql.Selector)
+
+// ByID orders the results by the id field.
+func ByID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByPrefix orders the results by the prefix field.
+func ByPrefix(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPrefix, opts...).ToFunc()
+}
+
+// BySchema orders the results by the schema field.
+func BySchema(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSchema, opts...).ToFunc()
+}
+
+// ByNamespace orders the results by the namespace field.
+func ByNamespace(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNamespace, opts...).ToFunc()
+}
+
+// ByRecordsCount orders the results by records count.
+func ByRecordsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRecordsStep(), opts...)
+	}
+}
+
+// ByRecords orders the results by records terms.
+func ByRecords(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRecordsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newRecordsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RecordsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RecordsTable, RecordsColumn),
+	)
 }

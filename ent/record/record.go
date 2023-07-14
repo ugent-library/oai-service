@@ -4,6 +4,9 @@ package record
 
 import (
 	"time"
+
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -75,3 +78,71 @@ var (
 	// UpdateDefaultDatestamp holds the default value on update for the "datestamp" field.
 	UpdateDefaultDatestamp func() time.Time
 )
+
+// OrderOption defines the ordering options for the Record queries.
+type OrderOption func(*sql.Selector)
+
+// ByID orders the results by the id field.
+func ByID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByMetadataFormatID orders the results by the metadata_format_id field.
+func ByMetadataFormatID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMetadataFormatID, opts...).ToFunc()
+}
+
+// ByIdentifier orders the results by the identifier field.
+func ByIdentifier(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIdentifier, opts...).ToFunc()
+}
+
+// ByMetadata orders the results by the metadata field.
+func ByMetadata(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMetadata, opts...).ToFunc()
+}
+
+// ByDeleted orders the results by the deleted field.
+func ByDeleted(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeleted, opts...).ToFunc()
+}
+
+// ByDatestamp orders the results by the datestamp field.
+func ByDatestamp(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDatestamp, opts...).ToFunc()
+}
+
+// ByMetadataFormatField orders the results by metadata_format field.
+func ByMetadataFormatField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMetadataFormatStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// BySetsCount orders the results by sets count.
+func BySetsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSetsStep(), opts...)
+	}
+}
+
+// BySets orders the results by sets terms.
+func BySets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSetsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newMetadataFormatStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MetadataFormatInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, MetadataFormatTable, MetadataFormatColumn),
+	)
+}
+func newSetsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SetsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, SetsTable, SetsPrimaryKey...),
+	)
+}

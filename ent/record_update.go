@@ -136,41 +136,8 @@ func (ru *RecordUpdate) RemoveSets(s ...*Set) *RecordUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (ru *RecordUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
 	ru.defaults()
-	if len(ru.hooks) == 0 {
-		if err = ru.check(); err != nil {
-			return 0, err
-		}
-		affected, err = ru.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*RecordMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = ru.check(); err != nil {
-				return 0, err
-			}
-			ru.mutation = mutation
-			affected, err = ru.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(ru.hooks) - 1; i >= 0; i-- {
-			if ru.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = ru.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, ru.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, ru.sqlSave, ru.mutation, ru.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -212,16 +179,10 @@ func (ru *RecordUpdate) check() error {
 }
 
 func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   record.Table,
-			Columns: record.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
-				Column: record.FieldID,
-			},
-		},
+	if err := ru.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(record.Table, record.Columns, sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64))
 	if ps := ru.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -252,10 +213,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: metadataformat.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -268,10 +226,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: metadataformat.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -287,10 +242,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: set.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -303,10 +255,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: set.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -322,10 +271,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: set.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -341,6 +287,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	ru.mutation.done = true
 	return n, nil
 }
 
@@ -456,6 +403,12 @@ func (ruo *RecordUpdateOne) RemoveSets(s ...*Set) *RecordUpdateOne {
 	return ruo.RemoveSetIDs(ids...)
 }
 
+// Where appends a list predicates to the RecordUpdate builder.
+func (ruo *RecordUpdateOne) Where(ps ...predicate.Record) *RecordUpdateOne {
+	ruo.mutation.Where(ps...)
+	return ruo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (ruo *RecordUpdateOne) Select(field string, fields ...string) *RecordUpdateOne {
@@ -465,47 +418,8 @@ func (ruo *RecordUpdateOne) Select(field string, fields ...string) *RecordUpdate
 
 // Save executes the query and returns the updated Record entity.
 func (ruo *RecordUpdateOne) Save(ctx context.Context) (*Record, error) {
-	var (
-		err  error
-		node *Record
-	)
 	ruo.defaults()
-	if len(ruo.hooks) == 0 {
-		if err = ruo.check(); err != nil {
-			return nil, err
-		}
-		node, err = ruo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*RecordMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = ruo.check(); err != nil {
-				return nil, err
-			}
-			ruo.mutation = mutation
-			node, err = ruo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(ruo.hooks) - 1; i >= 0; i-- {
-			if ruo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = ruo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, ruo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Record)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from RecordMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, ruo.sqlSave, ruo.mutation, ruo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -547,16 +461,10 @@ func (ruo *RecordUpdateOne) check() error {
 }
 
 func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   record.Table,
-			Columns: record.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
-				Column: record.FieldID,
-			},
-		},
+	if err := ruo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(record.Table, record.Columns, sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64))
 	id, ok := ruo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Record.id" for update`)}
@@ -604,10 +512,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: metadataformat.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -620,10 +525,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: metadataformat.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -639,10 +541,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: set.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -655,10 +554,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: set.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -674,10 +570,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: set.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -696,5 +589,6 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 		}
 		return nil, err
 	}
+	ruo.mutation.done = true
 	return _node, nil
 }

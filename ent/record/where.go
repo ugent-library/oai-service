@@ -12,434 +12,282 @@ import (
 
 // ID filters vertices based on their ID field.
 func ID(id int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.Record(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
 func IDEQ(id int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.Record(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
 func IDNEQ(id int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldID), id))
-	})
+	return predicate.Record(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
 func IDIn(ids ...int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		v := make([]any, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.In(s.C(FieldID), v...))
-	})
+	return predicate.Record(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
 func IDNotIn(ids ...int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		v := make([]any, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.NotIn(s.C(FieldID), v...))
-	})
+	return predicate.Record(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
 func IDGT(id int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldID), id))
-	})
+	return predicate.Record(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
 func IDGTE(id int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldID), id))
-	})
+	return predicate.Record(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
 func IDLT(id int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldID), id))
-	})
+	return predicate.Record(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldID), id))
-	})
+	return predicate.Record(sql.FieldLTE(FieldID, id))
 }
 
 // MetadataFormatID applies equality check predicate on the "metadata_format_id" field. It's identical to MetadataFormatIDEQ.
 func MetadataFormatID(v int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldMetadataFormatID), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldMetadataFormatID, v))
 }
 
 // Identifier applies equality check predicate on the "identifier" field. It's identical to IdentifierEQ.
 func Identifier(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldIdentifier, v))
 }
 
 // Metadata applies equality check predicate on the "metadata" field. It's identical to MetadataEQ.
 func Metadata(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldMetadata, v))
 }
 
 // Deleted applies equality check predicate on the "deleted" field. It's identical to DeletedEQ.
 func Deleted(v bool) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldDeleted), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldDeleted, v))
 }
 
 // Datestamp applies equality check predicate on the "datestamp" field. It's identical to DatestampEQ.
 func Datestamp(v time.Time) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldDatestamp), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldDatestamp, v))
 }
 
 // MetadataFormatIDEQ applies the EQ predicate on the "metadata_format_id" field.
 func MetadataFormatIDEQ(v int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldMetadataFormatID), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldMetadataFormatID, v))
 }
 
 // MetadataFormatIDNEQ applies the NEQ predicate on the "metadata_format_id" field.
 func MetadataFormatIDNEQ(v int64) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldMetadataFormatID), v))
-	})
+	return predicate.Record(sql.FieldNEQ(FieldMetadataFormatID, v))
 }
 
 // MetadataFormatIDIn applies the In predicate on the "metadata_format_id" field.
 func MetadataFormatIDIn(vs ...int64) predicate.Record {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldMetadataFormatID), v...))
-	})
+	return predicate.Record(sql.FieldIn(FieldMetadataFormatID, vs...))
 }
 
 // MetadataFormatIDNotIn applies the NotIn predicate on the "metadata_format_id" field.
 func MetadataFormatIDNotIn(vs ...int64) predicate.Record {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldMetadataFormatID), v...))
-	})
+	return predicate.Record(sql.FieldNotIn(FieldMetadataFormatID, vs...))
 }
 
 // IdentifierEQ applies the EQ predicate on the "identifier" field.
 func IdentifierEQ(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldIdentifier, v))
 }
 
 // IdentifierNEQ applies the NEQ predicate on the "identifier" field.
 func IdentifierNEQ(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldNEQ(FieldIdentifier, v))
 }
 
 // IdentifierIn applies the In predicate on the "identifier" field.
 func IdentifierIn(vs ...string) predicate.Record {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldIdentifier), v...))
-	})
+	return predicate.Record(sql.FieldIn(FieldIdentifier, vs...))
 }
 
 // IdentifierNotIn applies the NotIn predicate on the "identifier" field.
 func IdentifierNotIn(vs ...string) predicate.Record {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldIdentifier), v...))
-	})
+	return predicate.Record(sql.FieldNotIn(FieldIdentifier, vs...))
 }
 
 // IdentifierGT applies the GT predicate on the "identifier" field.
 func IdentifierGT(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldGT(FieldIdentifier, v))
 }
 
 // IdentifierGTE applies the GTE predicate on the "identifier" field.
 func IdentifierGTE(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldGTE(FieldIdentifier, v))
 }
 
 // IdentifierLT applies the LT predicate on the "identifier" field.
 func IdentifierLT(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldLT(FieldIdentifier, v))
 }
 
 // IdentifierLTE applies the LTE predicate on the "identifier" field.
 func IdentifierLTE(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldLTE(FieldIdentifier, v))
 }
 
 // IdentifierContains applies the Contains predicate on the "identifier" field.
 func IdentifierContains(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldContains(FieldIdentifier, v))
 }
 
 // IdentifierHasPrefix applies the HasPrefix predicate on the "identifier" field.
 func IdentifierHasPrefix(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldHasPrefix(FieldIdentifier, v))
 }
 
 // IdentifierHasSuffix applies the HasSuffix predicate on the "identifier" field.
 func IdentifierHasSuffix(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldHasSuffix(FieldIdentifier, v))
 }
 
 // IdentifierEqualFold applies the EqualFold predicate on the "identifier" field.
 func IdentifierEqualFold(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldEqualFold(FieldIdentifier, v))
 }
 
 // IdentifierContainsFold applies the ContainsFold predicate on the "identifier" field.
 func IdentifierContainsFold(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldIdentifier), v))
-	})
+	return predicate.Record(sql.FieldContainsFold(FieldIdentifier, v))
 }
 
 // MetadataEQ applies the EQ predicate on the "metadata" field.
 func MetadataEQ(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldMetadata, v))
 }
 
 // MetadataNEQ applies the NEQ predicate on the "metadata" field.
 func MetadataNEQ(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldNEQ(FieldMetadata, v))
 }
 
 // MetadataIn applies the In predicate on the "metadata" field.
 func MetadataIn(vs ...string) predicate.Record {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldMetadata), v...))
-	})
+	return predicate.Record(sql.FieldIn(FieldMetadata, vs...))
 }
 
 // MetadataNotIn applies the NotIn predicate on the "metadata" field.
 func MetadataNotIn(vs ...string) predicate.Record {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldMetadata), v...))
-	})
+	return predicate.Record(sql.FieldNotIn(FieldMetadata, vs...))
 }
 
 // MetadataGT applies the GT predicate on the "metadata" field.
 func MetadataGT(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldGT(FieldMetadata, v))
 }
 
 // MetadataGTE applies the GTE predicate on the "metadata" field.
 func MetadataGTE(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldGTE(FieldMetadata, v))
 }
 
 // MetadataLT applies the LT predicate on the "metadata" field.
 func MetadataLT(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldLT(FieldMetadata, v))
 }
 
 // MetadataLTE applies the LTE predicate on the "metadata" field.
 func MetadataLTE(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldLTE(FieldMetadata, v))
 }
 
 // MetadataContains applies the Contains predicate on the "metadata" field.
 func MetadataContains(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldContains(FieldMetadata, v))
 }
 
 // MetadataHasPrefix applies the HasPrefix predicate on the "metadata" field.
 func MetadataHasPrefix(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldHasPrefix(FieldMetadata, v))
 }
 
 // MetadataHasSuffix applies the HasSuffix predicate on the "metadata" field.
 func MetadataHasSuffix(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldHasSuffix(FieldMetadata, v))
 }
 
 // MetadataIsNil applies the IsNil predicate on the "metadata" field.
 func MetadataIsNil() predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldMetadata)))
-	})
+	return predicate.Record(sql.FieldIsNull(FieldMetadata))
 }
 
 // MetadataNotNil applies the NotNil predicate on the "metadata" field.
 func MetadataNotNil() predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldMetadata)))
-	})
+	return predicate.Record(sql.FieldNotNull(FieldMetadata))
 }
 
 // MetadataEqualFold applies the EqualFold predicate on the "metadata" field.
 func MetadataEqualFold(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldEqualFold(FieldMetadata, v))
 }
 
 // MetadataContainsFold applies the ContainsFold predicate on the "metadata" field.
 func MetadataContainsFold(v string) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldMetadata), v))
-	})
+	return predicate.Record(sql.FieldContainsFold(FieldMetadata, v))
 }
 
 // DeletedEQ applies the EQ predicate on the "deleted" field.
 func DeletedEQ(v bool) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldDeleted), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldDeleted, v))
 }
 
 // DeletedNEQ applies the NEQ predicate on the "deleted" field.
 func DeletedNEQ(v bool) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldDeleted), v))
-	})
+	return predicate.Record(sql.FieldNEQ(FieldDeleted, v))
 }
 
 // DatestampEQ applies the EQ predicate on the "datestamp" field.
 func DatestampEQ(v time.Time) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldDatestamp), v))
-	})
+	return predicate.Record(sql.FieldEQ(FieldDatestamp, v))
 }
 
 // DatestampNEQ applies the NEQ predicate on the "datestamp" field.
 func DatestampNEQ(v time.Time) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldDatestamp), v))
-	})
+	return predicate.Record(sql.FieldNEQ(FieldDatestamp, v))
 }
 
 // DatestampIn applies the In predicate on the "datestamp" field.
 func DatestampIn(vs ...time.Time) predicate.Record {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldDatestamp), v...))
-	})
+	return predicate.Record(sql.FieldIn(FieldDatestamp, vs...))
 }
 
 // DatestampNotIn applies the NotIn predicate on the "datestamp" field.
 func DatestampNotIn(vs ...time.Time) predicate.Record {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldDatestamp), v...))
-	})
+	return predicate.Record(sql.FieldNotIn(FieldDatestamp, vs...))
 }
 
 // DatestampGT applies the GT predicate on the "datestamp" field.
 func DatestampGT(v time.Time) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldDatestamp), v))
-	})
+	return predicate.Record(sql.FieldGT(FieldDatestamp, v))
 }
 
 // DatestampGTE applies the GTE predicate on the "datestamp" field.
 func DatestampGTE(v time.Time) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldDatestamp), v))
-	})
+	return predicate.Record(sql.FieldGTE(FieldDatestamp, v))
 }
 
 // DatestampLT applies the LT predicate on the "datestamp" field.
 func DatestampLT(v time.Time) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldDatestamp), v))
-	})
+	return predicate.Record(sql.FieldLT(FieldDatestamp, v))
 }
 
 // DatestampLTE applies the LTE predicate on the "datestamp" field.
 func DatestampLTE(v time.Time) predicate.Record {
-	return predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldDatestamp), v))
-	})
+	return predicate.Record(sql.FieldLTE(FieldDatestamp, v))
 }
 
 // HasMetadataFormat applies the HasEdge predicate on the "metadata_format" edge.
@@ -447,7 +295,6 @@ func HasMetadataFormat() predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(MetadataFormatTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, MetadataFormatTable, MetadataFormatColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
@@ -457,11 +304,7 @@ func HasMetadataFormat() predicate.Record {
 // HasMetadataFormatWith applies the HasEdge predicate on the "metadata_format" edge with a given conditions (other predicates).
 func HasMetadataFormatWith(preds ...predicate.MetadataFormat) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(MetadataFormatInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, MetadataFormatTable, MetadataFormatColumn),
-		)
+		step := newMetadataFormatStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -475,7 +318,6 @@ func HasSets() predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(SetsTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, SetsTable, SetsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
@@ -485,11 +327,7 @@ func HasSets() predicate.Record {
 // HasSetsWith applies the HasEdge predicate on the "sets" edge with a given conditions (other predicates).
 func HasSetsWith(preds ...predicate.Set) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(SetsInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, SetsTable, SetsPrimaryKey...),
-		)
+		step := newSetsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

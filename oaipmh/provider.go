@@ -231,7 +231,6 @@ func NewProvider(conf ProviderConfig) (*Provider, error) {
 	if p.Granularity == "" {
 		p.Granularity = "YYYY-MM-DDThh:mm:ssZ"
 	}
-
 	if p.Granularity == "YYYY-MM-DD" {
 		p.dateFormat = "2006-01-02"
 	} else if p.Granularity == "YYYY-MM-DDThh:mm:ssZ" {

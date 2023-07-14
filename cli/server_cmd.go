@@ -6,7 +6,6 @@ import (
 
 	"github.com/alexliesenfeld/health"
 	"github.com/bufbuild/connect-go"
-
 	grpchealth "github.com/bufbuild/connect-grpchealth-go"
 	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
 	"github.com/go-chi/chi/v5"
@@ -14,6 +13,7 @@ import (
 	"github.com/ory/graceful"
 	"github.com/spf13/cobra"
 	"github.com/ugent-library/httpx/render"
+	"github.com/ugent-library/oai-service/api/v1"
 	"github.com/ugent-library/oai-service/gen/oai/v1/oaiv1connect"
 	"github.com/ugent-library/oai-service/grpcserver"
 	"github.com/ugent-library/oai-service/oaipmh"
@@ -56,6 +56,12 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
+		// setup api
+		apiServer, err := api.NewServer(api.NewService(repo))
+		if err != nil {
+			return err
+		}
+
 		// setup mux
 		mux := chi.NewMux()
 		mux.Use(middleware.RequestID)
@@ -79,6 +85,9 @@ var serverCmd = &cobra.Command{
 				Image:  config.Version.Image,
 			})
 		})
+
+		// mount api
+		mux.Mount("/api/v1", http.StripPrefix("/api/v1", apiServer))
 
 		// mount oai provider
 		mux.Get("/oai.xsl", func(w http.ResponseWriter, r *http.Request) {

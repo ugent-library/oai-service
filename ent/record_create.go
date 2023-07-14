@@ -111,50 +111,8 @@ func (rc *RecordCreate) Mutation() *RecordMutation {
 
 // Save creates the Record in the database.
 func (rc *RecordCreate) Save(ctx context.Context) (*Record, error) {
-	var (
-		err  error
-		node *Record
-	)
 	rc.defaults()
-	if len(rc.hooks) == 0 {
-		if err = rc.check(); err != nil {
-			return nil, err
-		}
-		node, err = rc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*RecordMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = rc.check(); err != nil {
-				return nil, err
-			}
-			rc.mutation = mutation
-			if node, err = rc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			mutation.id = &node.ID
-			mutation.done = true
-			return node, err
-		})
-		for i := len(rc.hooks) - 1; i >= 0; i-- {
-			if rc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = rc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, rc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Record)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from RecordMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, rc.sqlSave, rc.mutation, rc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -212,6 +170,9 @@ func (rc *RecordCreate) check() error {
 }
 
 func (rc *RecordCreate) sqlSave(ctx context.Context) (*Record, error) {
+	if err := rc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := rc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, rc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -223,19 +184,15 @@ func (rc *RecordCreate) sqlSave(ctx context.Context) (*Record, error) {
 		id := _spec.ID.Value.(int64)
 		_node.ID = int64(id)
 	}
+	rc.mutation.id = &_node.ID
+	rc.mutation.done = true
 	return _node, nil
 }
 
 func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Record{config: rc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: record.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
-				Column: record.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(record.Table, sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = rc.conflict
 	if id, ok := rc.mutation.ID(); ok {
@@ -266,10 +223,7 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: metadataformat.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -286,10 +240,7 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 			Columns: record.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
-					Column: set.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -598,8 +549,8 @@ func (rcb *RecordCreateBulk) Save(ctx context.Context) ([]*Record, error) {
 					return nil, err
 				}
 				builder.mutation = mutation
-				nodes[i], specs[i] = builder.createSpec()
 				var err error
+				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
 					_, err = mutators[i+1].Mutate(root, rcb.builders[i+1].mutation)
 				} else {
