@@ -28,35 +28,35 @@ func (su *SetUpdate) Where(ps ...predicate.Set) *SetUpdate {
 	return su
 }
 
-// SetSpec sets the "spec" field.
-func (su *SetUpdate) SetSpec(s string) *SetUpdate {
-	su.mutation.SetSpec(s)
+// SetSetSpec sets the "set_spec" field.
+func (su *SetUpdate) SetSetSpec(s string) *SetUpdate {
+	su.mutation.SetSetSpec(s)
 	return su
 }
 
-// SetName sets the "name" field.
-func (su *SetUpdate) SetName(s string) *SetUpdate {
-	su.mutation.SetName(s)
+// SetSetName sets the "set_name" field.
+func (su *SetUpdate) SetSetName(s string) *SetUpdate {
+	su.mutation.SetSetName(s)
 	return su
 }
 
-// SetDescription sets the "description" field.
-func (su *SetUpdate) SetDescription(s string) *SetUpdate {
-	su.mutation.SetDescription(s)
+// SetSetDescription sets the "set_description" field.
+func (su *SetUpdate) SetSetDescription(s string) *SetUpdate {
+	su.mutation.SetSetDescription(s)
 	return su
 }
 
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (su *SetUpdate) SetNillableDescription(s *string) *SetUpdate {
+// SetNillableSetDescription sets the "set_description" field if the given value is not nil.
+func (su *SetUpdate) SetNillableSetDescription(s *string) *SetUpdate {
 	if s != nil {
-		su.SetDescription(*s)
+		su.SetSetDescription(*s)
 	}
 	return su
 }
 
-// ClearDescription clears the value of the "description" field.
-func (su *SetUpdate) ClearDescription() *SetUpdate {
-	su.mutation.ClearDescription()
+// ClearSetDescription clears the value of the "set_description" field.
+func (su *SetUpdate) ClearSetDescription() *SetUpdate {
+	su.mutation.ClearSetDescription()
 	return su
 }
 
@@ -137,17 +137,17 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := su.mutation.Spec(); ok {
-		_spec.SetField(set.FieldSpec, field.TypeString, value)
+	if value, ok := su.mutation.SetSpec(); ok {
+		_spec.SetField(set.FieldSetSpec, field.TypeString, value)
 	}
-	if value, ok := su.mutation.Name(); ok {
-		_spec.SetField(set.FieldName, field.TypeString, value)
+	if value, ok := su.mutation.SetName(); ok {
+		_spec.SetField(set.FieldSetName, field.TypeString, value)
 	}
-	if value, ok := su.mutation.Description(); ok {
-		_spec.SetField(set.FieldDescription, field.TypeString, value)
+	if value, ok := su.mutation.SetDescription(); ok {
+		_spec.SetField(set.FieldSetDescription, field.TypeString, value)
 	}
-	if su.mutation.DescriptionCleared() {
-		_spec.ClearField(set.FieldDescription, field.TypeString)
+	if su.mutation.SetDescriptionCleared() {
+		_spec.ClearField(set.FieldSetDescription, field.TypeString)
 	}
 	if su.mutation.RecordsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -214,35 +214,35 @@ type SetUpdateOne struct {
 	mutation *SetMutation
 }
 
-// SetSpec sets the "spec" field.
-func (suo *SetUpdateOne) SetSpec(s string) *SetUpdateOne {
-	suo.mutation.SetSpec(s)
+// SetSetSpec sets the "set_spec" field.
+func (suo *SetUpdateOne) SetSetSpec(s string) *SetUpdateOne {
+	suo.mutation.SetSetSpec(s)
 	return suo
 }
 
-// SetName sets the "name" field.
-func (suo *SetUpdateOne) SetName(s string) *SetUpdateOne {
-	suo.mutation.SetName(s)
+// SetSetName sets the "set_name" field.
+func (suo *SetUpdateOne) SetSetName(s string) *SetUpdateOne {
+	suo.mutation.SetSetName(s)
 	return suo
 }
 
-// SetDescription sets the "description" field.
-func (suo *SetUpdateOne) SetDescription(s string) *SetUpdateOne {
-	suo.mutation.SetDescription(s)
+// SetSetDescription sets the "set_description" field.
+func (suo *SetUpdateOne) SetSetDescription(s string) *SetUpdateOne {
+	suo.mutation.SetSetDescription(s)
 	return suo
 }
 
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (suo *SetUpdateOne) SetNillableDescription(s *string) *SetUpdateOne {
+// SetNillableSetDescription sets the "set_description" field if the given value is not nil.
+func (suo *SetUpdateOne) SetNillableSetDescription(s *string) *SetUpdateOne {
 	if s != nil {
-		suo.SetDescription(*s)
+		suo.SetSetDescription(*s)
 	}
 	return suo
 }
 
-// ClearDescription clears the value of the "description" field.
-func (suo *SetUpdateOne) ClearDescription() *SetUpdateOne {
-	suo.mutation.ClearDescription()
+// ClearSetDescription clears the value of the "set_description" field.
+func (suo *SetUpdateOne) ClearSetDescription() *SetUpdateOne {
+	suo.mutation.ClearSetDescription()
 	return suo
 }
 
@@ -353,17 +353,17 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 			}
 		}
 	}
-	if value, ok := suo.mutation.Spec(); ok {
-		_spec.SetField(set.FieldSpec, field.TypeString, value)
+	if value, ok := suo.mutation.SetSpec(); ok {
+		_spec.SetField(set.FieldSetSpec, field.TypeString, value)
 	}
-	if value, ok := suo.mutation.Name(); ok {
-		_spec.SetField(set.FieldName, field.TypeString, value)
+	if value, ok := suo.mutation.SetName(); ok {
+		_spec.SetField(set.FieldSetName, field.TypeString, value)
 	}
-	if value, ok := suo.mutation.Description(); ok {
-		_spec.SetField(set.FieldDescription, field.TypeString, value)
+	if value, ok := suo.mutation.SetDescription(); ok {
+		_spec.SetField(set.FieldSetDescription, field.TypeString, value)
 	}
-	if suo.mutation.DescriptionCleared() {
-		_spec.ClearField(set.FieldDescription, field.TypeString)
+	if suo.mutation.SetDescriptionCleared() {
+		_spec.ClearField(set.FieldSetDescription, field.TypeString)
 	}
 	if suo.mutation.RecordsCleared() {
 		edge := &sqlgraph.EdgeSpec{

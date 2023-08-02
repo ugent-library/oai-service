@@ -22,28 +22,28 @@ type SetCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetSpec sets the "spec" field.
-func (sc *SetCreate) SetSpec(s string) *SetCreate {
-	sc.mutation.SetSpec(s)
+// SetSetSpec sets the "set_spec" field.
+func (sc *SetCreate) SetSetSpec(s string) *SetCreate {
+	sc.mutation.SetSetSpec(s)
 	return sc
 }
 
-// SetName sets the "name" field.
-func (sc *SetCreate) SetName(s string) *SetCreate {
-	sc.mutation.SetName(s)
+// SetSetName sets the "set_name" field.
+func (sc *SetCreate) SetSetName(s string) *SetCreate {
+	sc.mutation.SetSetName(s)
 	return sc
 }
 
-// SetDescription sets the "description" field.
-func (sc *SetCreate) SetDescription(s string) *SetCreate {
-	sc.mutation.SetDescription(s)
+// SetSetDescription sets the "set_description" field.
+func (sc *SetCreate) SetSetDescription(s string) *SetCreate {
+	sc.mutation.SetSetDescription(s)
 	return sc
 }
 
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (sc *SetCreate) SetNillableDescription(s *string) *SetCreate {
+// SetNillableSetDescription sets the "set_description" field if the given value is not nil.
+func (sc *SetCreate) SetNillableSetDescription(s *string) *SetCreate {
 	if s != nil {
-		sc.SetDescription(*s)
+		sc.SetSetDescription(*s)
 	}
 	return sc
 }
@@ -103,11 +103,11 @@ func (sc *SetCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (sc *SetCreate) check() error {
-	if _, ok := sc.mutation.Spec(); !ok {
-		return &ValidationError{Name: "spec", err: errors.New(`ent: missing required field "Set.spec"`)}
+	if _, ok := sc.mutation.SetSpec(); !ok {
+		return &ValidationError{Name: "set_spec", err: errors.New(`ent: missing required field "Set.set_spec"`)}
 	}
-	if _, ok := sc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Set.name"`)}
+	if _, ok := sc.mutation.SetName(); !ok {
+		return &ValidationError{Name: "set_name", err: errors.New(`ent: missing required field "Set.set_name"`)}
 	}
 	return nil
 }
@@ -142,17 +142,17 @@ func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := sc.mutation.Spec(); ok {
-		_spec.SetField(set.FieldSpec, field.TypeString, value)
-		_node.Spec = value
+	if value, ok := sc.mutation.SetSpec(); ok {
+		_spec.SetField(set.FieldSetSpec, field.TypeString, value)
+		_node.SetSpec = value
 	}
-	if value, ok := sc.mutation.Name(); ok {
-		_spec.SetField(set.FieldName, field.TypeString, value)
-		_node.Name = value
+	if value, ok := sc.mutation.SetName(); ok {
+		_spec.SetField(set.FieldSetName, field.TypeString, value)
+		_node.SetName = value
 	}
-	if value, ok := sc.mutation.Description(); ok {
-		_spec.SetField(set.FieldDescription, field.TypeString, value)
-		_node.Description = value
+	if value, ok := sc.mutation.SetDescription(); ok {
+		_spec.SetField(set.FieldSetDescription, field.TypeString, value)
+		_node.SetDescription = value
 	}
 	if nodes := sc.mutation.RecordsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -177,7 +177,7 @@ func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Set.Create().
-//		SetSpec(v).
+//		SetSetSpec(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -186,7 +186,7 @@ func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SetUpsert) {
-//			SetSpec(v+v).
+//			SetSetSpec(v+v).
 //		}).
 //		Exec(ctx)
 func (sc *SetCreate) OnConflict(opts ...sql.ConflictOption) *SetUpsertOne {
@@ -222,45 +222,45 @@ type (
 	}
 )
 
-// SetSpec sets the "spec" field.
-func (u *SetUpsert) SetSpec(v string) *SetUpsert {
-	u.Set(set.FieldSpec, v)
+// SetSetSpec sets the "set_spec" field.
+func (u *SetUpsert) SetSetSpec(v string) *SetUpsert {
+	u.Set(set.FieldSetSpec, v)
 	return u
 }
 
-// UpdateSpec sets the "spec" field to the value that was provided on create.
-func (u *SetUpsert) UpdateSpec() *SetUpsert {
-	u.SetExcluded(set.FieldSpec)
+// UpdateSetSpec sets the "set_spec" field to the value that was provided on create.
+func (u *SetUpsert) UpdateSetSpec() *SetUpsert {
+	u.SetExcluded(set.FieldSetSpec)
 	return u
 }
 
-// SetName sets the "name" field.
-func (u *SetUpsert) SetName(v string) *SetUpsert {
-	u.Set(set.FieldName, v)
+// SetSetName sets the "set_name" field.
+func (u *SetUpsert) SetSetName(v string) *SetUpsert {
+	u.Set(set.FieldSetName, v)
 	return u
 }
 
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *SetUpsert) UpdateName() *SetUpsert {
-	u.SetExcluded(set.FieldName)
+// UpdateSetName sets the "set_name" field to the value that was provided on create.
+func (u *SetUpsert) UpdateSetName() *SetUpsert {
+	u.SetExcluded(set.FieldSetName)
 	return u
 }
 
-// SetDescription sets the "description" field.
-func (u *SetUpsert) SetDescription(v string) *SetUpsert {
-	u.Set(set.FieldDescription, v)
+// SetSetDescription sets the "set_description" field.
+func (u *SetUpsert) SetSetDescription(v string) *SetUpsert {
+	u.Set(set.FieldSetDescription, v)
 	return u
 }
 
-// UpdateDescription sets the "description" field to the value that was provided on create.
-func (u *SetUpsert) UpdateDescription() *SetUpsert {
-	u.SetExcluded(set.FieldDescription)
+// UpdateSetDescription sets the "set_description" field to the value that was provided on create.
+func (u *SetUpsert) UpdateSetDescription() *SetUpsert {
+	u.SetExcluded(set.FieldSetDescription)
 	return u
 }
 
-// ClearDescription clears the value of the "description" field.
-func (u *SetUpsert) ClearDescription() *SetUpsert {
-	u.SetNull(set.FieldDescription)
+// ClearSetDescription clears the value of the "set_description" field.
+func (u *SetUpsert) ClearSetDescription() *SetUpsert {
+	u.SetNull(set.FieldSetDescription)
 	return u
 }
 
@@ -312,52 +312,52 @@ func (u *SetUpsertOne) Update(set func(*SetUpsert)) *SetUpsertOne {
 	return u
 }
 
-// SetSpec sets the "spec" field.
-func (u *SetUpsertOne) SetSpec(v string) *SetUpsertOne {
+// SetSetSpec sets the "set_spec" field.
+func (u *SetUpsertOne) SetSetSpec(v string) *SetUpsertOne {
 	return u.Update(func(s *SetUpsert) {
-		s.SetSpec(v)
+		s.SetSetSpec(v)
 	})
 }
 
-// UpdateSpec sets the "spec" field to the value that was provided on create.
-func (u *SetUpsertOne) UpdateSpec() *SetUpsertOne {
+// UpdateSetSpec sets the "set_spec" field to the value that was provided on create.
+func (u *SetUpsertOne) UpdateSetSpec() *SetUpsertOne {
 	return u.Update(func(s *SetUpsert) {
-		s.UpdateSpec()
+		s.UpdateSetSpec()
 	})
 }
 
-// SetName sets the "name" field.
-func (u *SetUpsertOne) SetName(v string) *SetUpsertOne {
+// SetSetName sets the "set_name" field.
+func (u *SetUpsertOne) SetSetName(v string) *SetUpsertOne {
 	return u.Update(func(s *SetUpsert) {
-		s.SetName(v)
+		s.SetSetName(v)
 	})
 }
 
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *SetUpsertOne) UpdateName() *SetUpsertOne {
+// UpdateSetName sets the "set_name" field to the value that was provided on create.
+func (u *SetUpsertOne) UpdateSetName() *SetUpsertOne {
 	return u.Update(func(s *SetUpsert) {
-		s.UpdateName()
+		s.UpdateSetName()
 	})
 }
 
-// SetDescription sets the "description" field.
-func (u *SetUpsertOne) SetDescription(v string) *SetUpsertOne {
+// SetSetDescription sets the "set_description" field.
+func (u *SetUpsertOne) SetSetDescription(v string) *SetUpsertOne {
 	return u.Update(func(s *SetUpsert) {
-		s.SetDescription(v)
+		s.SetSetDescription(v)
 	})
 }
 
-// UpdateDescription sets the "description" field to the value that was provided on create.
-func (u *SetUpsertOne) UpdateDescription() *SetUpsertOne {
+// UpdateSetDescription sets the "set_description" field to the value that was provided on create.
+func (u *SetUpsertOne) UpdateSetDescription() *SetUpsertOne {
 	return u.Update(func(s *SetUpsert) {
-		s.UpdateDescription()
+		s.UpdateSetDescription()
 	})
 }
 
-// ClearDescription clears the value of the "description" field.
-func (u *SetUpsertOne) ClearDescription() *SetUpsertOne {
+// ClearSetDescription clears the value of the "set_description" field.
+func (u *SetUpsertOne) ClearSetDescription() *SetUpsertOne {
 	return u.Update(func(s *SetUpsert) {
-		s.ClearDescription()
+		s.ClearSetDescription()
 	})
 }
 
@@ -491,7 +491,7 @@ func (scb *SetCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SetUpsert) {
-//			SetSpec(v+v).
+//			SetSetSpec(v+v).
 //		}).
 //		Exec(ctx)
 func (scb *SetCreateBulk) OnConflict(opts ...sql.ConflictOption) *SetUpsertBulk {
@@ -570,52 +570,52 @@ func (u *SetUpsertBulk) Update(set func(*SetUpsert)) *SetUpsertBulk {
 	return u
 }
 
-// SetSpec sets the "spec" field.
-func (u *SetUpsertBulk) SetSpec(v string) *SetUpsertBulk {
+// SetSetSpec sets the "set_spec" field.
+func (u *SetUpsertBulk) SetSetSpec(v string) *SetUpsertBulk {
 	return u.Update(func(s *SetUpsert) {
-		s.SetSpec(v)
+		s.SetSetSpec(v)
 	})
 }
 
-// UpdateSpec sets the "spec" field to the value that was provided on create.
-func (u *SetUpsertBulk) UpdateSpec() *SetUpsertBulk {
+// UpdateSetSpec sets the "set_spec" field to the value that was provided on create.
+func (u *SetUpsertBulk) UpdateSetSpec() *SetUpsertBulk {
 	return u.Update(func(s *SetUpsert) {
-		s.UpdateSpec()
+		s.UpdateSetSpec()
 	})
 }
 
-// SetName sets the "name" field.
-func (u *SetUpsertBulk) SetName(v string) *SetUpsertBulk {
+// SetSetName sets the "set_name" field.
+func (u *SetUpsertBulk) SetSetName(v string) *SetUpsertBulk {
 	return u.Update(func(s *SetUpsert) {
-		s.SetName(v)
+		s.SetSetName(v)
 	})
 }
 
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *SetUpsertBulk) UpdateName() *SetUpsertBulk {
+// UpdateSetName sets the "set_name" field to the value that was provided on create.
+func (u *SetUpsertBulk) UpdateSetName() *SetUpsertBulk {
 	return u.Update(func(s *SetUpsert) {
-		s.UpdateName()
+		s.UpdateSetName()
 	})
 }
 
-// SetDescription sets the "description" field.
-func (u *SetUpsertBulk) SetDescription(v string) *SetUpsertBulk {
+// SetSetDescription sets the "set_description" field.
+func (u *SetUpsertBulk) SetSetDescription(v string) *SetUpsertBulk {
 	return u.Update(func(s *SetUpsert) {
-		s.SetDescription(v)
+		s.SetSetDescription(v)
 	})
 }
 
-// UpdateDescription sets the "description" field to the value that was provided on create.
-func (u *SetUpsertBulk) UpdateDescription() *SetUpsertBulk {
+// UpdateSetDescription sets the "set_description" field to the value that was provided on create.
+func (u *SetUpsertBulk) UpdateSetDescription() *SetUpsertBulk {
 	return u.Update(func(s *SetUpsert) {
-		s.UpdateDescription()
+		s.UpdateSetDescription()
 	})
 }
 
-// ClearDescription clears the value of the "description" field.
-func (u *SetUpsertBulk) ClearDescription() *SetUpsertBulk {
+// ClearSetDescription clears the value of the "set_description" field.
+func (u *SetUpsertBulk) ClearSetDescription() *SetUpsertBulk {
 	return u.Update(func(s *SetUpsert) {
-		s.ClearDescription()
+		s.ClearSetDescription()
 	})
 }
 

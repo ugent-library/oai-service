@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/ugent-library/oai-service/ent/metadata"
 	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/schema"
 )
@@ -13,16 +14,18 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	metadataFields := schema.Metadata{}.Fields()
+	_ = metadataFields
+	// metadataDescDatestamp is the schema descriptor for datestamp field.
+	metadataDescDatestamp := metadataFields[4].Descriptor()
+	// metadata.DefaultDatestamp holds the default value on creation for the datestamp field.
+	metadata.DefaultDatestamp = metadataDescDatestamp.Default.(func() time.Time)
+	// metadata.UpdateDefaultDatestamp holds the default value on update for the datestamp field.
+	metadata.UpdateDefaultDatestamp = metadataDescDatestamp.UpdateDefault.(func() time.Time)
 	recordFields := schema.Record{}.Fields()
 	_ = recordFields
 	// recordDescDeleted is the schema descriptor for deleted field.
-	recordDescDeleted := recordFields[4].Descriptor()
+	recordDescDeleted := recordFields[2].Descriptor()
 	// record.DefaultDeleted holds the default value on creation for the deleted field.
 	record.DefaultDeleted = recordDescDeleted.Default.(bool)
-	// recordDescDatestamp is the schema descriptor for datestamp field.
-	recordDescDatestamp := recordFields[5].Descriptor()
-	// record.DefaultDatestamp holds the default value on creation for the datestamp field.
-	record.DefaultDatestamp = recordDescDatestamp.Default.(func() time.Time)
-	// record.UpdateDefaultDatestamp holds the default value on update for the datestamp field.
-	record.UpdateDefaultDatestamp = recordDescDatestamp.UpdateDefault.(func() time.Time)
 }

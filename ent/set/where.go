@@ -53,224 +53,224 @@ func IDLTE(id int64) predicate.Set {
 	return predicate.Set(sql.FieldLTE(FieldID, id))
 }
 
-// Spec applies equality check predicate on the "spec" field. It's identical to SpecEQ.
-func Spec(v string) predicate.Set {
-	return predicate.Set(sql.FieldEQ(FieldSpec, v))
+// SetSpec applies equality check predicate on the "set_spec" field. It's identical to SetSpecEQ.
+func SetSpec(v string) predicate.Set {
+	return predicate.Set(sql.FieldEQ(FieldSetSpec, v))
 }
 
-// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
-func Name(v string) predicate.Set {
-	return predicate.Set(sql.FieldEQ(FieldName, v))
+// SetName applies equality check predicate on the "set_name" field. It's identical to SetNameEQ.
+func SetName(v string) predicate.Set {
+	return predicate.Set(sql.FieldEQ(FieldSetName, v))
 }
 
-// Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
-func Description(v string) predicate.Set {
-	return predicate.Set(sql.FieldEQ(FieldDescription, v))
+// SetDescription applies equality check predicate on the "set_description" field. It's identical to SetDescriptionEQ.
+func SetDescription(v string) predicate.Set {
+	return predicate.Set(sql.FieldEQ(FieldSetDescription, v))
 }
 
-// SpecEQ applies the EQ predicate on the "spec" field.
-func SpecEQ(v string) predicate.Set {
-	return predicate.Set(sql.FieldEQ(FieldSpec, v))
+// SetSpecEQ applies the EQ predicate on the "set_spec" field.
+func SetSpecEQ(v string) predicate.Set {
+	return predicate.Set(sql.FieldEQ(FieldSetSpec, v))
 }
 
-// SpecNEQ applies the NEQ predicate on the "spec" field.
-func SpecNEQ(v string) predicate.Set {
-	return predicate.Set(sql.FieldNEQ(FieldSpec, v))
+// SetSpecNEQ applies the NEQ predicate on the "set_spec" field.
+func SetSpecNEQ(v string) predicate.Set {
+	return predicate.Set(sql.FieldNEQ(FieldSetSpec, v))
 }
 
-// SpecIn applies the In predicate on the "spec" field.
-func SpecIn(vs ...string) predicate.Set {
-	return predicate.Set(sql.FieldIn(FieldSpec, vs...))
+// SetSpecIn applies the In predicate on the "set_spec" field.
+func SetSpecIn(vs ...string) predicate.Set {
+	return predicate.Set(sql.FieldIn(FieldSetSpec, vs...))
 }
 
-// SpecNotIn applies the NotIn predicate on the "spec" field.
-func SpecNotIn(vs ...string) predicate.Set {
-	return predicate.Set(sql.FieldNotIn(FieldSpec, vs...))
+// SetSpecNotIn applies the NotIn predicate on the "set_spec" field.
+func SetSpecNotIn(vs ...string) predicate.Set {
+	return predicate.Set(sql.FieldNotIn(FieldSetSpec, vs...))
 }
 
-// SpecGT applies the GT predicate on the "spec" field.
-func SpecGT(v string) predicate.Set {
-	return predicate.Set(sql.FieldGT(FieldSpec, v))
+// SetSpecGT applies the GT predicate on the "set_spec" field.
+func SetSpecGT(v string) predicate.Set {
+	return predicate.Set(sql.FieldGT(FieldSetSpec, v))
 }
 
-// SpecGTE applies the GTE predicate on the "spec" field.
-func SpecGTE(v string) predicate.Set {
-	return predicate.Set(sql.FieldGTE(FieldSpec, v))
+// SetSpecGTE applies the GTE predicate on the "set_spec" field.
+func SetSpecGTE(v string) predicate.Set {
+	return predicate.Set(sql.FieldGTE(FieldSetSpec, v))
 }
 
-// SpecLT applies the LT predicate on the "spec" field.
-func SpecLT(v string) predicate.Set {
-	return predicate.Set(sql.FieldLT(FieldSpec, v))
+// SetSpecLT applies the LT predicate on the "set_spec" field.
+func SetSpecLT(v string) predicate.Set {
+	return predicate.Set(sql.FieldLT(FieldSetSpec, v))
 }
 
-// SpecLTE applies the LTE predicate on the "spec" field.
-func SpecLTE(v string) predicate.Set {
-	return predicate.Set(sql.FieldLTE(FieldSpec, v))
+// SetSpecLTE applies the LTE predicate on the "set_spec" field.
+func SetSpecLTE(v string) predicate.Set {
+	return predicate.Set(sql.FieldLTE(FieldSetSpec, v))
 }
 
-// SpecContains applies the Contains predicate on the "spec" field.
-func SpecContains(v string) predicate.Set {
-	return predicate.Set(sql.FieldContains(FieldSpec, v))
+// SetSpecContains applies the Contains predicate on the "set_spec" field.
+func SetSpecContains(v string) predicate.Set {
+	return predicate.Set(sql.FieldContains(FieldSetSpec, v))
 }
 
-// SpecHasPrefix applies the HasPrefix predicate on the "spec" field.
-func SpecHasPrefix(v string) predicate.Set {
-	return predicate.Set(sql.FieldHasPrefix(FieldSpec, v))
+// SetSpecHasPrefix applies the HasPrefix predicate on the "set_spec" field.
+func SetSpecHasPrefix(v string) predicate.Set {
+	return predicate.Set(sql.FieldHasPrefix(FieldSetSpec, v))
 }
 
-// SpecHasSuffix applies the HasSuffix predicate on the "spec" field.
-func SpecHasSuffix(v string) predicate.Set {
-	return predicate.Set(sql.FieldHasSuffix(FieldSpec, v))
+// SetSpecHasSuffix applies the HasSuffix predicate on the "set_spec" field.
+func SetSpecHasSuffix(v string) predicate.Set {
+	return predicate.Set(sql.FieldHasSuffix(FieldSetSpec, v))
 }
 
-// SpecEqualFold applies the EqualFold predicate on the "spec" field.
-func SpecEqualFold(v string) predicate.Set {
-	return predicate.Set(sql.FieldEqualFold(FieldSpec, v))
+// SetSpecEqualFold applies the EqualFold predicate on the "set_spec" field.
+func SetSpecEqualFold(v string) predicate.Set {
+	return predicate.Set(sql.FieldEqualFold(FieldSetSpec, v))
 }
 
-// SpecContainsFold applies the ContainsFold predicate on the "spec" field.
-func SpecContainsFold(v string) predicate.Set {
-	return predicate.Set(sql.FieldContainsFold(FieldSpec, v))
+// SetSpecContainsFold applies the ContainsFold predicate on the "set_spec" field.
+func SetSpecContainsFold(v string) predicate.Set {
+	return predicate.Set(sql.FieldContainsFold(FieldSetSpec, v))
 }
 
-// NameEQ applies the EQ predicate on the "name" field.
-func NameEQ(v string) predicate.Set {
-	return predicate.Set(sql.FieldEQ(FieldName, v))
+// SetNameEQ applies the EQ predicate on the "set_name" field.
+func SetNameEQ(v string) predicate.Set {
+	return predicate.Set(sql.FieldEQ(FieldSetName, v))
 }
 
-// NameNEQ applies the NEQ predicate on the "name" field.
-func NameNEQ(v string) predicate.Set {
-	return predicate.Set(sql.FieldNEQ(FieldName, v))
+// SetNameNEQ applies the NEQ predicate on the "set_name" field.
+func SetNameNEQ(v string) predicate.Set {
+	return predicate.Set(sql.FieldNEQ(FieldSetName, v))
 }
 
-// NameIn applies the In predicate on the "name" field.
-func NameIn(vs ...string) predicate.Set {
-	return predicate.Set(sql.FieldIn(FieldName, vs...))
+// SetNameIn applies the In predicate on the "set_name" field.
+func SetNameIn(vs ...string) predicate.Set {
+	return predicate.Set(sql.FieldIn(FieldSetName, vs...))
 }
 
-// NameNotIn applies the NotIn predicate on the "name" field.
-func NameNotIn(vs ...string) predicate.Set {
-	return predicate.Set(sql.FieldNotIn(FieldName, vs...))
+// SetNameNotIn applies the NotIn predicate on the "set_name" field.
+func SetNameNotIn(vs ...string) predicate.Set {
+	return predicate.Set(sql.FieldNotIn(FieldSetName, vs...))
 }
 
-// NameGT applies the GT predicate on the "name" field.
-func NameGT(v string) predicate.Set {
-	return predicate.Set(sql.FieldGT(FieldName, v))
+// SetNameGT applies the GT predicate on the "set_name" field.
+func SetNameGT(v string) predicate.Set {
+	return predicate.Set(sql.FieldGT(FieldSetName, v))
 }
 
-// NameGTE applies the GTE predicate on the "name" field.
-func NameGTE(v string) predicate.Set {
-	return predicate.Set(sql.FieldGTE(FieldName, v))
+// SetNameGTE applies the GTE predicate on the "set_name" field.
+func SetNameGTE(v string) predicate.Set {
+	return predicate.Set(sql.FieldGTE(FieldSetName, v))
 }
 
-// NameLT applies the LT predicate on the "name" field.
-func NameLT(v string) predicate.Set {
-	return predicate.Set(sql.FieldLT(FieldName, v))
+// SetNameLT applies the LT predicate on the "set_name" field.
+func SetNameLT(v string) predicate.Set {
+	return predicate.Set(sql.FieldLT(FieldSetName, v))
 }
 
-// NameLTE applies the LTE predicate on the "name" field.
-func NameLTE(v string) predicate.Set {
-	return predicate.Set(sql.FieldLTE(FieldName, v))
+// SetNameLTE applies the LTE predicate on the "set_name" field.
+func SetNameLTE(v string) predicate.Set {
+	return predicate.Set(sql.FieldLTE(FieldSetName, v))
 }
 
-// NameContains applies the Contains predicate on the "name" field.
-func NameContains(v string) predicate.Set {
-	return predicate.Set(sql.FieldContains(FieldName, v))
+// SetNameContains applies the Contains predicate on the "set_name" field.
+func SetNameContains(v string) predicate.Set {
+	return predicate.Set(sql.FieldContains(FieldSetName, v))
 }
 
-// NameHasPrefix applies the HasPrefix predicate on the "name" field.
-func NameHasPrefix(v string) predicate.Set {
-	return predicate.Set(sql.FieldHasPrefix(FieldName, v))
+// SetNameHasPrefix applies the HasPrefix predicate on the "set_name" field.
+func SetNameHasPrefix(v string) predicate.Set {
+	return predicate.Set(sql.FieldHasPrefix(FieldSetName, v))
 }
 
-// NameHasSuffix applies the HasSuffix predicate on the "name" field.
-func NameHasSuffix(v string) predicate.Set {
-	return predicate.Set(sql.FieldHasSuffix(FieldName, v))
+// SetNameHasSuffix applies the HasSuffix predicate on the "set_name" field.
+func SetNameHasSuffix(v string) predicate.Set {
+	return predicate.Set(sql.FieldHasSuffix(FieldSetName, v))
 }
 
-// NameEqualFold applies the EqualFold predicate on the "name" field.
-func NameEqualFold(v string) predicate.Set {
-	return predicate.Set(sql.FieldEqualFold(FieldName, v))
+// SetNameEqualFold applies the EqualFold predicate on the "set_name" field.
+func SetNameEqualFold(v string) predicate.Set {
+	return predicate.Set(sql.FieldEqualFold(FieldSetName, v))
 }
 
-// NameContainsFold applies the ContainsFold predicate on the "name" field.
-func NameContainsFold(v string) predicate.Set {
-	return predicate.Set(sql.FieldContainsFold(FieldName, v))
+// SetNameContainsFold applies the ContainsFold predicate on the "set_name" field.
+func SetNameContainsFold(v string) predicate.Set {
+	return predicate.Set(sql.FieldContainsFold(FieldSetName, v))
 }
 
-// DescriptionEQ applies the EQ predicate on the "description" field.
-func DescriptionEQ(v string) predicate.Set {
-	return predicate.Set(sql.FieldEQ(FieldDescription, v))
+// SetDescriptionEQ applies the EQ predicate on the "set_description" field.
+func SetDescriptionEQ(v string) predicate.Set {
+	return predicate.Set(sql.FieldEQ(FieldSetDescription, v))
 }
 
-// DescriptionNEQ applies the NEQ predicate on the "description" field.
-func DescriptionNEQ(v string) predicate.Set {
-	return predicate.Set(sql.FieldNEQ(FieldDescription, v))
+// SetDescriptionNEQ applies the NEQ predicate on the "set_description" field.
+func SetDescriptionNEQ(v string) predicate.Set {
+	return predicate.Set(sql.FieldNEQ(FieldSetDescription, v))
 }
 
-// DescriptionIn applies the In predicate on the "description" field.
-func DescriptionIn(vs ...string) predicate.Set {
-	return predicate.Set(sql.FieldIn(FieldDescription, vs...))
+// SetDescriptionIn applies the In predicate on the "set_description" field.
+func SetDescriptionIn(vs ...string) predicate.Set {
+	return predicate.Set(sql.FieldIn(FieldSetDescription, vs...))
 }
 
-// DescriptionNotIn applies the NotIn predicate on the "description" field.
-func DescriptionNotIn(vs ...string) predicate.Set {
-	return predicate.Set(sql.FieldNotIn(FieldDescription, vs...))
+// SetDescriptionNotIn applies the NotIn predicate on the "set_description" field.
+func SetDescriptionNotIn(vs ...string) predicate.Set {
+	return predicate.Set(sql.FieldNotIn(FieldSetDescription, vs...))
 }
 
-// DescriptionGT applies the GT predicate on the "description" field.
-func DescriptionGT(v string) predicate.Set {
-	return predicate.Set(sql.FieldGT(FieldDescription, v))
+// SetDescriptionGT applies the GT predicate on the "set_description" field.
+func SetDescriptionGT(v string) predicate.Set {
+	return predicate.Set(sql.FieldGT(FieldSetDescription, v))
 }
 
-// DescriptionGTE applies the GTE predicate on the "description" field.
-func DescriptionGTE(v string) predicate.Set {
-	return predicate.Set(sql.FieldGTE(FieldDescription, v))
+// SetDescriptionGTE applies the GTE predicate on the "set_description" field.
+func SetDescriptionGTE(v string) predicate.Set {
+	return predicate.Set(sql.FieldGTE(FieldSetDescription, v))
 }
 
-// DescriptionLT applies the LT predicate on the "description" field.
-func DescriptionLT(v string) predicate.Set {
-	return predicate.Set(sql.FieldLT(FieldDescription, v))
+// SetDescriptionLT applies the LT predicate on the "set_description" field.
+func SetDescriptionLT(v string) predicate.Set {
+	return predicate.Set(sql.FieldLT(FieldSetDescription, v))
 }
 
-// DescriptionLTE applies the LTE predicate on the "description" field.
-func DescriptionLTE(v string) predicate.Set {
-	return predicate.Set(sql.FieldLTE(FieldDescription, v))
+// SetDescriptionLTE applies the LTE predicate on the "set_description" field.
+func SetDescriptionLTE(v string) predicate.Set {
+	return predicate.Set(sql.FieldLTE(FieldSetDescription, v))
 }
 
-// DescriptionContains applies the Contains predicate on the "description" field.
-func DescriptionContains(v string) predicate.Set {
-	return predicate.Set(sql.FieldContains(FieldDescription, v))
+// SetDescriptionContains applies the Contains predicate on the "set_description" field.
+func SetDescriptionContains(v string) predicate.Set {
+	return predicate.Set(sql.FieldContains(FieldSetDescription, v))
 }
 
-// DescriptionHasPrefix applies the HasPrefix predicate on the "description" field.
-func DescriptionHasPrefix(v string) predicate.Set {
-	return predicate.Set(sql.FieldHasPrefix(FieldDescription, v))
+// SetDescriptionHasPrefix applies the HasPrefix predicate on the "set_description" field.
+func SetDescriptionHasPrefix(v string) predicate.Set {
+	return predicate.Set(sql.FieldHasPrefix(FieldSetDescription, v))
 }
 
-// DescriptionHasSuffix applies the HasSuffix predicate on the "description" field.
-func DescriptionHasSuffix(v string) predicate.Set {
-	return predicate.Set(sql.FieldHasSuffix(FieldDescription, v))
+// SetDescriptionHasSuffix applies the HasSuffix predicate on the "set_description" field.
+func SetDescriptionHasSuffix(v string) predicate.Set {
+	return predicate.Set(sql.FieldHasSuffix(FieldSetDescription, v))
 }
 
-// DescriptionIsNil applies the IsNil predicate on the "description" field.
-func DescriptionIsNil() predicate.Set {
-	return predicate.Set(sql.FieldIsNull(FieldDescription))
+// SetDescriptionIsNil applies the IsNil predicate on the "set_description" field.
+func SetDescriptionIsNil() predicate.Set {
+	return predicate.Set(sql.FieldIsNull(FieldSetDescription))
 }
 
-// DescriptionNotNil applies the NotNil predicate on the "description" field.
-func DescriptionNotNil() predicate.Set {
-	return predicate.Set(sql.FieldNotNull(FieldDescription))
+// SetDescriptionNotNil applies the NotNil predicate on the "set_description" field.
+func SetDescriptionNotNil() predicate.Set {
+	return predicate.Set(sql.FieldNotNull(FieldSetDescription))
 }
 
-// DescriptionEqualFold applies the EqualFold predicate on the "description" field.
-func DescriptionEqualFold(v string) predicate.Set {
-	return predicate.Set(sql.FieldEqualFold(FieldDescription, v))
+// SetDescriptionEqualFold applies the EqualFold predicate on the "set_description" field.
+func SetDescriptionEqualFold(v string) predicate.Set {
+	return predicate.Set(sql.FieldEqualFold(FieldSetDescription, v))
 }
 
-// DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
-func DescriptionContainsFold(v string) predicate.Set {
-	return predicate.Set(sql.FieldContainsFold(FieldDescription, v))
+// SetDescriptionContainsFold applies the ContainsFold predicate on the "set_description" field.
+func SetDescriptionContainsFold(v string) predicate.Set {
+	return predicate.Set(sql.FieldContainsFold(FieldSetDescription, v))
 }
 
 // HasRecords applies the HasEdge predicate on the "records" edge.

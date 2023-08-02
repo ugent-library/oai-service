@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -16,32 +14,22 @@ type Record struct {
 func (Record) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id"),
-		field.Int64("metadata_format_id"),
 		field.String("identifier"),
-		field.String("metadata").
-			Optional(),
 		field.Bool("deleted").
 			Default(false),
-		field.Time("datestamp").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 
 func (Record) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("metadata_format", MetadataFormat.Type).
-			Ref("records").
-			Unique().
-			Required().
-			Field("metadata_format_id"),
+		edge.To("metadata", Metadata.Type),
 		edge.To("sets", Set.Type),
 	}
 }
 
 func (Record) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("identifier", "metadata_format_id").
+		index.Fields("identifier").
 			Unique(),
 	}
 }

@@ -3,17 +3,58 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
 
 var (
+	// MetadataColumns holds the columns for the "metadata" table.
+	MetadataColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "metadata", Type: field.TypeString},
+		{Name: "datestamp", Type: field.TypeTime},
+		{Name: "metadata_format_id", Type: field.TypeInt64},
+		{Name: "record_id", Type: field.TypeInt64},
+	}
+	// MetadataTable holds the schema information for the "metadata" table.
+	MetadataTable = &schema.Table{
+		Name:       "metadata",
+		Columns:    MetadataColumns,
+		PrimaryKey: []*schema.Column{MetadataColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "metadata_metadata_formats_metadata",
+				Columns:    []*schema.Column{MetadataColumns[3]},
+				RefColumns: []*schema.Column{MetadataFormatsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "metadata_records_metadata",
+				Columns:    []*schema.Column{MetadataColumns[4]},
+				RefColumns: []*schema.Column{RecordsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "metadata_record_id_metadata_format_id",
+				Unique:  true,
+				Columns: []*schema.Column{MetadataColumns[4], MetadataColumns[3]},
+			},
+			{
+				Name:    "metadata_datestamp",
+				Unique:  false,
+				Columns: []*schema.Column{MetadataColumns[2]},
+			},
+		},
+	}
 	// MetadataFormatsColumns holds the columns for the "metadata_formats" table.
 	MetadataFormatsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "prefix", Type: field.TypeString, Unique: true},
+		{Name: "metadata_prefix", Type: field.TypeString, Unique: true},
 		{Name: "schema", Type: field.TypeString},
-		{Name: "namespace", Type: field.TypeString},
+		{Name: "metadata_namespace", Type: field.TypeString},
 	}
 	// MetadataFormatsTable holds the schema information for the "metadata_formats" table.
 	MetadataFormatsTable = &schema.Table{
@@ -25,38 +66,27 @@ var (
 	RecordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "identifier", Type: field.TypeString},
-		{Name: "metadata", Type: field.TypeString, Nullable: true},
 		{Name: "deleted", Type: field.TypeBool, Default: false},
-		{Name: "datestamp", Type: field.TypeTime},
-		{Name: "metadata_format_id", Type: field.TypeInt64},
 	}
 	// RecordsTable holds the schema information for the "records" table.
 	RecordsTable = &schema.Table{
 		Name:       "records",
 		Columns:    RecordsColumns,
 		PrimaryKey: []*schema.Column{RecordsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "records_metadata_formats_records",
-				Columns:    []*schema.Column{RecordsColumns[5]},
-				RefColumns: []*schema.Column{MetadataFormatsColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "record_identifier_metadata_format_id",
+				Name:    "record_identifier",
 				Unique:  true,
-				Columns: []*schema.Column{RecordsColumns[1], RecordsColumns[5]},
+				Columns: []*schema.Column{RecordsColumns[1]},
 			},
 		},
 	}
 	// SetsColumns holds the columns for the "sets" table.
 	SetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "spec", Type: field.TypeString, Unique: true},
-		{Name: "name", Type: field.TypeString},
-		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "set_spec", Type: field.TypeString, Unique: true},
+		{Name: "set_name", Type: field.TypeString},
+		{Name: "set_description", Type: field.TypeString, Nullable: true},
 	}
 	// SetsTable holds the schema information for the "sets" table.
 	SetsTable = &schema.Table{
@@ -91,6 +121,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		MetadataTable,
 		MetadataFormatsTable,
 		RecordsTable,
 		SetsTable,
@@ -99,7 +130,11 @@ var (
 )
 
 func init() {
-	RecordsTable.ForeignKeys[0].RefTable = MetadataFormatsTable
+	MetadataTable.ForeignKeys[0].RefTable = MetadataFormatsTable
+	MetadataTable.ForeignKeys[1].RefTable = RecordsTable
+	MetadataTable.Annotation = &entsql.Annotation{
+		Table: "metadata",
+	}
 	RecordSetsTable.ForeignKeys[0].RefTable = RecordsTable
 	RecordSetsTable.ForeignKeys[1].RefTable = SetsTable
 }

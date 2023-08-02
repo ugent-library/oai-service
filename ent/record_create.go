@@ -6,12 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/ugent-library/oai-service/ent/metadataformat"
+	"github.com/ugent-library/oai-service/ent/metadata"
 	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/set"
 )
@@ -24,29 +23,9 @@ type RecordCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetMetadataFormatID sets the "metadata_format_id" field.
-func (rc *RecordCreate) SetMetadataFormatID(i int64) *RecordCreate {
-	rc.mutation.SetMetadataFormatID(i)
-	return rc
-}
-
 // SetIdentifier sets the "identifier" field.
 func (rc *RecordCreate) SetIdentifier(s string) *RecordCreate {
 	rc.mutation.SetIdentifier(s)
-	return rc
-}
-
-// SetMetadata sets the "metadata" field.
-func (rc *RecordCreate) SetMetadata(s string) *RecordCreate {
-	rc.mutation.SetMetadata(s)
-	return rc
-}
-
-// SetNillableMetadata sets the "metadata" field if the given value is not nil.
-func (rc *RecordCreate) SetNillableMetadata(s *string) *RecordCreate {
-	if s != nil {
-		rc.SetMetadata(*s)
-	}
 	return rc
 }
 
@@ -64,29 +43,25 @@ func (rc *RecordCreate) SetNillableDeleted(b *bool) *RecordCreate {
 	return rc
 }
 
-// SetDatestamp sets the "datestamp" field.
-func (rc *RecordCreate) SetDatestamp(t time.Time) *RecordCreate {
-	rc.mutation.SetDatestamp(t)
-	return rc
-}
-
-// SetNillableDatestamp sets the "datestamp" field if the given value is not nil.
-func (rc *RecordCreate) SetNillableDatestamp(t *time.Time) *RecordCreate {
-	if t != nil {
-		rc.SetDatestamp(*t)
-	}
-	return rc
-}
-
 // SetID sets the "id" field.
 func (rc *RecordCreate) SetID(i int64) *RecordCreate {
 	rc.mutation.SetID(i)
 	return rc
 }
 
-// SetMetadataFormat sets the "metadata_format" edge to the MetadataFormat entity.
-func (rc *RecordCreate) SetMetadataFormat(m *MetadataFormat) *RecordCreate {
-	return rc.SetMetadataFormatID(m.ID)
+// AddMetadatumIDs adds the "metadata" edge to the Metadata entity by IDs.
+func (rc *RecordCreate) AddMetadatumIDs(ids ...int64) *RecordCreate {
+	rc.mutation.AddMetadatumIDs(ids...)
+	return rc
+}
+
+// AddMetadata adds the "metadata" edges to the Metadata entity.
+func (rc *RecordCreate) AddMetadata(m ...*Metadata) *RecordCreate {
+	ids := make([]int64, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return rc.AddMetadatumIDs(ids...)
 }
 
 // AddSetIDs adds the "sets" edge to the Set entity by IDs.
@@ -143,28 +118,15 @@ func (rc *RecordCreate) defaults() {
 		v := record.DefaultDeleted
 		rc.mutation.SetDeleted(v)
 	}
-	if _, ok := rc.mutation.Datestamp(); !ok {
-		v := record.DefaultDatestamp()
-		rc.mutation.SetDatestamp(v)
-	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (rc *RecordCreate) check() error {
-	if _, ok := rc.mutation.MetadataFormatID(); !ok {
-		return &ValidationError{Name: "metadata_format_id", err: errors.New(`ent: missing required field "Record.metadata_format_id"`)}
-	}
 	if _, ok := rc.mutation.Identifier(); !ok {
 		return &ValidationError{Name: "identifier", err: errors.New(`ent: missing required field "Record.identifier"`)}
 	}
 	if _, ok := rc.mutation.Deleted(); !ok {
 		return &ValidationError{Name: "deleted", err: errors.New(`ent: missing required field "Record.deleted"`)}
-	}
-	if _, ok := rc.mutation.Datestamp(); !ok {
-		return &ValidationError{Name: "datestamp", err: errors.New(`ent: missing required field "Record.datestamp"`)}
-	}
-	if _, ok := rc.mutation.MetadataFormatID(); !ok {
-		return &ValidationError{Name: "metadata_format", err: errors.New(`ent: missing required edge "Record.metadata_format"`)}
 	}
 	return nil
 }
@@ -203,33 +165,24 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 		_spec.SetField(record.FieldIdentifier, field.TypeString, value)
 		_node.Identifier = value
 	}
-	if value, ok := rc.mutation.Metadata(); ok {
-		_spec.SetField(record.FieldMetadata, field.TypeString, value)
-		_node.Metadata = value
-	}
 	if value, ok := rc.mutation.Deleted(); ok {
 		_spec.SetField(record.FieldDeleted, field.TypeBool, value)
 		_node.Deleted = value
 	}
-	if value, ok := rc.mutation.Datestamp(); ok {
-		_spec.SetField(record.FieldDatestamp, field.TypeTime, value)
-		_node.Datestamp = value
-	}
-	if nodes := rc.mutation.MetadataFormatIDs(); len(nodes) > 0 {
+	if nodes := rc.mutation.MetadataIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   record.MetadataFormatTable,
-			Columns: []string{record.MetadataFormatColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   record.MetadataTable,
+			Columns: []string{record.MetadataColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.MetadataFormatID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := rc.mutation.SetsIDs(); len(nodes) > 0 {
@@ -255,7 +208,7 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Record.Create().
-//		SetMetadataFormatID(v).
+//		SetIdentifier(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -264,7 +217,7 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.RecordUpsert) {
-//			SetMetadataFormatID(v+v).
+//			SetIdentifier(v+v).
 //		}).
 //		Exec(ctx)
 func (rc *RecordCreate) OnConflict(opts ...sql.ConflictOption) *RecordUpsertOne {
@@ -300,18 +253,6 @@ type (
 	}
 )
 
-// SetMetadataFormatID sets the "metadata_format_id" field.
-func (u *RecordUpsert) SetMetadataFormatID(v int64) *RecordUpsert {
-	u.Set(record.FieldMetadataFormatID, v)
-	return u
-}
-
-// UpdateMetadataFormatID sets the "metadata_format_id" field to the value that was provided on create.
-func (u *RecordUpsert) UpdateMetadataFormatID() *RecordUpsert {
-	u.SetExcluded(record.FieldMetadataFormatID)
-	return u
-}
-
 // SetIdentifier sets the "identifier" field.
 func (u *RecordUpsert) SetIdentifier(v string) *RecordUpsert {
 	u.Set(record.FieldIdentifier, v)
@@ -324,24 +265,6 @@ func (u *RecordUpsert) UpdateIdentifier() *RecordUpsert {
 	return u
 }
 
-// SetMetadata sets the "metadata" field.
-func (u *RecordUpsert) SetMetadata(v string) *RecordUpsert {
-	u.Set(record.FieldMetadata, v)
-	return u
-}
-
-// UpdateMetadata sets the "metadata" field to the value that was provided on create.
-func (u *RecordUpsert) UpdateMetadata() *RecordUpsert {
-	u.SetExcluded(record.FieldMetadata)
-	return u
-}
-
-// ClearMetadata clears the value of the "metadata" field.
-func (u *RecordUpsert) ClearMetadata() *RecordUpsert {
-	u.SetNull(record.FieldMetadata)
-	return u
-}
-
 // SetDeleted sets the "deleted" field.
 func (u *RecordUpsert) SetDeleted(v bool) *RecordUpsert {
 	u.Set(record.FieldDeleted, v)
@@ -351,18 +274,6 @@ func (u *RecordUpsert) SetDeleted(v bool) *RecordUpsert {
 // UpdateDeleted sets the "deleted" field to the value that was provided on create.
 func (u *RecordUpsert) UpdateDeleted() *RecordUpsert {
 	u.SetExcluded(record.FieldDeleted)
-	return u
-}
-
-// SetDatestamp sets the "datestamp" field.
-func (u *RecordUpsert) SetDatestamp(v time.Time) *RecordUpsert {
-	u.Set(record.FieldDatestamp, v)
-	return u
-}
-
-// UpdateDatestamp sets the "datestamp" field to the value that was provided on create.
-func (u *RecordUpsert) UpdateDatestamp() *RecordUpsert {
-	u.SetExcluded(record.FieldDatestamp)
 	return u
 }
 
@@ -414,20 +325,6 @@ func (u *RecordUpsertOne) Update(set func(*RecordUpsert)) *RecordUpsertOne {
 	return u
 }
 
-// SetMetadataFormatID sets the "metadata_format_id" field.
-func (u *RecordUpsertOne) SetMetadataFormatID(v int64) *RecordUpsertOne {
-	return u.Update(func(s *RecordUpsert) {
-		s.SetMetadataFormatID(v)
-	})
-}
-
-// UpdateMetadataFormatID sets the "metadata_format_id" field to the value that was provided on create.
-func (u *RecordUpsertOne) UpdateMetadataFormatID() *RecordUpsertOne {
-	return u.Update(func(s *RecordUpsert) {
-		s.UpdateMetadataFormatID()
-	})
-}
-
 // SetIdentifier sets the "identifier" field.
 func (u *RecordUpsertOne) SetIdentifier(v string) *RecordUpsertOne {
 	return u.Update(func(s *RecordUpsert) {
@@ -442,27 +339,6 @@ func (u *RecordUpsertOne) UpdateIdentifier() *RecordUpsertOne {
 	})
 }
 
-// SetMetadata sets the "metadata" field.
-func (u *RecordUpsertOne) SetMetadata(v string) *RecordUpsertOne {
-	return u.Update(func(s *RecordUpsert) {
-		s.SetMetadata(v)
-	})
-}
-
-// UpdateMetadata sets the "metadata" field to the value that was provided on create.
-func (u *RecordUpsertOne) UpdateMetadata() *RecordUpsertOne {
-	return u.Update(func(s *RecordUpsert) {
-		s.UpdateMetadata()
-	})
-}
-
-// ClearMetadata clears the value of the "metadata" field.
-func (u *RecordUpsertOne) ClearMetadata() *RecordUpsertOne {
-	return u.Update(func(s *RecordUpsert) {
-		s.ClearMetadata()
-	})
-}
-
 // SetDeleted sets the "deleted" field.
 func (u *RecordUpsertOne) SetDeleted(v bool) *RecordUpsertOne {
 	return u.Update(func(s *RecordUpsert) {
@@ -474,20 +350,6 @@ func (u *RecordUpsertOne) SetDeleted(v bool) *RecordUpsertOne {
 func (u *RecordUpsertOne) UpdateDeleted() *RecordUpsertOne {
 	return u.Update(func(s *RecordUpsert) {
 		s.UpdateDeleted()
-	})
-}
-
-// SetDatestamp sets the "datestamp" field.
-func (u *RecordUpsertOne) SetDatestamp(v time.Time) *RecordUpsertOne {
-	return u.Update(func(s *RecordUpsert) {
-		s.SetDatestamp(v)
-	})
-}
-
-// UpdateDatestamp sets the "datestamp" field to the value that was provided on create.
-func (u *RecordUpsertOne) UpdateDatestamp() *RecordUpsertOne {
-	return u.Update(func(s *RecordUpsert) {
-		s.UpdateDatestamp()
 	})
 }
 
@@ -622,7 +484,7 @@ func (rcb *RecordCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.RecordUpsert) {
-//			SetMetadataFormatID(v+v).
+//			SetIdentifier(v+v).
 //		}).
 //		Exec(ctx)
 func (rcb *RecordCreateBulk) OnConflict(opts ...sql.ConflictOption) *RecordUpsertBulk {
@@ -701,20 +563,6 @@ func (u *RecordUpsertBulk) Update(set func(*RecordUpsert)) *RecordUpsertBulk {
 	return u
 }
 
-// SetMetadataFormatID sets the "metadata_format_id" field.
-func (u *RecordUpsertBulk) SetMetadataFormatID(v int64) *RecordUpsertBulk {
-	return u.Update(func(s *RecordUpsert) {
-		s.SetMetadataFormatID(v)
-	})
-}
-
-// UpdateMetadataFormatID sets the "metadata_format_id" field to the value that was provided on create.
-func (u *RecordUpsertBulk) UpdateMetadataFormatID() *RecordUpsertBulk {
-	return u.Update(func(s *RecordUpsert) {
-		s.UpdateMetadataFormatID()
-	})
-}
-
 // SetIdentifier sets the "identifier" field.
 func (u *RecordUpsertBulk) SetIdentifier(v string) *RecordUpsertBulk {
 	return u.Update(func(s *RecordUpsert) {
@@ -729,27 +577,6 @@ func (u *RecordUpsertBulk) UpdateIdentifier() *RecordUpsertBulk {
 	})
 }
 
-// SetMetadata sets the "metadata" field.
-func (u *RecordUpsertBulk) SetMetadata(v string) *RecordUpsertBulk {
-	return u.Update(func(s *RecordUpsert) {
-		s.SetMetadata(v)
-	})
-}
-
-// UpdateMetadata sets the "metadata" field to the value that was provided on create.
-func (u *RecordUpsertBulk) UpdateMetadata() *RecordUpsertBulk {
-	return u.Update(func(s *RecordUpsert) {
-		s.UpdateMetadata()
-	})
-}
-
-// ClearMetadata clears the value of the "metadata" field.
-func (u *RecordUpsertBulk) ClearMetadata() *RecordUpsertBulk {
-	return u.Update(func(s *RecordUpsert) {
-		s.ClearMetadata()
-	})
-}
-
 // SetDeleted sets the "deleted" field.
 func (u *RecordUpsertBulk) SetDeleted(v bool) *RecordUpsertBulk {
 	return u.Update(func(s *RecordUpsert) {
@@ -761,20 +588,6 @@ func (u *RecordUpsertBulk) SetDeleted(v bool) *RecordUpsertBulk {
 func (u *RecordUpsertBulk) UpdateDeleted() *RecordUpsertBulk {
 	return u.Update(func(s *RecordUpsert) {
 		s.UpdateDeleted()
-	})
-}
-
-// SetDatestamp sets the "datestamp" field.
-func (u *RecordUpsertBulk) SetDatestamp(v time.Time) *RecordUpsertBulk {
-	return u.Update(func(s *RecordUpsert) {
-		s.SetDatestamp(v)
-	})
-}
-
-// UpdateDatestamp sets the "datestamp" field to the value that was provided on create.
-func (u *RecordUpsertBulk) UpdateDatestamp() *RecordUpsertBulk {
-	return u.Update(func(s *RecordUpsert) {
-		s.UpdateDatestamp()
 	})
 }
 

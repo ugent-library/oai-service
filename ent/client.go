@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/ugent-library/oai-service/ent/metadata"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
 	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/set"
@@ -24,6 +25,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Metadata is the client for interacting with the Metadata builders.
+	Metadata *MetadataClient
 	// MetadataFormat is the client for interacting with the MetadataFormat builders.
 	MetadataFormat *MetadataFormatClient
 	// Record is the client for interacting with the Record builders.
@@ -43,6 +46,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Metadata = NewMetadataClient(c.config)
 	c.MetadataFormat = NewMetadataFormatClient(c.config)
 	c.Record = NewRecordClient(c.config)
 	c.Set = NewSetClient(c.config)
@@ -128,6 +132,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:            ctx,
 		config:         cfg,
+		Metadata:       NewMetadataClient(cfg),
 		MetadataFormat: NewMetadataFormatClient(cfg),
 		Record:         NewRecordClient(cfg),
 		Set:            NewSetClient(cfg),
@@ -150,6 +155,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:            ctx,
 		config:         cfg,
+		Metadata:       NewMetadataClient(cfg),
 		MetadataFormat: NewMetadataFormatClient(cfg),
 		Record:         NewRecordClient(cfg),
 		Set:            NewSetClient(cfg),
@@ -159,7 +165,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		MetadataFormat.
+//		Metadata.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -181,6 +187,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Metadata.Use(hooks...)
 	c.MetadataFormat.Use(hooks...)
 	c.Record.Use(hooks...)
 	c.Set.Use(hooks...)
@@ -189,6 +196,7 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Metadata.Intercept(interceptors...)
 	c.MetadataFormat.Intercept(interceptors...)
 	c.Record.Intercept(interceptors...)
 	c.Set.Intercept(interceptors...)
@@ -197,6 +205,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *MetadataMutation:
+		return c.Metadata.mutate(ctx, m)
 	case *MetadataFormatMutation:
 		return c.MetadataFormat.mutate(ctx, m)
 	case *RecordMutation:
@@ -205,6 +215,156 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Set.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// MetadataClient is a client for the Metadata schema.
+type MetadataClient struct {
+	config
+}
+
+// NewMetadataClient returns a client for the Metadata from the given config.
+func NewMetadataClient(c config) *MetadataClient {
+	return &MetadataClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `metadata.Hooks(f(g(h())))`.
+func (c *MetadataClient) Use(hooks ...Hook) {
+	c.hooks.Metadata = append(c.hooks.Metadata, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `metadata.Intercept(f(g(h())))`.
+func (c *MetadataClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Metadata = append(c.inters.Metadata, interceptors...)
+}
+
+// Create returns a builder for creating a Metadata entity.
+func (c *MetadataClient) Create() *MetadataCreate {
+	mutation := newMetadataMutation(c.config, OpCreate)
+	return &MetadataCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Metadata entities.
+func (c *MetadataClient) CreateBulk(builders ...*MetadataCreate) *MetadataCreateBulk {
+	return &MetadataCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Metadata.
+func (c *MetadataClient) Update() *MetadataUpdate {
+	mutation := newMetadataMutation(c.config, OpUpdate)
+	return &MetadataUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MetadataClient) UpdateOne(m *Metadata) *MetadataUpdateOne {
+	mutation := newMetadataMutation(c.config, OpUpdateOne, withMetadata(m))
+	return &MetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MetadataClient) UpdateOneID(id int64) *MetadataUpdateOne {
+	mutation := newMetadataMutation(c.config, OpUpdateOne, withMetadataID(id))
+	return &MetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Metadata.
+func (c *MetadataClient) Delete() *MetadataDelete {
+	mutation := newMetadataMutation(c.config, OpDelete)
+	return &MetadataDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MetadataClient) DeleteOne(m *Metadata) *MetadataDeleteOne {
+	return c.DeleteOneID(m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MetadataClient) DeleteOneID(id int64) *MetadataDeleteOne {
+	builder := c.Delete().Where(metadata.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MetadataDeleteOne{builder}
+}
+
+// Query returns a query builder for Metadata.
+func (c *MetadataClient) Query() *MetadataQuery {
+	return &MetadataQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMetadata},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Metadata entity by its id.
+func (c *MetadataClient) Get(ctx context.Context, id int64) (*Metadata, error) {
+	return c.Query().Where(metadata.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MetadataClient) GetX(ctx context.Context, id int64) *Metadata {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRecord queries the record edge of a Metadata.
+func (c *MetadataClient) QueryRecord(m *Metadata) *RecordQuery {
+	query := (&RecordClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(metadata.Table, metadata.FieldID, id),
+			sqlgraph.To(record.Table, record.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, metadata.RecordTable, metadata.RecordColumn),
+		)
+		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMetadataFormat queries the metadata_format edge of a Metadata.
+func (c *MetadataClient) QueryMetadataFormat(m *Metadata) *MetadataFormatQuery {
+	query := (&MetadataFormatClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(metadata.Table, metadata.FieldID, id),
+			sqlgraph.To(metadataformat.Table, metadataformat.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, metadata.MetadataFormatTable, metadata.MetadataFormatColumn),
+		)
+		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MetadataClient) Hooks() []Hook {
+	return c.hooks.Metadata
+}
+
+// Interceptors returns the client interceptors.
+func (c *MetadataClient) Interceptors() []Interceptor {
+	return c.inters.Metadata
+}
+
+func (c *MetadataClient) mutate(ctx context.Context, m *MetadataMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MetadataCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MetadataUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MetadataDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Metadata mutation op: %q", m.Op())
 	}
 }
 
@@ -301,15 +461,15 @@ func (c *MetadataFormatClient) GetX(ctx context.Context, id int64) *MetadataForm
 	return obj
 }
 
-// QueryRecords queries the records edge of a MetadataFormat.
-func (c *MetadataFormatClient) QueryRecords(mf *MetadataFormat) *RecordQuery {
-	query := (&RecordClient{config: c.config}).Query()
+// QueryMetadata queries the metadata edge of a MetadataFormat.
+func (c *MetadataFormatClient) QueryMetadata(mf *MetadataFormat) *MetadataQuery {
+	query := (&MetadataClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := mf.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(metadataformat.Table, metadataformat.FieldID, id),
-			sqlgraph.To(record.Table, record.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, metadataformat.RecordsTable, metadataformat.RecordsColumn),
+			sqlgraph.To(metadata.Table, metadata.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, metadataformat.MetadataTable, metadataformat.MetadataColumn),
 		)
 		fromV = sqlgraph.Neighbors(mf.driver.Dialect(), step)
 		return fromV, nil
@@ -435,15 +595,15 @@ func (c *RecordClient) GetX(ctx context.Context, id int64) *Record {
 	return obj
 }
 
-// QueryMetadataFormat queries the metadata_format edge of a Record.
-func (c *RecordClient) QueryMetadataFormat(r *Record) *MetadataFormatQuery {
-	query := (&MetadataFormatClient{config: c.config}).Query()
+// QueryMetadata queries the metadata edge of a Record.
+func (c *RecordClient) QueryMetadata(r *Record) *MetadataQuery {
+	query := (&MetadataClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := r.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(record.Table, record.FieldID, id),
-			sqlgraph.To(metadataformat.Table, metadataformat.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, record.MetadataFormatTable, record.MetadataFormatColumn),
+			sqlgraph.To(metadata.Table, metadata.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, record.MetadataTable, record.MetadataColumn),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
@@ -629,9 +789,9 @@ func (c *SetClient) mutate(ctx context.Context, m *SetMutation) (Value, error) {
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		MetadataFormat, Record, Set []ent.Hook
+		Metadata, MetadataFormat, Record, Set []ent.Hook
 	}
 	inters struct {
-		MetadataFormat, Record, Set []ent.Interceptor
+		Metadata, MetadataFormat, Record, Set []ent.Interceptor
 	}
 )

@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Metadata is the predicate function for metadata builders.
+type Metadata func(*sql.Selector)
+
 // MetadataFormat is the predicate function for metadataformat builders.
 type MetadataFormat func(*sql.Selector)
 

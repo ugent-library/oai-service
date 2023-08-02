@@ -11,19 +11,19 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ugent-library/oai-service/ent/metadata"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
 	"github.com/ugent-library/oai-service/ent/predicate"
-	"github.com/ugent-library/oai-service/ent/record"
 )
 
 // MetadataFormatQuery is the builder for querying MetadataFormat entities.
 type MetadataFormatQuery struct {
 	config
-	ctx         *QueryContext
-	order       []metadataformat.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.MetadataFormat
-	withRecords *RecordQuery
+	ctx          *QueryContext
+	order        []metadataformat.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.MetadataFormat
+	withMetadata *MetadataQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -60,9 +60,9 @@ func (mfq *MetadataFormatQuery) Order(o ...metadataformat.OrderOption) *Metadata
 	return mfq
 }
 
-// QueryRecords chains the current query on the "records" edge.
-func (mfq *MetadataFormatQuery) QueryRecords() *RecordQuery {
-	query := (&RecordClient{config: mfq.config}).Query()
+// QueryMetadata chains the current query on the "metadata" edge.
+func (mfq *MetadataFormatQuery) QueryMetadata() *MetadataQuery {
+	query := (&MetadataClient{config: mfq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := mfq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -73,8 +73,8 @@ func (mfq *MetadataFormatQuery) QueryRecords() *RecordQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(metadataformat.Table, metadataformat.FieldID, selector),
-			sqlgraph.To(record.Table, record.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, metadataformat.RecordsTable, metadataformat.RecordsColumn),
+			sqlgraph.To(metadata.Table, metadata.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, metadataformat.MetadataTable, metadataformat.MetadataColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(mfq.driver.Dialect(), step)
 		return fromU, nil
@@ -269,26 +269,26 @@ func (mfq *MetadataFormatQuery) Clone() *MetadataFormatQuery {
 		return nil
 	}
 	return &MetadataFormatQuery{
-		config:      mfq.config,
-		ctx:         mfq.ctx.Clone(),
-		order:       append([]metadataformat.OrderOption{}, mfq.order...),
-		inters:      append([]Interceptor{}, mfq.inters...),
-		predicates:  append([]predicate.MetadataFormat{}, mfq.predicates...),
-		withRecords: mfq.withRecords.Clone(),
+		config:       mfq.config,
+		ctx:          mfq.ctx.Clone(),
+		order:        append([]metadataformat.OrderOption{}, mfq.order...),
+		inters:       append([]Interceptor{}, mfq.inters...),
+		predicates:   append([]predicate.MetadataFormat{}, mfq.predicates...),
+		withMetadata: mfq.withMetadata.Clone(),
 		// clone intermediate query.
 		sql:  mfq.sql.Clone(),
 		path: mfq.path,
 	}
 }
 
-// WithRecords tells the query-builder to eager-load the nodes that are connected to
-// the "records" edge. The optional arguments are used to configure the query builder of the edge.
-func (mfq *MetadataFormatQuery) WithRecords(opts ...func(*RecordQuery)) *MetadataFormatQuery {
-	query := (&RecordClient{config: mfq.config}).Query()
+// WithMetadata tells the query-builder to eager-load the nodes that are connected to
+// the "metadata" edge. The optional arguments are used to configure the query builder of the edge.
+func (mfq *MetadataFormatQuery) WithMetadata(opts ...func(*MetadataQuery)) *MetadataFormatQuery {
+	query := (&MetadataClient{config: mfq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	mfq.withRecords = query
+	mfq.withMetadata = query
 	return mfq
 }
 
@@ -298,12 +298,12 @@ func (mfq *MetadataFormatQuery) WithRecords(opts ...func(*RecordQuery)) *Metadat
 // Example:
 //
 //	var v []struct {
-//		Prefix string `json:"prefix,omitempty"`
+//		MetadataPrefix string `json:"metadata_prefix,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.MetadataFormat.Query().
-//		GroupBy(metadataformat.FieldPrefix).
+//		GroupBy(metadataformat.FieldMetadataPrefix).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (mfq *MetadataFormatQuery) GroupBy(field string, fields ...string) *MetadataFormatGroupBy {
@@ -321,11 +321,11 @@ func (mfq *MetadataFormatQuery) GroupBy(field string, fields ...string) *Metadat
 // Example:
 //
 //	var v []struct {
-//		Prefix string `json:"prefix,omitempty"`
+//		MetadataPrefix string `json:"metadata_prefix,omitempty"`
 //	}
 //
 //	client.MetadataFormat.Query().
-//		Select(metadataformat.FieldPrefix).
+//		Select(metadataformat.FieldMetadataPrefix).
 //		Scan(ctx, &v)
 func (mfq *MetadataFormatQuery) Select(fields ...string) *MetadataFormatSelect {
 	mfq.ctx.Fields = append(mfq.ctx.Fields, fields...)
@@ -371,7 +371,7 @@ func (mfq *MetadataFormatQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 		nodes       = []*MetadataFormat{}
 		_spec       = mfq.querySpec()
 		loadedTypes = [1]bool{
-			mfq.withRecords != nil,
+			mfq.withMetadata != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -392,17 +392,17 @@ func (mfq *MetadataFormatQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := mfq.withRecords; query != nil {
-		if err := mfq.loadRecords(ctx, query, nodes,
-			func(n *MetadataFormat) { n.Edges.Records = []*Record{} },
-			func(n *MetadataFormat, e *Record) { n.Edges.Records = append(n.Edges.Records, e) }); err != nil {
+	if query := mfq.withMetadata; query != nil {
+		if err := mfq.loadMetadata(ctx, query, nodes,
+			func(n *MetadataFormat) { n.Edges.Metadata = []*Metadata{} },
+			func(n *MetadataFormat, e *Metadata) { n.Edges.Metadata = append(n.Edges.Metadata, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (mfq *MetadataFormatQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes []*MetadataFormat, init func(*MetadataFormat), assign func(*MetadataFormat, *Record)) error {
+func (mfq *MetadataFormatQuery) loadMetadata(ctx context.Context, query *MetadataQuery, nodes []*MetadataFormat, init func(*MetadataFormat), assign func(*MetadataFormat, *Metadata)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int64]*MetadataFormat)
 	for i := range nodes {
@@ -413,10 +413,10 @@ func (mfq *MetadataFormatQuery) loadRecords(ctx context.Context, query *RecordQu
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(record.FieldMetadataFormatID)
+		query.ctx.AppendFieldOnce(metadata.FieldMetadataFormatID)
 	}
-	query.Where(predicate.Record(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(metadataformat.RecordsColumn), fks...))
+	query.Where(predicate.Metadata(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(metadataformat.MetadataColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -5,11 +5,9 @@ package ent
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/ugent-library/oai-service/ent/metadataformat"
 	"github.com/ugent-library/oai-service/ent/record"
 )
 
@@ -18,16 +16,10 @@ type Record struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
-	// MetadataFormatID holds the value of the "metadata_format_id" field.
-	MetadataFormatID int64 `json:"metadata_format_id,omitempty"`
 	// Identifier holds the value of the "identifier" field.
 	Identifier string `json:"identifier,omitempty"`
-	// Metadata holds the value of the "metadata" field.
-	Metadata string `json:"metadata,omitempty"`
 	// Deleted holds the value of the "deleted" field.
 	Deleted bool `json:"deleted,omitempty"`
-	// Datestamp holds the value of the "datestamp" field.
-	Datestamp time.Time `json:"datestamp,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RecordQuery when eager-loading is set.
 	Edges        RecordEdges `json:"edges"`
@@ -36,8 +28,8 @@ type Record struct {
 
 // RecordEdges holds the relations/edges for other nodes in the graph.
 type RecordEdges struct {
-	// MetadataFormat holds the value of the metadata_format edge.
-	MetadataFormat *MetadataFormat `json:"metadata_format,omitempty"`
+	// Metadata holds the value of the metadata edge.
+	Metadata []*Metadata `json:"metadata,omitempty"`
 	// Sets holds the value of the sets edge.
 	Sets []*Set `json:"sets,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -45,17 +37,13 @@ type RecordEdges struct {
 	loadedTypes [2]bool
 }
 
-// MetadataFormatOrErr returns the MetadataFormat value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e RecordEdges) MetadataFormatOrErr() (*MetadataFormat, error) {
+// MetadataOrErr returns the Metadata value or an error if the edge
+// was not loaded in eager-loading.
+func (e RecordEdges) MetadataOrErr() ([]*Metadata, error) {
 	if e.loadedTypes[0] {
-		if e.MetadataFormat == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: metadataformat.Label}
-		}
-		return e.MetadataFormat, nil
+		return e.Metadata, nil
 	}
-	return nil, &NotLoadedError{edge: "metadata_format"}
+	return nil, &NotLoadedError{edge: "metadata"}
 }
 
 // SetsOrErr returns the Sets value or an error if the edge
@@ -74,12 +62,10 @@ func (*Record) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case record.FieldDeleted:
 			values[i] = new(sql.NullBool)
-		case record.FieldID, record.FieldMetadataFormatID:
+		case record.FieldID:
 			values[i] = new(sql.NullInt64)
-		case record.FieldIdentifier, record.FieldMetadata:
+		case record.FieldIdentifier:
 			values[i] = new(sql.NullString)
-		case record.FieldDatestamp:
-			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -101,35 +87,17 @@ func (r *Record) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			r.ID = int64(value.Int64)
-		case record.FieldMetadataFormatID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field metadata_format_id", values[i])
-			} else if value.Valid {
-				r.MetadataFormatID = value.Int64
-			}
 		case record.FieldIdentifier:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field identifier", values[i])
 			} else if value.Valid {
 				r.Identifier = value.String
 			}
-		case record.FieldMetadata:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field metadata", values[i])
-			} else if value.Valid {
-				r.Metadata = value.String
-			}
 		case record.FieldDeleted:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field deleted", values[i])
 			} else if value.Valid {
 				r.Deleted = value.Bool
-			}
-		case record.FieldDatestamp:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field datestamp", values[i])
-			} else if value.Valid {
-				r.Datestamp = value.Time
 			}
 		default:
 			r.selectValues.Set(columns[i], values[i])
@@ -144,9 +112,9 @@ func (r *Record) Value(name string) (ent.Value, error) {
 	return r.selectValues.Get(name)
 }
 
-// QueryMetadataFormat queries the "metadata_format" edge of the Record entity.
-func (r *Record) QueryMetadataFormat() *MetadataFormatQuery {
-	return NewRecordClient(r.config).QueryMetadataFormat(r)
+// QueryMetadata queries the "metadata" edge of the Record entity.
+func (r *Record) QueryMetadata() *MetadataQuery {
+	return NewRecordClient(r.config).QueryMetadata(r)
 }
 
 // QuerySets queries the "sets" edge of the Record entity.
@@ -177,20 +145,11 @@ func (r *Record) String() string {
 	var builder strings.Builder
 	builder.WriteString("Record(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", r.ID))
-	builder.WriteString("metadata_format_id=")
-	builder.WriteString(fmt.Sprintf("%v", r.MetadataFormatID))
-	builder.WriteString(", ")
 	builder.WriteString("identifier=")
 	builder.WriteString(r.Identifier)
 	builder.WriteString(", ")
-	builder.WriteString("metadata=")
-	builder.WriteString(r.Metadata)
-	builder.WriteString(", ")
 	builder.WriteString("deleted=")
 	builder.WriteString(fmt.Sprintf("%v", r.Deleted))
-	builder.WriteString(", ")
-	builder.WriteString("datestamp=")
-	builder.WriteString(r.Datestamp.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

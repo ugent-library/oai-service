@@ -9,6 +9,18 @@ import (
 	"github.com/ugent-library/oai-service/ent"
 )
 
+// The MetadataFunc type is an adapter to allow the use of ordinary
+// function as Metadata mutator.
+type MetadataFunc func(context.Context, *ent.MetadataMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MetadataFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MetadataMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MetadataMutation", m)
+}
+
 // The MetadataFormatFunc type is an adapter to allow the use of ordinary
 // function as MetadataFormat mutator.
 type MetadataFormatFunc func(context.Context, *ent.MetadataFormatMutation) (ent.Value, error)

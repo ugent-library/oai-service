@@ -65,23 +65,42 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 				switch elem[0] {
-				case 'm': // Prefix: "metadata-format"
-					if l := len("metadata-format"); len(elem) >= l && elem[0:l] == "metadata-format" {
+				case 'm': // Prefix: "metadata"
+					if l := len("metadata"); len(elem) >= l && elem[0:l] == "metadata" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						// Leaf node.
 						switch r.Method {
 						case "POST":
-							s.handleAddMetadataFormatRequest([0]string{}, elemIsEscaped, w, r)
+							s.handleAddMetadataRequest([0]string{}, elemIsEscaped, w, r)
 						default:
 							s.notAllowed(w, r, "POST")
 						}
 
 						return
+					}
+					switch elem[0] {
+					case '-': // Prefix: "-format"
+						if l := len("-format"); len(elem) >= l && elem[0:l] == "-format" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleAddMetadataFormatRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
+							}
+
+							return
+						}
 					}
 				case 'r': // Prefix: "record"
 					if l := len("record"); len(elem) >= l && elem[0:l] == "record" {
@@ -230,8 +249,8 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					break
 				}
 				switch elem[0] {
-				case 'm': // Prefix: "metadata-format"
-					if l := len("metadata-format"); len(elem) >= l && elem[0:l] == "metadata-format" {
+				case 'm': // Prefix: "metadata"
+					if l := len("metadata"); len(elem) >= l && elem[0:l] == "metadata" {
 						elem = elem[l:]
 					} else {
 						break
@@ -240,15 +259,37 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					if len(elem) == 0 {
 						switch method {
 						case "POST":
-							// Leaf: AddMetadataFormat
-							r.name = "AddMetadataFormat"
-							r.operationID = "addMetadataFormat"
-							r.pathPattern = "/add-metadata-format"
+							r.name = "AddMetadata"
+							r.operationID = "addMetadata"
+							r.pathPattern = "/add-metadata"
 							r.args = args
 							r.count = 0
 							return r, true
 						default:
 							return
+						}
+					}
+					switch elem[0] {
+					case '-': // Prefix: "-format"
+						if l := len("-format"); len(elem) >= l && elem[0:l] == "-format" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch method {
+							case "POST":
+								// Leaf: AddMetadataFormat
+								r.name = "AddMetadataFormat"
+								r.operationID = "addMetadataFormat"
+								r.pathPattern = "/add-metadata-format"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
 						}
 					}
 				case 'r': // Prefix: "record"

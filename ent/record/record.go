@@ -3,8 +3,6 @@
 package record
 
 import (
-	"time"
-
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
@@ -14,29 +12,23 @@ const (
 	Label = "record"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldMetadataFormatID holds the string denoting the metadata_format_id field in the database.
-	FieldMetadataFormatID = "metadata_format_id"
 	// FieldIdentifier holds the string denoting the identifier field in the database.
 	FieldIdentifier = "identifier"
-	// FieldMetadata holds the string denoting the metadata field in the database.
-	FieldMetadata = "metadata"
 	// FieldDeleted holds the string denoting the deleted field in the database.
 	FieldDeleted = "deleted"
-	// FieldDatestamp holds the string denoting the datestamp field in the database.
-	FieldDatestamp = "datestamp"
-	// EdgeMetadataFormat holds the string denoting the metadata_format edge name in mutations.
-	EdgeMetadataFormat = "metadata_format"
+	// EdgeMetadata holds the string denoting the metadata edge name in mutations.
+	EdgeMetadata = "metadata"
 	// EdgeSets holds the string denoting the sets edge name in mutations.
 	EdgeSets = "sets"
 	// Table holds the table name of the record in the database.
 	Table = "records"
-	// MetadataFormatTable is the table that holds the metadata_format relation/edge.
-	MetadataFormatTable = "records"
-	// MetadataFormatInverseTable is the table name for the MetadataFormat entity.
-	// It exists in this package in order to avoid circular dependency with the "metadataformat" package.
-	MetadataFormatInverseTable = "metadata_formats"
-	// MetadataFormatColumn is the table column denoting the metadata_format relation/edge.
-	MetadataFormatColumn = "metadata_format_id"
+	// MetadataTable is the table that holds the metadata relation/edge.
+	MetadataTable = "metadata"
+	// MetadataInverseTable is the table name for the Metadata entity.
+	// It exists in this package in order to avoid circular dependency with the "metadata" package.
+	MetadataInverseTable = "metadata"
+	// MetadataColumn is the table column denoting the metadata relation/edge.
+	MetadataColumn = "record_id"
 	// SetsTable is the table that holds the sets relation/edge. The primary key declared below.
 	SetsTable = "record_sets"
 	// SetsInverseTable is the table name for the Set entity.
@@ -47,11 +39,8 @@ const (
 // Columns holds all SQL columns for record fields.
 var Columns = []string{
 	FieldID,
-	FieldMetadataFormatID,
 	FieldIdentifier,
-	FieldMetadata,
 	FieldDeleted,
-	FieldDatestamp,
 }
 
 var (
@@ -73,10 +62,6 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultDeleted holds the default value on creation for the "deleted" field.
 	DefaultDeleted bool
-	// DefaultDatestamp holds the default value on creation for the "datestamp" field.
-	DefaultDatestamp func() time.Time
-	// UpdateDefaultDatestamp holds the default value on update for the "datestamp" field.
-	UpdateDefaultDatestamp func() time.Time
 )
 
 // OrderOption defines the ordering options for the Record queries.
@@ -87,19 +72,9 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByMetadataFormatID orders the results by the metadata_format_id field.
-func ByMetadataFormatID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldMetadataFormatID, opts...).ToFunc()
-}
-
 // ByIdentifier orders the results by the identifier field.
 func ByIdentifier(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIdentifier, opts...).ToFunc()
-}
-
-// ByMetadata orders the results by the metadata field.
-func ByMetadata(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldMetadata, opts...).ToFunc()
 }
 
 // ByDeleted orders the results by the deleted field.
@@ -107,15 +82,17 @@ func ByDeleted(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDeleted, opts...).ToFunc()
 }
 
-// ByDatestamp orders the results by the datestamp field.
-func ByDatestamp(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDatestamp, opts...).ToFunc()
+// ByMetadataCount orders the results by metadata count.
+func ByMetadataCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMetadataStep(), opts...)
+	}
 }
 
-// ByMetadataFormatField orders the results by metadata_format field.
-func ByMetadataFormatField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByMetadata orders the results by metadata terms.
+func ByMetadata(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newMetadataFormatStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newMetadataStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -132,11 +109,11 @@ func BySets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newSetsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newMetadataFormatStep() *sqlgraph.Step {
+func newMetadataStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(MetadataFormatInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, MetadataFormatTable, MetadataFormatColumn),
+		sqlgraph.To(MetadataInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, MetadataTable, MetadataColumn),
 	)
 }
 func newSetsStep() *sqlgraph.Step {

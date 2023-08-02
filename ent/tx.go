@@ -12,6 +12,8 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Metadata is the client for interacting with the Metadata builders.
+	Metadata *MetadataClient
 	// MetadataFormat is the client for interacting with the MetadataFormat builders.
 	MetadataFormat *MetadataFormatClient
 	// Record is the client for interacting with the Record builders.
@@ -149,6 +151,7 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Metadata = NewMetadataClient(tx.config)
 	tx.MetadataFormat = NewMetadataFormatClient(tx.config)
 	tx.Record = NewRecordClient(tx.config)
 	tx.Set = NewSetClient(tx.config)
@@ -161,7 +164,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: MetadataFormat.QueryXXX(), the query will be executed
+// applies a query, for example: Metadata.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

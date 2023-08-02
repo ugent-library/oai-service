@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// AddMetadata implements addMetadata operation.
+	//
+	// Add record metadata.
+	//
+	// POST /add-metadata
+	AddMetadata(ctx context.Context, req *AddMetadataRequest) error
 	// AddMetadataFormat implements addMetadataFormat operation.
 	//
 	// Add a metadata format.

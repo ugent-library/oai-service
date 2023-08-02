@@ -6,12 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/ugent-library/oai-service/ent/metadataformat"
+	"github.com/ugent-library/oai-service/ent/metadata"
 	"github.com/ugent-library/oai-service/ent/predicate"
 	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/set"
@@ -30,35 +29,9 @@ func (ru *RecordUpdate) Where(ps ...predicate.Record) *RecordUpdate {
 	return ru
 }
 
-// SetMetadataFormatID sets the "metadata_format_id" field.
-func (ru *RecordUpdate) SetMetadataFormatID(i int64) *RecordUpdate {
-	ru.mutation.SetMetadataFormatID(i)
-	return ru
-}
-
 // SetIdentifier sets the "identifier" field.
 func (ru *RecordUpdate) SetIdentifier(s string) *RecordUpdate {
 	ru.mutation.SetIdentifier(s)
-	return ru
-}
-
-// SetMetadata sets the "metadata" field.
-func (ru *RecordUpdate) SetMetadata(s string) *RecordUpdate {
-	ru.mutation.SetMetadata(s)
-	return ru
-}
-
-// SetNillableMetadata sets the "metadata" field if the given value is not nil.
-func (ru *RecordUpdate) SetNillableMetadata(s *string) *RecordUpdate {
-	if s != nil {
-		ru.SetMetadata(*s)
-	}
-	return ru
-}
-
-// ClearMetadata clears the value of the "metadata" field.
-func (ru *RecordUpdate) ClearMetadata() *RecordUpdate {
-	ru.mutation.ClearMetadata()
 	return ru
 }
 
@@ -76,15 +49,19 @@ func (ru *RecordUpdate) SetNillableDeleted(b *bool) *RecordUpdate {
 	return ru
 }
 
-// SetDatestamp sets the "datestamp" field.
-func (ru *RecordUpdate) SetDatestamp(t time.Time) *RecordUpdate {
-	ru.mutation.SetDatestamp(t)
+// AddMetadatumIDs adds the "metadata" edge to the Metadata entity by IDs.
+func (ru *RecordUpdate) AddMetadatumIDs(ids ...int64) *RecordUpdate {
+	ru.mutation.AddMetadatumIDs(ids...)
 	return ru
 }
 
-// SetMetadataFormat sets the "metadata_format" edge to the MetadataFormat entity.
-func (ru *RecordUpdate) SetMetadataFormat(m *MetadataFormat) *RecordUpdate {
-	return ru.SetMetadataFormatID(m.ID)
+// AddMetadata adds the "metadata" edges to the Metadata entity.
+func (ru *RecordUpdate) AddMetadata(m ...*Metadata) *RecordUpdate {
+	ids := make([]int64, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return ru.AddMetadatumIDs(ids...)
 }
 
 // AddSetIDs adds the "sets" edge to the Set entity by IDs.
@@ -107,10 +84,25 @@ func (ru *RecordUpdate) Mutation() *RecordMutation {
 	return ru.mutation
 }
 
-// ClearMetadataFormat clears the "metadata_format" edge to the MetadataFormat entity.
-func (ru *RecordUpdate) ClearMetadataFormat() *RecordUpdate {
-	ru.mutation.ClearMetadataFormat()
+// ClearMetadata clears all "metadata" edges to the Metadata entity.
+func (ru *RecordUpdate) ClearMetadata() *RecordUpdate {
+	ru.mutation.ClearMetadata()
 	return ru
+}
+
+// RemoveMetadatumIDs removes the "metadata" edge to Metadata entities by IDs.
+func (ru *RecordUpdate) RemoveMetadatumIDs(ids ...int64) *RecordUpdate {
+	ru.mutation.RemoveMetadatumIDs(ids...)
+	return ru
+}
+
+// RemoveMetadata removes "metadata" edges to Metadata entities.
+func (ru *RecordUpdate) RemoveMetadata(m ...*Metadata) *RecordUpdate {
+	ids := make([]int64, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return ru.RemoveMetadatumIDs(ids...)
 }
 
 // ClearSets clears all "sets" edges to the Set entity.
@@ -136,7 +128,6 @@ func (ru *RecordUpdate) RemoveSets(s ...*Set) *RecordUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (ru *RecordUpdate) Save(ctx context.Context) (int, error) {
-	ru.defaults()
 	return withHooks(ctx, ru.sqlSave, ru.mutation, ru.hooks)
 }
 
@@ -162,26 +153,7 @@ func (ru *RecordUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (ru *RecordUpdate) defaults() {
-	if _, ok := ru.mutation.Datestamp(); !ok {
-		v := record.UpdateDefaultDatestamp()
-		ru.mutation.SetDatestamp(v)
-	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (ru *RecordUpdate) check() error {
-	if _, ok := ru.mutation.MetadataFormatID(); ru.mutation.MetadataFormatCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Record.metadata_format"`)
-	}
-	return nil
-}
-
 func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := ru.check(); err != nil {
-		return n, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(record.Table, record.Columns, sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64))
 	if ps := ru.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -193,40 +165,47 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ru.mutation.Identifier(); ok {
 		_spec.SetField(record.FieldIdentifier, field.TypeString, value)
 	}
-	if value, ok := ru.mutation.Metadata(); ok {
-		_spec.SetField(record.FieldMetadata, field.TypeString, value)
-	}
-	if ru.mutation.MetadataCleared() {
-		_spec.ClearField(record.FieldMetadata, field.TypeString)
-	}
 	if value, ok := ru.mutation.Deleted(); ok {
 		_spec.SetField(record.FieldDeleted, field.TypeBool, value)
 	}
-	if value, ok := ru.mutation.Datestamp(); ok {
-		_spec.SetField(record.FieldDatestamp, field.TypeTime, value)
-	}
-	if ru.mutation.MetadataFormatCleared() {
+	if ru.mutation.MetadataCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   record.MetadataFormatTable,
-			Columns: []string{record.MetadataFormatColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   record.MetadataTable,
+			Columns: []string{record.MetadataColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ru.mutation.MetadataFormatIDs(); len(nodes) > 0 {
+	if nodes := ru.mutation.RemovedMetadataIDs(); len(nodes) > 0 && !ru.mutation.MetadataCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   record.MetadataFormatTable,
-			Columns: []string{record.MetadataFormatColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   record.MetadataTable,
+			Columns: []string{record.MetadataColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.MetadataIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   record.MetadataTable,
+			Columns: []string{record.MetadataColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -299,35 +278,9 @@ type RecordUpdateOne struct {
 	mutation *RecordMutation
 }
 
-// SetMetadataFormatID sets the "metadata_format_id" field.
-func (ruo *RecordUpdateOne) SetMetadataFormatID(i int64) *RecordUpdateOne {
-	ruo.mutation.SetMetadataFormatID(i)
-	return ruo
-}
-
 // SetIdentifier sets the "identifier" field.
 func (ruo *RecordUpdateOne) SetIdentifier(s string) *RecordUpdateOne {
 	ruo.mutation.SetIdentifier(s)
-	return ruo
-}
-
-// SetMetadata sets the "metadata" field.
-func (ruo *RecordUpdateOne) SetMetadata(s string) *RecordUpdateOne {
-	ruo.mutation.SetMetadata(s)
-	return ruo
-}
-
-// SetNillableMetadata sets the "metadata" field if the given value is not nil.
-func (ruo *RecordUpdateOne) SetNillableMetadata(s *string) *RecordUpdateOne {
-	if s != nil {
-		ruo.SetMetadata(*s)
-	}
-	return ruo
-}
-
-// ClearMetadata clears the value of the "metadata" field.
-func (ruo *RecordUpdateOne) ClearMetadata() *RecordUpdateOne {
-	ruo.mutation.ClearMetadata()
 	return ruo
 }
 
@@ -345,15 +298,19 @@ func (ruo *RecordUpdateOne) SetNillableDeleted(b *bool) *RecordUpdateOne {
 	return ruo
 }
 
-// SetDatestamp sets the "datestamp" field.
-func (ruo *RecordUpdateOne) SetDatestamp(t time.Time) *RecordUpdateOne {
-	ruo.mutation.SetDatestamp(t)
+// AddMetadatumIDs adds the "metadata" edge to the Metadata entity by IDs.
+func (ruo *RecordUpdateOne) AddMetadatumIDs(ids ...int64) *RecordUpdateOne {
+	ruo.mutation.AddMetadatumIDs(ids...)
 	return ruo
 }
 
-// SetMetadataFormat sets the "metadata_format" edge to the MetadataFormat entity.
-func (ruo *RecordUpdateOne) SetMetadataFormat(m *MetadataFormat) *RecordUpdateOne {
-	return ruo.SetMetadataFormatID(m.ID)
+// AddMetadata adds the "metadata" edges to the Metadata entity.
+func (ruo *RecordUpdateOne) AddMetadata(m ...*Metadata) *RecordUpdateOne {
+	ids := make([]int64, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return ruo.AddMetadatumIDs(ids...)
 }
 
 // AddSetIDs adds the "sets" edge to the Set entity by IDs.
@@ -376,10 +333,25 @@ func (ruo *RecordUpdateOne) Mutation() *RecordMutation {
 	return ruo.mutation
 }
 
-// ClearMetadataFormat clears the "metadata_format" edge to the MetadataFormat entity.
-func (ruo *RecordUpdateOne) ClearMetadataFormat() *RecordUpdateOne {
-	ruo.mutation.ClearMetadataFormat()
+// ClearMetadata clears all "metadata" edges to the Metadata entity.
+func (ruo *RecordUpdateOne) ClearMetadata() *RecordUpdateOne {
+	ruo.mutation.ClearMetadata()
 	return ruo
+}
+
+// RemoveMetadatumIDs removes the "metadata" edge to Metadata entities by IDs.
+func (ruo *RecordUpdateOne) RemoveMetadatumIDs(ids ...int64) *RecordUpdateOne {
+	ruo.mutation.RemoveMetadatumIDs(ids...)
+	return ruo
+}
+
+// RemoveMetadata removes "metadata" edges to Metadata entities.
+func (ruo *RecordUpdateOne) RemoveMetadata(m ...*Metadata) *RecordUpdateOne {
+	ids := make([]int64, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return ruo.RemoveMetadatumIDs(ids...)
 }
 
 // ClearSets clears all "sets" edges to the Set entity.
@@ -418,7 +390,6 @@ func (ruo *RecordUpdateOne) Select(field string, fields ...string) *RecordUpdate
 
 // Save executes the query and returns the updated Record entity.
 func (ruo *RecordUpdateOne) Save(ctx context.Context) (*Record, error) {
-	ruo.defaults()
 	return withHooks(ctx, ruo.sqlSave, ruo.mutation, ruo.hooks)
 }
 
@@ -444,26 +415,7 @@ func (ruo *RecordUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (ruo *RecordUpdateOne) defaults() {
-	if _, ok := ruo.mutation.Datestamp(); !ok {
-		v := record.UpdateDefaultDatestamp()
-		ruo.mutation.SetDatestamp(v)
-	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (ruo *RecordUpdateOne) check() error {
-	if _, ok := ruo.mutation.MetadataFormatID(); ruo.mutation.MetadataFormatCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Record.metadata_format"`)
-	}
-	return nil
-}
-
 func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err error) {
-	if err := ruo.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(record.Table, record.Columns, sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64))
 	id, ok := ruo.mutation.ID()
 	if !ok {
@@ -492,40 +444,47 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 	if value, ok := ruo.mutation.Identifier(); ok {
 		_spec.SetField(record.FieldIdentifier, field.TypeString, value)
 	}
-	if value, ok := ruo.mutation.Metadata(); ok {
-		_spec.SetField(record.FieldMetadata, field.TypeString, value)
-	}
-	if ruo.mutation.MetadataCleared() {
-		_spec.ClearField(record.FieldMetadata, field.TypeString)
-	}
 	if value, ok := ruo.mutation.Deleted(); ok {
 		_spec.SetField(record.FieldDeleted, field.TypeBool, value)
 	}
-	if value, ok := ruo.mutation.Datestamp(); ok {
-		_spec.SetField(record.FieldDatestamp, field.TypeTime, value)
-	}
-	if ruo.mutation.MetadataFormatCleared() {
+	if ruo.mutation.MetadataCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   record.MetadataFormatTable,
-			Columns: []string{record.MetadataFormatColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   record.MetadataTable,
+			Columns: []string{record.MetadataColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ruo.mutation.MetadataFormatIDs(); len(nodes) > 0 {
+	if nodes := ruo.mutation.RemovedMetadataIDs(); len(nodes) > 0 && !ruo.mutation.MetadataCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   record.MetadataFormatTable,
-			Columns: []string{record.MetadataFormatColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   record.MetadataTable,
+			Columns: []string{record.MetadataColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.MetadataIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   record.MetadataTable,
+			Columns: []string{record.MetadataColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

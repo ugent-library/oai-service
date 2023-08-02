@@ -13,6 +13,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/ugent-library/crypt"
 	"github.com/ugent-library/oai-service/ent"
+	"github.com/ugent-library/oai-service/ent/metadata"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
 	"github.com/ugent-library/oai-service/ent/migrate"
 	"github.com/ugent-library/oai-service/ent/predicate"
@@ -69,7 +70,7 @@ func New(c Config) (*Repo, error) {
 
 func (r *Repo) HasMetadataFormat(ctx context.Context, prefix string) (bool, error) {
 	return r.client.MetadataFormat.Query().
-		Where(metadataformat.PrefixEQ(prefix)).
+		Where(metadataformat.MetadataPrefixEQ(prefix)).
 		Exist(ctx)
 }
 
@@ -81,9 +82,9 @@ func (r *Repo) GetMetadataFormats(ctx context.Context) ([]*oaipmh.MetadataFormat
 	formats := make([]*oaipmh.MetadataFormat, len(rows))
 	for i, row := range rows {
 		formats[i] = &oaipmh.MetadataFormat{
-			MetadataPrefix:    row.Prefix,
+			MetadataPrefix:    row.MetadataPrefix,
 			Schema:            row.Schema,
-			MetadataNamespace: row.Namespace,
+			MetadataNamespace: row.MetadataNamespace,
 		}
 	}
 	return formats, nil
@@ -91,10 +92,10 @@ func (r *Repo) GetMetadataFormats(ctx context.Context) ([]*oaipmh.MetadataFormat
 
 func (r *Repo) AddMetadataFormat(ctx context.Context, prefix, schema, namespace string) error {
 	return r.client.MetadataFormat.Create().
-		SetPrefix(prefix).
+		SetMetadataPrefix(prefix).
 		SetSchema(schema).
-		SetNamespace(namespace).
-		OnConflictColumns(metadataformat.FieldPrefix).
+		SetMetadataNamespace(namespace).
+		OnConflictColumns(metadataformat.FieldMetadataPrefix).
 		UpdateNewValues().
 		Exec(ctx)
 }
@@ -105,7 +106,7 @@ func (r *Repo) HasSets(ctx context.Context) (bool, error) {
 
 func (r *Repo) HasSet(ctx context.Context, spec string) (bool, error) {
 	return r.client.Set.Query().
-		Where(set.SpecEQ(spec)).
+		Where(set.SetSpecEQ(spec)).
 		Exist(ctx)
 }
 
@@ -122,23 +123,17 @@ func (r *Repo) GetMoreSets(ctx context.Context, tokenValue string) ([]*oaipmh.Se
 }
 
 func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh.ResumptionToken, error) {
-	// TODO ent can't do count and select in one query
-	n, err := r.client.Set.Query().
+	total, err := r.client.Set.Query().
 		Count(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	if n == 0 {
+	if total == 0 {
 		return nil, nil, nil
 	}
 
-	var where []predicate.Set
-	if c.LastID > 0 {
-		where = append(where, set.IDGT(c.LastID))
-	}
-
 	rows, err := r.client.Set.Query().
-		Where(where...).
+		Where(set.IDGT(c.LastID)).
 		Order(ent.Asc(set.FieldID)).
 		Limit(100).
 		All(ctx)
@@ -148,16 +143,16 @@ func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh
 	sets := make([]*oaipmh.Set, len(rows))
 	for i, row := range rows {
 		sets[i] = &oaipmh.Set{
-			Spec: row.Spec,
-			Name: row.Name,
-			Description: &oaipmh.Payload{
-				XML: row.Description,
+			SetSpec: row.SetSpec,
+			SetName: row.SetName,
+			SetDescription: &oaipmh.Payload{
+				XML: row.SetDescription,
 			},
 		}
 	}
 
 	var token *oaipmh.ResumptionToken
-	if n > len(rows) {
+	if total > len(rows) {
 		tokenValue, err := r.encodeCursor(setCursor{
 			LastID: rows[len(rows)-1].ID,
 		})
@@ -165,7 +160,7 @@ func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh
 			return nil, nil, err
 		}
 		token = &oaipmh.ResumptionToken{
-			CompleteListSize: n,
+			CompleteListSize: total,
 			Value:            tokenValue,
 		}
 	}
@@ -175,23 +170,18 @@ func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh
 
 func (r *Repo) AddSet(ctx context.Context, spec, name, description string) error {
 	return r.client.Set.Create().
-		SetSpec(spec).
-		SetName(name).
-		SetDescription(description).
-		OnConflictColumns(set.FieldSpec).
+		SetSetSpec(spec).
+		SetSetName(name).
+		SetSetDescription(description).
+		OnConflictColumns(set.FieldSetSpec).
 		UpdateNewValues().
 		Exec(ctx)
 }
 
-func (r *Repo) HasRecord(ctx context.Context, identifier string) (bool, error) {
-	return r.client.Record.Query().
-		Where(record.IdentifierEQ(identifier)).
-		Exist(ctx)
-}
-
-func (r *Repo) GetEarliestRecordDatestamp(ctx context.Context) (time.Time, error) {
-	row, err := r.client.Record.Query().
-		Order(ent.Asc(record.FieldID)).
+func (r *Repo) GetEarliestDatestamp(ctx context.Context) (time.Time, error) {
+	row, err := r.client.Metadata.Query().
+		Select(metadata.FieldDatestamp).
+		Order(ent.Asc(metadata.FieldDatestamp)).
 		First(ctx)
 	if err != nil {
 		return time.Time{}, err
@@ -199,7 +189,7 @@ func (r *Repo) GetEarliestRecordDatestamp(ctx context.Context) (time.Time, error
 	return row.Datestamp, nil
 }
 
-func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string) (*oaipmh.Record, error) {
+func (r *Repo) GetRecord(ctx context.Context, identifier, prefix string) (*oaipmh.Record, error) {
 	exists, err := r.client.Record.Query().
 		Where(record.IdentifierEQ(identifier)).
 		Exist(ctx)
@@ -210,13 +200,15 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string)
 		return nil, oaipmh.ErrIDDoesNotExist
 	}
 
-	row, err := r.client.Record.Query().
+	row, err := r.client.Metadata.Query().
 		Where(
-			record.IdentifierEQ(identifier),
-			record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
+			metadata.HasRecordWith(record.IdentifierEQ(identifier)),
+			metadata.HasMetadataFormatWith(metadataformat.MetadataPrefixEQ(prefix)),
 		).
-		WithSets(func(q *ent.SetQuery) {
-			q.Select(set.FieldSpec)
+		WithRecord(func(q *ent.RecordQuery) {
+			q.WithSets(func(q *ent.SetQuery) {
+				q.Select(set.FieldSetSpec)
+			})
 		}).
 		First(ctx)
 	if ent.IsNotFound(err) {
@@ -228,14 +220,14 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, metadataPrefix string)
 
 	rec := &oaipmh.Record{
 		Header: &oaipmh.Header{
-			Identifier: row.Identifier,
+			Identifier: row.Edges.Record.Identifier,
 			Datestamp:  row.Datestamp.UTC().Format(time.RFC3339),
 		},
 	}
-	for _, set := range row.Edges.Sets {
-		rec.Header.SetSpecs = append(rec.Header.SetSpecs, set.Spec)
+	for _, set := range row.Edges.Record.Edges.Sets {
+		rec.Header.SetSpecs = append(rec.Header.SetSpecs, set.SetSpec)
 	}
-	if row.Deleted {
+	if row.Edges.Record.Deleted {
 		rec.Header.Status = "deleted"
 	} else {
 		rec.Metadata = &oaipmh.Payload{
@@ -309,48 +301,51 @@ func (r *Repo) GetMoreRecords(ctx context.Context, tokenValue string) ([]*oaipmh
 }
 
 func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
-	where := []predicate.Record{
-		record.HasMetadataFormatWith(metadataformat.PrefixEQ(c.MetadataPrefix)),
+	where := []predicate.Metadata{
+		metadata.HasMetadataFormatWith(metadataformat.MetadataPrefixEQ(c.MetadataPrefix)),
 	}
 	if c.SetSpec != "" {
-		where = append(where, record.HasSetsWith(set.SpecEQ(c.SetSpec)))
+		where = append(where, metadata.HasRecordWith(
+			record.HasSetsWith(set.SetSpecEQ(c.SetSpec)),
+		))
 	}
 	if c.From != "" {
 		dt, err := time.Parse(time.RFC3339, c.From)
 		if err != nil {
 			return nil, nil, err
 		}
-		where = append(where, record.DatestampGTE(dt))
+		where = append(where, metadata.DatestampGTE(dt))
 	}
 	if c.Until != "" {
 		dt, err := time.Parse(time.RFC3339, c.Until)
 		if err != nil {
 			return nil, nil, err
 		}
-		where = append(where, record.DatestampLTE(dt))
+		where = append(where, metadata.DatestampLTE(dt))
 	}
 
-	// TODO ent can't do count and select in one query
-	n, err := r.client.Record.Query().
+	total, err := r.client.Metadata.Query().
 		Where(where...).
 		Count(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	if n == 0 {
+	if total == 0 {
 		return nil, nil, nil
 	}
 
 	if c.LastID > 0 {
-		where = append(where, record.IDGT(c.LastID))
+		where = append(where, metadata.IDGT(c.LastID))
 	}
 
-	rows, err := r.client.Record.Query().
+	rows, err := r.client.Metadata.Query().
 		Where(where...).
-		WithSets(func(q *ent.SetQuery) {
-			q.Select(set.FieldSpec)
+		WithRecord(func(q *ent.RecordQuery) {
+			q.WithSets(func(q *ent.SetQuery) {
+				q.Select(set.FieldSetSpec)
+			})
 		}).
-		Order(ent.Asc(record.FieldID)).
+		Order(ent.Asc(metadata.FieldID)).
 		Limit(100).
 		All(ctx)
 	if err != nil {
@@ -360,14 +355,14 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 	for i, row := range rows {
 		rec := &oaipmh.Record{
 			Header: &oaipmh.Header{
-				Identifier: row.Identifier,
+				Identifier: row.Edges.Record.Identifier,
 				Datestamp:  row.Datestamp.UTC().Format(time.RFC3339),
 			},
 		}
-		for _, set := range row.Edges.Sets {
-			rec.Header.SetSpecs = append(rec.Header.SetSpecs, set.Spec)
+		for _, s := range row.Edges.Record.Edges.Sets {
+			rec.Header.SetSpecs = append(rec.Header.SetSpecs, s.SetSpec)
 		}
-		if row.Deleted {
+		if row.Edges.Record.Deleted {
 			rec.Header.Status = "deleted"
 		} else {
 			rec.Metadata = &oaipmh.Payload{
@@ -378,7 +373,7 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 	}
 
 	var token *oaipmh.ResumptionToken
-	if n > len(rows) {
+	if total > len(rows) {
 		tokenValue, err := r.encodeCursor(recordCursor{
 			MetadataPrefix: c.MetadataPrefix,
 			SetSpec:        c.SetSpec,
@@ -390,7 +385,7 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 			return nil, nil, err
 		}
 		token = &oaipmh.ResumptionToken{
-			CompleteListSize: n,
+			CompleteListSize: total,
 			Value:            tokenValue,
 		}
 	}
@@ -399,8 +394,8 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 }
 
 func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) ([]*oaipmh.MetadataFormat, error) {
-	rows, err := r.client.Record.Query().
-		Where(record.IdentifierEQ(identifier)).
+	rows, err := r.client.Metadata.Query().
+		Where(metadata.HasRecordWith(record.IdentifierEQ(identifier))).
 		QueryMetadataFormat().All(ctx)
 	if ent.IsNotFound(err) {
 		return nil, oaipmh.ErrIDDoesNotExist
@@ -414,25 +409,25 @@ func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) 
 	formats := make([]*oaipmh.MetadataFormat, len(rows))
 	for i, row := range rows {
 		formats[i] = &oaipmh.MetadataFormat{
-			MetadataPrefix:    row.Prefix,
+			MetadataPrefix:    row.MetadataPrefix,
 			Schema:            row.Schema,
-			MetadataNamespace: row.Namespace,
+			MetadataNamespace: row.MetadataNamespace,
 		}
 	}
 	return formats, nil
 }
 
-func (r *Repo) AddRecord(ctx context.Context, identifier, metadataPrefix, metadata string, setSpecs []string) error {
-	formatID, err := r.client.MetadataFormat.Query().
-		Where(metadataformat.PrefixEQ(metadataPrefix)).OnlyID(ctx)
+// TODO do this in one query
+func (r *Repo) AddRecord(ctx context.Context, identifier string, setSpecs []string) error {
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
 		return err
 	}
 
 	setIDs := make([]int64, len(setSpecs))
 	for i, spec := range setSpecs {
-		id, err := r.client.Set.Query().
-			Where(set.SpecEQ(spec)).
+		id, err := tx.Set.Query().
+			Where(set.SetSpecEQ(spec)).
 			OnlyID(ctx)
 		if err != nil {
 			return err
@@ -440,17 +435,9 @@ func (r *Repo) AddRecord(ctx context.Context, identifier, metadataPrefix, metada
 		setIDs[i] = id
 	}
 
-	tx, err := r.client.Tx(ctx)
-	if err != nil {
-		return err
-	}
-
 	// remove old sets
 	err = tx.Record.Update().
-		Where(
-			record.IdentifierEQ(identifier),
-			record.HasMetadataFormatWith(metadataformat.PrefixEQ(metadataPrefix)),
-		).
+		Where(record.IdentifierEQ(identifier)).
 		ClearSets().
 		Exec(ctx)
 	if err != nil {
@@ -459,11 +446,43 @@ func (r *Repo) AddRecord(ctx context.Context, identifier, metadataPrefix, metada
 
 	err = tx.Record.Create().
 		SetIdentifier(identifier).
-		SetMetadataFormatID(formatID).
-		SetMetadata(metadata).
 		AddSetIDs(setIDs...).
-		OnConflictColumns(record.FieldIdentifier, record.FieldMetadataFormatID).
+		OnConflictColumns(record.FieldIdentifier).
 		UpdateNewValues().
+		Exec(ctx)
+	if err != nil {
+		return tx.Rollback()
+	}
+
+	return tx.Commit()
+}
+
+// TODO do this in one query
+// TODO create record if not exists
+func (r *Repo) AddMetadata(ctx context.Context, identifier, format, metadata string) error {
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		return err
+	}
+
+	recordID, err := tx.Record.Query().
+		Where(record.IdentifierEQ(identifier)).
+		OnlyID(ctx)
+	if err != nil {
+		return tx.Rollback()
+	}
+
+	metadataFormatID, err := tx.MetadataFormat.Query().
+		Where(metadataformat.MetadataPrefixEQ(format)).
+		OnlyID(ctx)
+	if err != nil {
+		return tx.Rollback()
+	}
+
+	err = tx.Metadata.Create().
+		SetMetadata(metadata).
+		SetRecordID(recordID).
+		SetMetadataFormatID(metadataFormatID).
 		Exec(ctx)
 	if err != nil {
 		return tx.Rollback()
@@ -476,7 +495,6 @@ func (r *Repo) DeleteRecord(ctx context.Context, identifier string) error {
 	return r.client.Record.Update().
 		Where(record.IdentifierEQ(identifier)).
 		SetDeleted(true).
-		SetNillableMetadata(nil).
 		Exec(ctx)
 }
 

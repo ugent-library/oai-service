@@ -13,14 +13,14 @@ type MetadataFormat struct {
 func (MetadataFormat) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id"),
-		field.String("prefix").Unique(),
+		field.String("metadata_prefix").Unique(),
 		field.String("schema"),
-		field.String("namespace"),
+		field.String("metadata_namespace"),
 	}
 }
 
 func (MetadataFormat) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("records", Record.Type),
+		edge.To("metadata", Metadata.Type),
 	}
 }

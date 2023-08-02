@@ -298,12 +298,12 @@ func (sq *SetQuery) WithRecords(opts ...func(*RecordQuery)) *SetQuery {
 // Example:
 //
 //	var v []struct {
-//		Spec string `json:"spec,omitempty"`
+//		SetSpec string `json:"set_spec,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Set.Query().
-//		GroupBy(set.FieldSpec).
+//		GroupBy(set.FieldSetSpec).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (sq *SetQuery) GroupBy(field string, fields ...string) *SetGroupBy {
@@ -321,11 +321,11 @@ func (sq *SetQuery) GroupBy(field string, fields ...string) *SetGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Spec string `json:"spec,omitempty"`
+//		SetSpec string `json:"set_spec,omitempty"`
 //	}
 //
 //	client.Set.Query().
-//		Select(set.FieldSpec).
+//		Select(set.FieldSetSpec).
 //		Scan(ctx, &v)
 func (sq *SetQuery) Select(fields ...string) *SetSelect {
 	sq.ctx.Fields = append(sq.ctx.Fields, fields...)

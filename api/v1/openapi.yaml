@@ -55,6 +55,23 @@ paths:
           description: Success
         default:
           $ref: '#/components/responses/Error'
+  
+  /add-metadata:
+    post:
+      summary: Add record metadata
+      description: Add record metadata
+      operationId: addMetadata
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMetadataRequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+        default:
+          $ref: '#/components/responses/Error'
 
   /delete-record:
     post:
@@ -95,26 +112,37 @@ components:
     AddMetadataFormatRequest:
       type: object
       properties:
-        prefix:
+        metadata_prefix:
           type: string
         schema:
           type: string
-        namespace:
+        metadata_namespace:
           type: string
-      required: [prefix, schema, namespace]
+      required: [metadata_prefix, schema, metadata_namespace]
 
     AddSetRequest:
       type: object
       properties:
-        spec:
+        set_spec:
           type: string
-        name:
+        set_name:
           type: string
-        description:
+        set_description:
           type: string
-      required: [spec, name]
+      required: [set_spec, set_name]
 
     AddRecordRequest:
+      type: object
+      properties:
+        identifier:
+          type: string
+        set_specs:
+          type: array
+          items:
+            type: string
+      required: [identifier]
+
+    AddMetadataRequest:
       type: object
       properties:
         identifier:
@@ -123,10 +151,6 @@ components:
           type: string
         metadata:
           type: string
-        set_specs:
-          type: array
-          items:
-            type: string
       required: [identifier, metadata_prefix, metadata]
 
     DeleteRecordRequest:

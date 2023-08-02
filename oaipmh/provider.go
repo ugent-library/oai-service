@@ -160,9 +160,9 @@ type MetadataFormat struct {
 }
 
 type Set struct {
-	Spec        string   `xml:"setSpec"`
-	Name        string   `xml:"setName"`
-	Description *Payload `xml:"setDescription"`
+	SetSpec        string   `xml:"setSpec"`
+	SetName        string   `xml:"setName"`
+	SetDescription *Payload `xml:"setDescription"`
 }
 
 type Header struct {
@@ -207,7 +207,7 @@ type ProviderConfig struct {
 }
 
 type ProviderBackend interface {
-	GetEarliestRecordDatestamp(context.Context) (time.Time, error)
+	GetEarliestDatestamp(context.Context) (time.Time, error)
 	HasMetadataFormat(context.Context, string) (bool, error)
 	HasSets(context.Context) (bool, error)
 	HasSet(context.Context, string) (bool, error)
@@ -326,7 +326,7 @@ func (p *Provider) handleError(w http.ResponseWriter, err error) {
 
 // TODO description
 func identify(ctx context.Context, p *Provider, res *response, q url.Values) error {
-	t, err := p.Backend.GetEarliestRecordDatestamp(ctx)
+	t, err := p.Backend.GetEarliestDatestamp(ctx)
 	if err != nil {
 		return err
 	}
@@ -478,7 +478,7 @@ func listRecords(ctx context.Context, p *Provider, res *response, args url.Value
 }
 
 func getRecord(ctx context.Context, p *Provider, res *response, args url.Values) error {
-	rec, err := p.Backend.GetRecord(ctx, res.Request.MetadataPrefix, res.Request.Identifier)
+	rec, err := p.Backend.GetRecord(ctx, res.Request.Identifier, res.Request.MetadataPrefix)
 	if err == ErrIDDoesNotExist || err == ErrCannotDisseminateFormat {
 		res.Errors = append(res.Errors, err.(*Error))
 		return nil

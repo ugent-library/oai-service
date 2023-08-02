@@ -12,12 +12,12 @@ const (
 	Label = "set"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldSpec holds the string denoting the spec field in the database.
-	FieldSpec = "spec"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
-	// FieldDescription holds the string denoting the description field in the database.
-	FieldDescription = "description"
+	// FieldSetSpec holds the string denoting the set_spec field in the database.
+	FieldSetSpec = "set_spec"
+	// FieldSetName holds the string denoting the set_name field in the database.
+	FieldSetName = "set_name"
+	// FieldSetDescription holds the string denoting the set_description field in the database.
+	FieldSetDescription = "set_description"
 	// EdgeRecords holds the string denoting the records edge name in mutations.
 	EdgeRecords = "records"
 	// Table holds the table name of the set in the database.
@@ -32,9 +32,9 @@ const (
 // Columns holds all SQL columns for set fields.
 var Columns = []string{
 	FieldID,
-	FieldSpec,
-	FieldName,
-	FieldDescription,
+	FieldSetSpec,
+	FieldSetName,
+	FieldSetDescription,
 }
 
 var (
@@ -61,19 +61,19 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// BySpec orders the results by the spec field.
-func BySpec(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSpec, opts...).ToFunc()
+// BySetSpec orders the results by the set_spec field.
+func BySetSpec(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSetSpec, opts...).ToFunc()
 }
 
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
+// BySetName orders the results by the set_name field.
+func BySetName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSetName, opts...).ToFunc()
 }
 
-// ByDescription orders the results by the description field.
-func ByDescription(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+// BySetDescription orders the results by the set_description field.
+func BySetDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSetDescription, opts...).ToFunc()
 }
 
 // ByRecordsCount orders the results by records count.

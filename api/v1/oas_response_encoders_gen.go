@@ -11,6 +11,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+func encodeAddMetadataResponse(response *AddMetadataOK, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(200)
+	span.SetStatus(codes.Ok, http.StatusText(200))
+
+	return nil
+}
+
 func encodeAddMetadataFormatResponse(response *AddMetadataFormatOK, w http.ResponseWriter, span trace.Span) error {
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))

@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// AddMetadata implements addMetadata operation.
+//
+// Add record metadata.
+//
+// POST /add-metadata
+func (UnimplementedHandler) AddMetadata(ctx context.Context, req *AddMetadataRequest) error {
+	return ht.ErrNotImplemented
+}
+
 // AddMetadataFormat implements addMetadataFormat operation.
 //
 // Add a metadata format.

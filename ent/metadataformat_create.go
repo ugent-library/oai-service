@@ -10,8 +10,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ugent-library/oai-service/ent/metadata"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
-	"github.com/ugent-library/oai-service/ent/record"
 )
 
 // MetadataFormatCreate is the builder for creating a MetadataFormat entity.
@@ -22,9 +22,9 @@ type MetadataFormatCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetPrefix sets the "prefix" field.
-func (mfc *MetadataFormatCreate) SetPrefix(s string) *MetadataFormatCreate {
-	mfc.mutation.SetPrefix(s)
+// SetMetadataPrefix sets the "metadata_prefix" field.
+func (mfc *MetadataFormatCreate) SetMetadataPrefix(s string) *MetadataFormatCreate {
+	mfc.mutation.SetMetadataPrefix(s)
 	return mfc
 }
 
@@ -34,9 +34,9 @@ func (mfc *MetadataFormatCreate) SetSchema(s string) *MetadataFormatCreate {
 	return mfc
 }
 
-// SetNamespace sets the "namespace" field.
-func (mfc *MetadataFormatCreate) SetNamespace(s string) *MetadataFormatCreate {
-	mfc.mutation.SetNamespace(s)
+// SetMetadataNamespace sets the "metadata_namespace" field.
+func (mfc *MetadataFormatCreate) SetMetadataNamespace(s string) *MetadataFormatCreate {
+	mfc.mutation.SetMetadataNamespace(s)
 	return mfc
 }
 
@@ -46,19 +46,19 @@ func (mfc *MetadataFormatCreate) SetID(i int64) *MetadataFormatCreate {
 	return mfc
 }
 
-// AddRecordIDs adds the "records" edge to the Record entity by IDs.
-func (mfc *MetadataFormatCreate) AddRecordIDs(ids ...int64) *MetadataFormatCreate {
-	mfc.mutation.AddRecordIDs(ids...)
+// AddMetadatumIDs adds the "metadata" edge to the Metadata entity by IDs.
+func (mfc *MetadataFormatCreate) AddMetadatumIDs(ids ...int64) *MetadataFormatCreate {
+	mfc.mutation.AddMetadatumIDs(ids...)
 	return mfc
 }
 
-// AddRecords adds the "records" edges to the Record entity.
-func (mfc *MetadataFormatCreate) AddRecords(r ...*Record) *MetadataFormatCreate {
-	ids := make([]int64, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+// AddMetadata adds the "metadata" edges to the Metadata entity.
+func (mfc *MetadataFormatCreate) AddMetadata(m ...*Metadata) *MetadataFormatCreate {
+	ids := make([]int64, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
 	}
-	return mfc.AddRecordIDs(ids...)
+	return mfc.AddMetadatumIDs(ids...)
 }
 
 // Mutation returns the MetadataFormatMutation object of the builder.
@@ -95,14 +95,14 @@ func (mfc *MetadataFormatCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (mfc *MetadataFormatCreate) check() error {
-	if _, ok := mfc.mutation.Prefix(); !ok {
-		return &ValidationError{Name: "prefix", err: errors.New(`ent: missing required field "MetadataFormat.prefix"`)}
+	if _, ok := mfc.mutation.MetadataPrefix(); !ok {
+		return &ValidationError{Name: "metadata_prefix", err: errors.New(`ent: missing required field "MetadataFormat.metadata_prefix"`)}
 	}
 	if _, ok := mfc.mutation.Schema(); !ok {
 		return &ValidationError{Name: "schema", err: errors.New(`ent: missing required field "MetadataFormat.schema"`)}
 	}
-	if _, ok := mfc.mutation.Namespace(); !ok {
-		return &ValidationError{Name: "namespace", err: errors.New(`ent: missing required field "MetadataFormat.namespace"`)}
+	if _, ok := mfc.mutation.MetadataNamespace(); !ok {
+		return &ValidationError{Name: "metadata_namespace", err: errors.New(`ent: missing required field "MetadataFormat.metadata_namespace"`)}
 	}
 	return nil
 }
@@ -137,27 +137,27 @@ func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.Create
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := mfc.mutation.Prefix(); ok {
-		_spec.SetField(metadataformat.FieldPrefix, field.TypeString, value)
-		_node.Prefix = value
+	if value, ok := mfc.mutation.MetadataPrefix(); ok {
+		_spec.SetField(metadataformat.FieldMetadataPrefix, field.TypeString, value)
+		_node.MetadataPrefix = value
 	}
 	if value, ok := mfc.mutation.Schema(); ok {
 		_spec.SetField(metadataformat.FieldSchema, field.TypeString, value)
 		_node.Schema = value
 	}
-	if value, ok := mfc.mutation.Namespace(); ok {
-		_spec.SetField(metadataformat.FieldNamespace, field.TypeString, value)
-		_node.Namespace = value
+	if value, ok := mfc.mutation.MetadataNamespace(); ok {
+		_spec.SetField(metadataformat.FieldMetadataNamespace, field.TypeString, value)
+		_node.MetadataNamespace = value
 	}
-	if nodes := mfc.mutation.RecordsIDs(); len(nodes) > 0 {
+	if nodes := mfc.mutation.MetadataIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   metadataformat.RecordsTable,
-			Columns: []string{metadataformat.RecordsColumn},
+			Table:   metadataformat.MetadataTable,
+			Columns: []string{metadataformat.MetadataColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -172,7 +172,7 @@ func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.Create
 // of the `INSERT` statement. For example:
 //
 //	client.MetadataFormat.Create().
-//		SetPrefix(v).
+//		SetMetadataPrefix(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -181,7 +181,7 @@ func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.Create
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.MetadataFormatUpsert) {
-//			SetPrefix(v+v).
+//			SetMetadataPrefix(v+v).
 //		}).
 //		Exec(ctx)
 func (mfc *MetadataFormatCreate) OnConflict(opts ...sql.ConflictOption) *MetadataFormatUpsertOne {
@@ -217,15 +217,15 @@ type (
 	}
 )
 
-// SetPrefix sets the "prefix" field.
-func (u *MetadataFormatUpsert) SetPrefix(v string) *MetadataFormatUpsert {
-	u.Set(metadataformat.FieldPrefix, v)
+// SetMetadataPrefix sets the "metadata_prefix" field.
+func (u *MetadataFormatUpsert) SetMetadataPrefix(v string) *MetadataFormatUpsert {
+	u.Set(metadataformat.FieldMetadataPrefix, v)
 	return u
 }
 
-// UpdatePrefix sets the "prefix" field to the value that was provided on create.
-func (u *MetadataFormatUpsert) UpdatePrefix() *MetadataFormatUpsert {
-	u.SetExcluded(metadataformat.FieldPrefix)
+// UpdateMetadataPrefix sets the "metadata_prefix" field to the value that was provided on create.
+func (u *MetadataFormatUpsert) UpdateMetadataPrefix() *MetadataFormatUpsert {
+	u.SetExcluded(metadataformat.FieldMetadataPrefix)
 	return u
 }
 
@@ -241,15 +241,15 @@ func (u *MetadataFormatUpsert) UpdateSchema() *MetadataFormatUpsert {
 	return u
 }
 
-// SetNamespace sets the "namespace" field.
-func (u *MetadataFormatUpsert) SetNamespace(v string) *MetadataFormatUpsert {
-	u.Set(metadataformat.FieldNamespace, v)
+// SetMetadataNamespace sets the "metadata_namespace" field.
+func (u *MetadataFormatUpsert) SetMetadataNamespace(v string) *MetadataFormatUpsert {
+	u.Set(metadataformat.FieldMetadataNamespace, v)
 	return u
 }
 
-// UpdateNamespace sets the "namespace" field to the value that was provided on create.
-func (u *MetadataFormatUpsert) UpdateNamespace() *MetadataFormatUpsert {
-	u.SetExcluded(metadataformat.FieldNamespace)
+// UpdateMetadataNamespace sets the "metadata_namespace" field to the value that was provided on create.
+func (u *MetadataFormatUpsert) UpdateMetadataNamespace() *MetadataFormatUpsert {
+	u.SetExcluded(metadataformat.FieldMetadataNamespace)
 	return u
 }
 
@@ -301,17 +301,17 @@ func (u *MetadataFormatUpsertOne) Update(set func(*MetadataFormatUpsert)) *Metad
 	return u
 }
 
-// SetPrefix sets the "prefix" field.
-func (u *MetadataFormatUpsertOne) SetPrefix(v string) *MetadataFormatUpsertOne {
+// SetMetadataPrefix sets the "metadata_prefix" field.
+func (u *MetadataFormatUpsertOne) SetMetadataPrefix(v string) *MetadataFormatUpsertOne {
 	return u.Update(func(s *MetadataFormatUpsert) {
-		s.SetPrefix(v)
+		s.SetMetadataPrefix(v)
 	})
 }
 
-// UpdatePrefix sets the "prefix" field to the value that was provided on create.
-func (u *MetadataFormatUpsertOne) UpdatePrefix() *MetadataFormatUpsertOne {
+// UpdateMetadataPrefix sets the "metadata_prefix" field to the value that was provided on create.
+func (u *MetadataFormatUpsertOne) UpdateMetadataPrefix() *MetadataFormatUpsertOne {
 	return u.Update(func(s *MetadataFormatUpsert) {
-		s.UpdatePrefix()
+		s.UpdateMetadataPrefix()
 	})
 }
 
@@ -329,17 +329,17 @@ func (u *MetadataFormatUpsertOne) UpdateSchema() *MetadataFormatUpsertOne {
 	})
 }
 
-// SetNamespace sets the "namespace" field.
-func (u *MetadataFormatUpsertOne) SetNamespace(v string) *MetadataFormatUpsertOne {
+// SetMetadataNamespace sets the "metadata_namespace" field.
+func (u *MetadataFormatUpsertOne) SetMetadataNamespace(v string) *MetadataFormatUpsertOne {
 	return u.Update(func(s *MetadataFormatUpsert) {
-		s.SetNamespace(v)
+		s.SetMetadataNamespace(v)
 	})
 }
 
-// UpdateNamespace sets the "namespace" field to the value that was provided on create.
-func (u *MetadataFormatUpsertOne) UpdateNamespace() *MetadataFormatUpsertOne {
+// UpdateMetadataNamespace sets the "metadata_namespace" field to the value that was provided on create.
+func (u *MetadataFormatUpsertOne) UpdateMetadataNamespace() *MetadataFormatUpsertOne {
 	return u.Update(func(s *MetadataFormatUpsert) {
-		s.UpdateNamespace()
+		s.UpdateMetadataNamespace()
 	})
 }
 
@@ -473,7 +473,7 @@ func (mfcb *MetadataFormatCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.MetadataFormatUpsert) {
-//			SetPrefix(v+v).
+//			SetMetadataPrefix(v+v).
 //		}).
 //		Exec(ctx)
 func (mfcb *MetadataFormatCreateBulk) OnConflict(opts ...sql.ConflictOption) *MetadataFormatUpsertBulk {
@@ -552,17 +552,17 @@ func (u *MetadataFormatUpsertBulk) Update(set func(*MetadataFormatUpsert)) *Meta
 	return u
 }
 
-// SetPrefix sets the "prefix" field.
-func (u *MetadataFormatUpsertBulk) SetPrefix(v string) *MetadataFormatUpsertBulk {
+// SetMetadataPrefix sets the "metadata_prefix" field.
+func (u *MetadataFormatUpsertBulk) SetMetadataPrefix(v string) *MetadataFormatUpsertBulk {
 	return u.Update(func(s *MetadataFormatUpsert) {
-		s.SetPrefix(v)
+		s.SetMetadataPrefix(v)
 	})
 }
 
-// UpdatePrefix sets the "prefix" field to the value that was provided on create.
-func (u *MetadataFormatUpsertBulk) UpdatePrefix() *MetadataFormatUpsertBulk {
+// UpdateMetadataPrefix sets the "metadata_prefix" field to the value that was provided on create.
+func (u *MetadataFormatUpsertBulk) UpdateMetadataPrefix() *MetadataFormatUpsertBulk {
 	return u.Update(func(s *MetadataFormatUpsert) {
-		s.UpdatePrefix()
+		s.UpdateMetadataPrefix()
 	})
 }
 
@@ -580,17 +580,17 @@ func (u *MetadataFormatUpsertBulk) UpdateSchema() *MetadataFormatUpsertBulk {
 	})
 }
 
-// SetNamespace sets the "namespace" field.
-func (u *MetadataFormatUpsertBulk) SetNamespace(v string) *MetadataFormatUpsertBulk {
+// SetMetadataNamespace sets the "metadata_namespace" field.
+func (u *MetadataFormatUpsertBulk) SetMetadataNamespace(v string) *MetadataFormatUpsertBulk {
 	return u.Update(func(s *MetadataFormatUpsert) {
-		s.SetNamespace(v)
+		s.SetMetadataNamespace(v)
 	})
 }
 
-// UpdateNamespace sets the "namespace" field to the value that was provided on create.
-func (u *MetadataFormatUpsertBulk) UpdateNamespace() *MetadataFormatUpsertBulk {
+// UpdateMetadataNamespace sets the "metadata_namespace" field to the value that was provided on create.
+func (u *MetadataFormatUpsertBulk) UpdateMetadataNamespace() *MetadataFormatUpsertBulk {
 	return u.Update(func(s *MetadataFormatUpsert) {
-		s.UpdateNamespace()
+		s.UpdateMetadataNamespace()
 	})
 }
 

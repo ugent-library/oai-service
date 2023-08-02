@@ -15,14 +15,14 @@ type AddMetadataFormatOK struct{}
 
 // Ref: #/components/schemas/AddMetadataFormatRequest
 type AddMetadataFormatRequest struct {
-	Prefix    string `json:"prefix"`
-	Schema    string `json:"schema"`
-	Namespace string `json:"namespace"`
+	MetadataPrefix    string `json:"metadata_prefix"`
+	Schema            string `json:"schema"`
+	MetadataNamespace string `json:"metadata_namespace"`
 }
 
-// GetPrefix returns the value of Prefix.
-func (s *AddMetadataFormatRequest) GetPrefix() string {
-	return s.Prefix
+// GetMetadataPrefix returns the value of MetadataPrefix.
+func (s *AddMetadataFormatRequest) GetMetadataPrefix() string {
+	return s.MetadataPrefix
 }
 
 // GetSchema returns the value of Schema.
@@ -30,14 +30,14 @@ func (s *AddMetadataFormatRequest) GetSchema() string {
 	return s.Schema
 }
 
-// GetNamespace returns the value of Namespace.
-func (s *AddMetadataFormatRequest) GetNamespace() string {
-	return s.Namespace
+// GetMetadataNamespace returns the value of MetadataNamespace.
+func (s *AddMetadataFormatRequest) GetMetadataNamespace() string {
+	return s.MetadataNamespace
 }
 
-// SetPrefix sets the value of Prefix.
-func (s *AddMetadataFormatRequest) SetPrefix(val string) {
-	s.Prefix = val
+// SetMetadataPrefix sets the value of MetadataPrefix.
+func (s *AddMetadataFormatRequest) SetMetadataPrefix(val string) {
+	s.MetadataPrefix = val
 }
 
 // SetSchema sets the value of Schema.
@@ -45,9 +45,49 @@ func (s *AddMetadataFormatRequest) SetSchema(val string) {
 	s.Schema = val
 }
 
-// SetNamespace sets the value of Namespace.
-func (s *AddMetadataFormatRequest) SetNamespace(val string) {
-	s.Namespace = val
+// SetMetadataNamespace sets the value of MetadataNamespace.
+func (s *AddMetadataFormatRequest) SetMetadataNamespace(val string) {
+	s.MetadataNamespace = val
+}
+
+// AddMetadataOK is response for AddMetadata operation.
+type AddMetadataOK struct{}
+
+// Ref: #/components/schemas/AddMetadataRequest
+type AddMetadataRequest struct {
+	Identifier     string `json:"identifier"`
+	MetadataPrefix string `json:"metadata_prefix"`
+	Metadata       string `json:"metadata"`
+}
+
+// GetIdentifier returns the value of Identifier.
+func (s *AddMetadataRequest) GetIdentifier() string {
+	return s.Identifier
+}
+
+// GetMetadataPrefix returns the value of MetadataPrefix.
+func (s *AddMetadataRequest) GetMetadataPrefix() string {
+	return s.MetadataPrefix
+}
+
+// GetMetadata returns the value of Metadata.
+func (s *AddMetadataRequest) GetMetadata() string {
+	return s.Metadata
+}
+
+// SetIdentifier sets the value of Identifier.
+func (s *AddMetadataRequest) SetIdentifier(val string) {
+	s.Identifier = val
+}
+
+// SetMetadataPrefix sets the value of MetadataPrefix.
+func (s *AddMetadataRequest) SetMetadataPrefix(val string) {
+	s.MetadataPrefix = val
+}
+
+// SetMetadata sets the value of Metadata.
+func (s *AddMetadataRequest) SetMetadata(val string) {
+	s.Metadata = val
 }
 
 // AddRecordOK is response for AddRecord operation.
@@ -55,25 +95,13 @@ type AddRecordOK struct{}
 
 // Ref: #/components/schemas/AddRecordRequest
 type AddRecordRequest struct {
-	Identifier     string   `json:"identifier"`
-	MetadataPrefix string   `json:"metadata_prefix"`
-	Metadata       string   `json:"metadata"`
-	SetSpecs       []string `json:"set_specs"`
+	Identifier string   `json:"identifier"`
+	SetSpecs   []string `json:"set_specs"`
 }
 
 // GetIdentifier returns the value of Identifier.
 func (s *AddRecordRequest) GetIdentifier() string {
 	return s.Identifier
-}
-
-// GetMetadataPrefix returns the value of MetadataPrefix.
-func (s *AddRecordRequest) GetMetadataPrefix() string {
-	return s.MetadataPrefix
-}
-
-// GetMetadata returns the value of Metadata.
-func (s *AddRecordRequest) GetMetadata() string {
-	return s.Metadata
 }
 
 // GetSetSpecs returns the value of SetSpecs.
@@ -86,16 +114,6 @@ func (s *AddRecordRequest) SetIdentifier(val string) {
 	s.Identifier = val
 }
 
-// SetMetadataPrefix sets the value of MetadataPrefix.
-func (s *AddRecordRequest) SetMetadataPrefix(val string) {
-	s.MetadataPrefix = val
-}
-
-// SetMetadata sets the value of Metadata.
-func (s *AddRecordRequest) SetMetadata(val string) {
-	s.Metadata = val
-}
-
 // SetSetSpecs sets the value of SetSpecs.
 func (s *AddRecordRequest) SetSetSpecs(val []string) {
 	s.SetSpecs = val
@@ -106,39 +124,39 @@ type AddSetOK struct{}
 
 // Ref: #/components/schemas/AddSetRequest
 type AddSetRequest struct {
-	Spec        string    `json:"spec"`
-	Name        string    `json:"name"`
-	Description OptString `json:"description"`
+	SetSpec        string    `json:"set_spec"`
+	SetName        string    `json:"set_name"`
+	SetDescription OptString `json:"set_description"`
 }
 
-// GetSpec returns the value of Spec.
-func (s *AddSetRequest) GetSpec() string {
-	return s.Spec
+// GetSetSpec returns the value of SetSpec.
+func (s *AddSetRequest) GetSetSpec() string {
+	return s.SetSpec
 }
 
-// GetName returns the value of Name.
-func (s *AddSetRequest) GetName() string {
-	return s.Name
+// GetSetName returns the value of SetName.
+func (s *AddSetRequest) GetSetName() string {
+	return s.SetName
 }
 
-// GetDescription returns the value of Description.
-func (s *AddSetRequest) GetDescription() OptString {
-	return s.Description
+// GetSetDescription returns the value of SetDescription.
+func (s *AddSetRequest) GetSetDescription() OptString {
+	return s.SetDescription
 }
 
-// SetSpec sets the value of Spec.
-func (s *AddSetRequest) SetSpec(val string) {
-	s.Spec = val
+// SetSetSpec sets the value of SetSpec.
+func (s *AddSetRequest) SetSetSpec(val string) {
+	s.SetSpec = val
 }
 
-// SetName sets the value of Name.
-func (s *AddSetRequest) SetName(val string) {
-	s.Name = val
+// SetSetName sets the value of SetName.
+func (s *AddSetRequest) SetSetName(val string) {
+	s.SetName = val
 }
 
-// SetDescription sets the value of Description.
-func (s *AddSetRequest) SetDescription(val OptString) {
-	s.Description = val
+// SetSetDescription sets the value of SetDescription.
+func (s *AddSetRequest) SetSetDescription(val OptString) {
+	s.SetDescription = val
 }
 
 type ApiKey struct {

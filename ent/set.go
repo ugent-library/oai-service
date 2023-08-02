@@ -16,12 +16,12 @@ type Set struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
-	// Spec holds the value of the "spec" field.
-	Spec string `json:"spec,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
-	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	// SetSpec holds the value of the "set_spec" field.
+	SetSpec string `json:"set_spec,omitempty"`
+	// SetName holds the value of the "set_name" field.
+	SetName string `json:"set_name,omitempty"`
+	// SetDescription holds the value of the "set_description" field.
+	SetDescription string `json:"set_description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SetQuery when eager-loading is set.
 	Edges        SetEdges `json:"edges"`
@@ -53,7 +53,7 @@ func (*Set) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case set.FieldID:
 			values[i] = new(sql.NullInt64)
-		case set.FieldSpec, set.FieldName, set.FieldDescription:
+		case set.FieldSetSpec, set.FieldSetName, set.FieldSetDescription:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -76,23 +76,23 @@ func (s *Set) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			s.ID = int64(value.Int64)
-		case set.FieldSpec:
+		case set.FieldSetSpec:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field spec", values[i])
+				return fmt.Errorf("unexpected type %T for field set_spec", values[i])
 			} else if value.Valid {
-				s.Spec = value.String
+				s.SetSpec = value.String
 			}
-		case set.FieldName:
+		case set.FieldSetName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
+				return fmt.Errorf("unexpected type %T for field set_name", values[i])
 			} else if value.Valid {
-				s.Name = value.String
+				s.SetName = value.String
 			}
-		case set.FieldDescription:
+		case set.FieldSetDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field description", values[i])
+				return fmt.Errorf("unexpected type %T for field set_description", values[i])
 			} else if value.Valid {
-				s.Description = value.String
+				s.SetDescription = value.String
 			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
@@ -135,14 +135,14 @@ func (s *Set) String() string {
 	var builder strings.Builder
 	builder.WriteString("Set(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", s.ID))
-	builder.WriteString("spec=")
-	builder.WriteString(s.Spec)
+	builder.WriteString("set_spec=")
+	builder.WriteString(s.SetSpec)
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(s.Name)
+	builder.WriteString("set_name=")
+	builder.WriteString(s.SetName)
 	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(s.Description)
+	builder.WriteString("set_description=")
+	builder.WriteString(s.SetDescription)
 	builder.WriteByte(')')
 	return builder.String()
 }

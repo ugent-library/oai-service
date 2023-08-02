@@ -22,23 +22,23 @@ func (s *AddMetadataFormatRequest) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *AddMetadataFormatRequest) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("prefix")
-		e.Str(s.Prefix)
+		e.FieldStart("metadata_prefix")
+		e.Str(s.MetadataPrefix)
 	}
 	{
 		e.FieldStart("schema")
 		e.Str(s.Schema)
 	}
 	{
-		e.FieldStart("namespace")
-		e.Str(s.Namespace)
+		e.FieldStart("metadata_namespace")
+		e.Str(s.MetadataNamespace)
 	}
 }
 
 var jsonFieldsNameOfAddMetadataFormatRequest = [3]string{
-	0: "prefix",
+	0: "metadata_prefix",
 	1: "schema",
-	2: "namespace",
+	2: "metadata_namespace",
 }
 
 // Decode decodes AddMetadataFormatRequest from json.
@@ -50,17 +50,17 @@ func (s *AddMetadataFormatRequest) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "prefix":
+		case "metadata_prefix":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := d.Str()
-				s.Prefix = string(v)
+				s.MetadataPrefix = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"prefix\"")
+				return errors.Wrap(err, "decode field \"metadata_prefix\"")
 			}
 		case "schema":
 			requiredBitSet[0] |= 1 << 1
@@ -74,17 +74,17 @@ func (s *AddMetadataFormatRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"schema\"")
 			}
-		case "namespace":
+		case "metadata_namespace":
 			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
-				s.Namespace = string(v)
+				s.MetadataNamespace = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"namespace\"")
+				return errors.Wrap(err, "decode field \"metadata_namespace\"")
 			}
 		default:
 			return d.Skip()
@@ -143,14 +143,14 @@ func (s *AddMetadataFormatRequest) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *AddRecordRequest) Encode(e *jx.Encoder) {
+func (s *AddMetadataRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *AddRecordRequest) encodeFields(e *jx.Encoder) {
+func (s *AddMetadataRequest) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("identifier")
 		e.Str(s.Identifier)
@@ -163,29 +163,18 @@ func (s *AddRecordRequest) encodeFields(e *jx.Encoder) {
 		e.FieldStart("metadata")
 		e.Str(s.Metadata)
 	}
-	{
-		if s.SetSpecs != nil {
-			e.FieldStart("set_specs")
-			e.ArrStart()
-			for _, elem := range s.SetSpecs {
-				e.Str(elem)
-			}
-			e.ArrEnd()
-		}
-	}
 }
 
-var jsonFieldsNameOfAddRecordRequest = [4]string{
+var jsonFieldsNameOfAddMetadataRequest = [3]string{
 	0: "identifier",
 	1: "metadata_prefix",
 	2: "metadata",
-	3: "set_specs",
 }
 
-// Decode decodes AddRecordRequest from json.
-func (s *AddRecordRequest) Decode(d *jx.Decoder) error {
+// Decode decodes AddMetadataRequest from json.
+func (s *AddMetadataRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AddRecordRequest to nil")
+		return errors.New("invalid: unable to decode AddMetadataRequest to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -227,6 +216,113 @@ func (s *AddRecordRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"metadata\"")
 			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode AddMetadataRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfAddMetadataRequest) {
+					name = jsonFieldsNameOfAddMetadataRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AddMetadataRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AddMetadataRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *AddRecordRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *AddRecordRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("identifier")
+		e.Str(s.Identifier)
+	}
+	{
+		if s.SetSpecs != nil {
+			e.FieldStart("set_specs")
+			e.ArrStart()
+			for _, elem := range s.SetSpecs {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfAddRecordRequest = [2]string{
+	0: "identifier",
+	1: "set_specs",
+}
+
+// Decode decodes AddRecordRequest from json.
+func (s *AddRecordRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AddRecordRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "identifier":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.Identifier = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"identifier\"")
+			}
 		case "set_specs":
 			if err := func() error {
 				s.SetSpecs = make([]string, 0)
@@ -256,7 +352,7 @@ func (s *AddRecordRequest) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000111,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -312,25 +408,25 @@ func (s *AddSetRequest) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *AddSetRequest) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("spec")
-		e.Str(s.Spec)
+		e.FieldStart("set_spec")
+		e.Str(s.SetSpec)
 	}
 	{
-		e.FieldStart("name")
-		e.Str(s.Name)
+		e.FieldStart("set_name")
+		e.Str(s.SetName)
 	}
 	{
-		if s.Description.Set {
-			e.FieldStart("description")
-			s.Description.Encode(e)
+		if s.SetDescription.Set {
+			e.FieldStart("set_description")
+			s.SetDescription.Encode(e)
 		}
 	}
 }
 
 var jsonFieldsNameOfAddSetRequest = [3]string{
-	0: "spec",
-	1: "name",
-	2: "description",
+	0: "set_spec",
+	1: "set_name",
+	2: "set_description",
 }
 
 // Decode decodes AddSetRequest from json.
@@ -342,39 +438,39 @@ func (s *AddSetRequest) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "spec":
+		case "set_spec":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := d.Str()
-				s.Spec = string(v)
+				s.SetSpec = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"spec\"")
+				return errors.Wrap(err, "decode field \"set_spec\"")
 			}
-		case "name":
+		case "set_name":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := d.Str()
-				s.Name = string(v)
+				s.SetName = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"name\"")
+				return errors.Wrap(err, "decode field \"set_name\"")
 			}
-		case "description":
+		case "set_description":
 			if err := func() error {
-				s.Description.Reset()
-				if err := s.Description.Decode(d); err != nil {
+				s.SetDescription.Reset()
+				if err := s.SetDescription.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"description\"")
+				return errors.Wrap(err, "decode field \"set_description\"")
 			}
 		default:
 			return d.Skip()

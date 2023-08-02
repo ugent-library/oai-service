@@ -12,31 +12,31 @@ const (
 	Label = "metadata_format"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldPrefix holds the string denoting the prefix field in the database.
-	FieldPrefix = "prefix"
+	// FieldMetadataPrefix holds the string denoting the metadata_prefix field in the database.
+	FieldMetadataPrefix = "metadata_prefix"
 	// FieldSchema holds the string denoting the schema field in the database.
 	FieldSchema = "schema"
-	// FieldNamespace holds the string denoting the namespace field in the database.
-	FieldNamespace = "namespace"
-	// EdgeRecords holds the string denoting the records edge name in mutations.
-	EdgeRecords = "records"
+	// FieldMetadataNamespace holds the string denoting the metadata_namespace field in the database.
+	FieldMetadataNamespace = "metadata_namespace"
+	// EdgeMetadata holds the string denoting the metadata edge name in mutations.
+	EdgeMetadata = "metadata"
 	// Table holds the table name of the metadataformat in the database.
 	Table = "metadata_formats"
-	// RecordsTable is the table that holds the records relation/edge.
-	RecordsTable = "records"
-	// RecordsInverseTable is the table name for the Record entity.
-	// It exists in this package in order to avoid circular dependency with the "record" package.
-	RecordsInverseTable = "records"
-	// RecordsColumn is the table column denoting the records relation/edge.
-	RecordsColumn = "metadata_format_id"
+	// MetadataTable is the table that holds the metadata relation/edge.
+	MetadataTable = "metadata"
+	// MetadataInverseTable is the table name for the Metadata entity.
+	// It exists in this package in order to avoid circular dependency with the "metadata" package.
+	MetadataInverseTable = "metadata"
+	// MetadataColumn is the table column denoting the metadata relation/edge.
+	MetadataColumn = "metadata_format_id"
 )
 
 // Columns holds all SQL columns for metadataformat fields.
 var Columns = []string{
 	FieldID,
-	FieldPrefix,
+	FieldMetadataPrefix,
 	FieldSchema,
-	FieldNamespace,
+	FieldMetadataNamespace,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -57,9 +57,9 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByPrefix orders the results by the prefix field.
-func ByPrefix(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPrefix, opts...).ToFunc()
+// ByMetadataPrefix orders the results by the metadata_prefix field.
+func ByMetadataPrefix(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMetadataPrefix, opts...).ToFunc()
 }
 
 // BySchema orders the results by the schema field.
@@ -67,28 +67,28 @@ func BySchema(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSchema, opts...).ToFunc()
 }
 
-// ByNamespace orders the results by the namespace field.
-func ByNamespace(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldNamespace, opts...).ToFunc()
+// ByMetadataNamespace orders the results by the metadata_namespace field.
+func ByMetadataNamespace(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMetadataNamespace, opts...).ToFunc()
 }
 
-// ByRecordsCount orders the results by records count.
-func ByRecordsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByMetadataCount orders the results by metadata count.
+func ByMetadataCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newRecordsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newMetadataStep(), opts...)
 	}
 }
 
-// ByRecords orders the results by records terms.
-func ByRecords(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByMetadata orders the results by metadata terms.
+func ByMetadata(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newRecordsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newMetadataStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newRecordsStep() *sqlgraph.Step {
+func newMetadataStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(RecordsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, RecordsTable, RecordsColumn),
+		sqlgraph.To(MetadataInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, MetadataTable, MetadataColumn),
 	)
 }

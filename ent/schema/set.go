@@ -13,9 +13,9 @@ type Set struct {
 func (Set) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id"),
-		field.String("spec").Unique(),
-		field.String("name"),
-		field.String("description").Optional(),
+		field.String("set_spec").Unique(),
+		field.String("set_name"),
+		field.String("set_description").Optional(),
 	}
 }
 
