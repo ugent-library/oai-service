@@ -50,72 +50,72 @@ func (s *AddMetadataFormatRequest) SetMetadataNamespace(val string) {
 	s.MetadataNamespace = val
 }
 
-// AddMetadataOK is response for AddMetadata operation.
-type AddMetadataOK struct{}
+// AddRecordMetadataOK is response for AddRecordMetadata operation.
+type AddRecordMetadataOK struct{}
 
-// Ref: #/components/schemas/AddMetadataRequest
-type AddMetadataRequest struct {
+// Ref: #/components/schemas/AddRecordMetadataRequest
+type AddRecordMetadataRequest struct {
 	Identifier     string `json:"identifier"`
 	MetadataPrefix string `json:"metadata_prefix"`
 	Metadata       string `json:"metadata"`
 }
 
 // GetIdentifier returns the value of Identifier.
-func (s *AddMetadataRequest) GetIdentifier() string {
+func (s *AddRecordMetadataRequest) GetIdentifier() string {
 	return s.Identifier
 }
 
 // GetMetadataPrefix returns the value of MetadataPrefix.
-func (s *AddMetadataRequest) GetMetadataPrefix() string {
+func (s *AddRecordMetadataRequest) GetMetadataPrefix() string {
 	return s.MetadataPrefix
 }
 
 // GetMetadata returns the value of Metadata.
-func (s *AddMetadataRequest) GetMetadata() string {
+func (s *AddRecordMetadataRequest) GetMetadata() string {
 	return s.Metadata
 }
 
 // SetIdentifier sets the value of Identifier.
-func (s *AddMetadataRequest) SetIdentifier(val string) {
+func (s *AddRecordMetadataRequest) SetIdentifier(val string) {
 	s.Identifier = val
 }
 
 // SetMetadataPrefix sets the value of MetadataPrefix.
-func (s *AddMetadataRequest) SetMetadataPrefix(val string) {
+func (s *AddRecordMetadataRequest) SetMetadataPrefix(val string) {
 	s.MetadataPrefix = val
 }
 
 // SetMetadata sets the value of Metadata.
-func (s *AddMetadataRequest) SetMetadata(val string) {
+func (s *AddRecordMetadataRequest) SetMetadata(val string) {
 	s.Metadata = val
 }
 
-// AddRecordOK is response for AddRecord operation.
-type AddRecordOK struct{}
+// AddRecordSetsOK is response for AddRecordSets operation.
+type AddRecordSetsOK struct{}
 
-// Ref: #/components/schemas/AddRecordRequest
-type AddRecordRequest struct {
+// Ref: #/components/schemas/AddRecordSetsRequest
+type AddRecordSetsRequest struct {
 	Identifier string   `json:"identifier"`
 	SetSpecs   []string `json:"set_specs"`
 }
 
 // GetIdentifier returns the value of Identifier.
-func (s *AddRecordRequest) GetIdentifier() string {
+func (s *AddRecordSetsRequest) GetIdentifier() string {
 	return s.Identifier
 }
 
 // GetSetSpecs returns the value of SetSpecs.
-func (s *AddRecordRequest) GetSetSpecs() []string {
+func (s *AddRecordSetsRequest) GetSetSpecs() []string {
 	return s.SetSpecs
 }
 
 // SetIdentifier sets the value of Identifier.
-func (s *AddRecordRequest) SetIdentifier(val string) {
+func (s *AddRecordSetsRequest) SetIdentifier(val string) {
 	s.Identifier = val
 }
 
 // SetSetSpecs sets the value of SetSpecs.
-func (s *AddRecordRequest) SetSetSpecs(val []string) {
+func (s *AddRecordSetsRequest) SetSetSpecs(val []string) {
 	s.SetSpecs = val
 }
 

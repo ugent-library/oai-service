@@ -11,20 +11,6 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodeAddMetadataRequest(
-	req *AddMetadataRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := jx.GetEncoder()
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeAddMetadataFormatRequest(
 	req *AddMetadataFormatRequest,
 	r *http.Request,
@@ -39,8 +25,22 @@ func encodeAddMetadataFormatRequest(
 	return nil
 }
 
-func encodeAddRecordRequest(
-	req *AddRecordRequest,
+func encodeAddRecordMetadataRequest(
+	req *AddRecordMetadataRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := jx.GetEncoder()
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeAddRecordSetsRequest(
+	req *AddRecordSetsRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

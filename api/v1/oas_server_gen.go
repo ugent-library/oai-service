@@ -8,24 +8,24 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// AddMetadata implements addMetadata operation.
-	//
-	// Add record metadata.
-	//
-	// POST /add-metadata
-	AddMetadata(ctx context.Context, req *AddMetadataRequest) error
 	// AddMetadataFormat implements addMetadataFormat operation.
 	//
 	// Add a metadata format.
 	//
 	// POST /add-metadata-format
 	AddMetadataFormat(ctx context.Context, req *AddMetadataFormatRequest) error
-	// AddRecord implements addRecord operation.
+	// AddRecordMetadata implements addRecordMetadata operation.
 	//
-	// Add a record.
+	// Add record metadata.
 	//
-	// POST /add-record
-	AddRecord(ctx context.Context, req *AddRecordRequest) error
+	// POST /add-record-metadata
+	AddRecordMetadata(ctx context.Context, req *AddRecordMetadataRequest) error
+	// AddRecordSets implements addRecordSets operation.
+	//
+	// Add record sets.
+	//
+	// POST /add-record-sets
+	AddRecordSets(ctx context.Context, req *AddRecordSetsRequest) error
 	// AddSet implements addSet operation.
 	//
 	// Add a set.

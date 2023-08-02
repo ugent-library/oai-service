@@ -34,16 +34,16 @@ func (s *Service) AddSet(ctx context.Context, req *AddSetRequest) error {
 	return err
 }
 
-func (s *Service) AddRecord(ctx context.Context, req *AddRecordRequest) error {
-	err := s.repo.AddRecord(ctx,
+func (s *Service) AddRecordSets(ctx context.Context, req *AddRecordSetsRequest) error {
+	err := s.repo.AddRecordSets(ctx,
 		req.Identifier,
 		req.SetSpecs,
 	)
 	return err
 }
 
-func (s *Service) AddMetadata(ctx context.Context, req *AddMetadataRequest) error {
-	err := s.repo.AddMetadata(ctx,
+func (s *Service) AddRecordMetadata(ctx context.Context, req *AddRecordMetadataRequest) error {
+	err := s.repo.AddRecordMetadata(ctx,
 		req.Identifier,
 		req.MetadataPrefix,
 		req.Metadata,

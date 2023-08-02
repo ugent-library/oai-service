@@ -418,14 +418,14 @@ func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) 
 }
 
 // TODO do this in one query
-func (r *Repo) AddRecord(ctx context.Context, identifier string, setSpecs []string) error {
+func (r *Repo) AddRecordSets(ctx context.Context, identifier string, specs []string) error {
 	tx, err := r.client.Tx(ctx)
 	if err != nil {
 		return err
 	}
 
-	setIDs := make([]int64, len(setSpecs))
-	for i, spec := range setSpecs {
+	setIDs := make([]int64, len(specs))
+	for i, spec := range specs {
 		id, err := tx.Set.Query().
 			Where(set.SetSpecEQ(spec)).
 			OnlyID(ctx)
@@ -458,16 +458,17 @@ func (r *Repo) AddRecord(ctx context.Context, identifier string, setSpecs []stri
 }
 
 // TODO do this in one query
-// TODO create record if not exists
-func (r *Repo) AddMetadata(ctx context.Context, identifier, format, metadata string) error {
+func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, format, metadata string) error {
 	tx, err := r.client.Tx(ctx)
 	if err != nil {
 		return err
 	}
 
-	recordID, err := tx.Record.Query().
-		Where(record.IdentifierEQ(identifier)).
-		OnlyID(ctx)
+	recordID, err := tx.Record.Create().
+		SetIdentifier(identifier).
+		OnConflictColumns(record.FieldIdentifier).
+		DoNothing().
+		ID(ctx)
 	if err != nil {
 		return tx.Rollback()
 	}

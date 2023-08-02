@@ -143,14 +143,14 @@ func (s *AddMetadataFormatRequest) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *AddMetadataRequest) Encode(e *jx.Encoder) {
+func (s *AddRecordMetadataRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *AddMetadataRequest) encodeFields(e *jx.Encoder) {
+func (s *AddRecordMetadataRequest) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("identifier")
 		e.Str(s.Identifier)
@@ -165,16 +165,16 @@ func (s *AddMetadataRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfAddMetadataRequest = [3]string{
+var jsonFieldsNameOfAddRecordMetadataRequest = [3]string{
 	0: "identifier",
 	1: "metadata_prefix",
 	2: "metadata",
 }
 
-// Decode decodes AddMetadataRequest from json.
-func (s *AddMetadataRequest) Decode(d *jx.Decoder) error {
+// Decode decodes AddRecordMetadataRequest from json.
+func (s *AddRecordMetadataRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AddMetadataRequest to nil")
+		return errors.New("invalid: unable to decode AddRecordMetadataRequest to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -221,7 +221,7 @@ func (s *AddMetadataRequest) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode AddMetadataRequest")
+		return errors.Wrap(err, "decode AddRecordMetadataRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -238,8 +238,8 @@ func (s *AddMetadataRequest) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfAddMetadataRequest) {
-					name = jsonFieldsNameOfAddMetadataRequest[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfAddRecordMetadataRequest) {
+					name = jsonFieldsNameOfAddRecordMetadataRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -260,27 +260,27 @@ func (s *AddMetadataRequest) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AddMetadataRequest) MarshalJSON() ([]byte, error) {
+func (s *AddRecordMetadataRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AddMetadataRequest) UnmarshalJSON(data []byte) error {
+func (s *AddRecordMetadataRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *AddRecordRequest) Encode(e *jx.Encoder) {
+func (s *AddRecordSetsRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *AddRecordRequest) encodeFields(e *jx.Encoder) {
+func (s *AddRecordSetsRequest) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("identifier")
 		e.Str(s.Identifier)
@@ -297,15 +297,15 @@ func (s *AddRecordRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfAddRecordRequest = [2]string{
+var jsonFieldsNameOfAddRecordSetsRequest = [2]string{
 	0: "identifier",
 	1: "set_specs",
 }
 
-// Decode decodes AddRecordRequest from json.
-func (s *AddRecordRequest) Decode(d *jx.Decoder) error {
+// Decode decodes AddRecordSetsRequest from json.
+func (s *AddRecordSetsRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AddRecordRequest to nil")
+		return errors.New("invalid: unable to decode AddRecordSetsRequest to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -347,7 +347,7 @@ func (s *AddRecordRequest) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode AddRecordRequest")
+		return errors.Wrap(err, "decode AddRecordSetsRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -364,8 +364,8 @@ func (s *AddRecordRequest) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfAddRecordRequest) {
-					name = jsonFieldsNameOfAddRecordRequest[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfAddRecordSetsRequest) {
+					name = jsonFieldsNameOfAddRecordSetsRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -386,14 +386,14 @@ func (s *AddRecordRequest) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AddRecordRequest) MarshalJSON() ([]byte, error) {
+func (s *AddRecordSetsRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AddRecordRequest) UnmarshalJSON(data []byte) error {
+func (s *AddRecordSetsRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
