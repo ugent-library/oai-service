@@ -504,7 +504,7 @@ func allowArgs(keys ...string) handleFunc {
 				}
 			}
 			if !ok {
-				res.Errors = append(res.Errors, &Error{Code: "badArgument", Value: fmt.Sprintf("argument '%s' is illegal", key)})
+				res.Errors = append(res.Errors, &Error{Code: "badArgument", Value: fmt.Sprintf("argument %s is illegal", key)})
 			}
 		}
 		return nil
