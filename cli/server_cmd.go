@@ -25,13 +25,15 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 }
 
-type apiSecurityHandler struct{}
+type apiSecurityHandler struct {
+	APIKey string
+}
 
 func (s *apiSecurityHandler) HandleApiKey(ctx context.Context, operationName string, t api.ApiKey) (context.Context, error) {
-	if t.APIKey == "123" {
+	if t.APIKey == s.APIKey {
 		return ctx, nil
 	}
-	return ctx, errors.New("go away")
+	return ctx, errors.New("unauthorized")
 }
 
 var serverCmd = &cobra.Command{
@@ -63,7 +65,7 @@ var serverCmd = &cobra.Command{
 		}
 
 		// setup api
-		apiServer, err := api.NewServer(api.NewService(repo), &apiSecurityHandler{})
+		apiServer, err := api.NewServer(api.NewService(repo), &apiSecurityHandler{APIKey: config.APIKey})
 		if err != nil {
 			return err
 		}

@@ -10,16 +10,14 @@ type Config struct {
 		Image  string `env:"IMAGE_NAME"`
 	}
 	// Env must be local, development, test or production
-	Env  string `env:"OAI_ENV" envDefault:"production"`
-	Host string `env:"OAI_HOST"`
-	Port int    `env:"OAI_PORT" envDefault:"3000"`
-	Repo struct {
+	Env    string `env:"OAI_ENV" envDefault:"production"`
+	Host   string `env:"OAI_HOST"`
+	Port   int    `env:"OAI_PORT" envDefault:"3000"`
+	APIKey string `env:"OAI_API_KEY"`
+	Repo   struct {
 		Conn   string `env:"CONN,notEmpty"`
 		Secret string `env:"SECRET,notEmpty"`
 	} `envPrefix:"OAI_REPO_"`
-	GRPC struct {
-		Secret string `env:"SECRET,notEmpty"`
-	} `envPrefix:"OAI_GRPC_"`
 }
 
 func (c Config) Addr() string {
