@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -430,7 +431,7 @@ func (r *Repo) AddRecordSets(ctx context.Context, identifier string, specs []str
 			Where(set.SetSpecEQ(spec)).
 			OnlyID(ctx)
 		if err != nil {
-			return err
+			return rollback(tx, err)
 		}
 		setIDs[i] = id
 	}
@@ -441,7 +442,7 @@ func (r *Repo) AddRecordSets(ctx context.Context, identifier string, specs []str
 		ClearSets().
 		Exec(ctx)
 	if err != nil {
-		return tx.Rollback()
+		return rollback(tx, err)
 	}
 
 	err = tx.Record.Create().
@@ -451,7 +452,7 @@ func (r *Repo) AddRecordSets(ctx context.Context, identifier string, specs []str
 		UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
-		return tx.Rollback()
+		return rollback(tx, err)
 	}
 
 	return tx.Commit()
@@ -470,14 +471,14 @@ func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, format, metada
 		DoNothing().
 		ID(ctx)
 	if err != nil {
-		return tx.Rollback()
+		return rollback(tx, err)
 	}
 
 	metadataFormatID, err := tx.MetadataFormat.Query().
 		Where(metadataformat.MetadataPrefixEQ(format)).
 		OnlyID(ctx)
 	if err != nil {
-		return tx.Rollback()
+		return rollback(tx, err)
 	}
 
 	err = tx.Metadata.Create().
@@ -486,7 +487,7 @@ func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, format, metada
 		SetMetadataFormatID(metadataFormatID).
 		Exec(ctx)
 	if err != nil {
-		return tx.Rollback()
+		return rollback(tx, err)
 	}
 
 	return tx.Commit()
@@ -518,4 +519,11 @@ func (r *Repo) decodeCursor(encryptedCursor string, c any) error {
 		return err
 	}
 	return json.Unmarshal(plaintext, c)
+}
+
+func rollback(tx *ent.Tx, err error) error {
+	if rerr := tx.Rollback(); rerr != nil {
+		err = fmt.Errorf("%w: %v", err, rerr)
+	}
+	return err
 }

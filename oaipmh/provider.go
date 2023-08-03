@@ -18,7 +18,7 @@ const (
 type handleFunc func(context.Context, *Provider, *response, url.Values) error
 
 var (
-	OAIDC = MetadataFormat{
+	OAIDC = &MetadataFormat{
 		MetadataPrefix:    "oai_dc",
 		Schema:            "http://www.openarchives.org/OAI/2.0/oai_dc.xsd",
 		MetadataNamespace: "http://www.openarchives.org/OAI/2.0/oai_dc/",
