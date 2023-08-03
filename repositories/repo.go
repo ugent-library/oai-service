@@ -459,7 +459,7 @@ func (r *Repo) AddRecordSets(ctx context.Context, identifier string, specs []str
 }
 
 // TODO do this in one query
-func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, format, metadata string) error {
+func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, prefix, md string) error {
 	tx, err := r.client.Tx(ctx)
 	if err != nil {
 		return err
@@ -468,23 +468,25 @@ func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, format, metada
 	recordID, err := tx.Record.Create().
 		SetIdentifier(identifier).
 		OnConflictColumns(record.FieldIdentifier).
-		DoNothing().
+		UpdateNewValues(). // TODO DoNothing returns no rows error if record already exists
 		ID(ctx)
 	if err != nil {
 		return rollback(tx, err)
 	}
 
 	metadataFormatID, err := tx.MetadataFormat.Query().
-		Where(metadataformat.MetadataPrefixEQ(format)).
+		Where(metadataformat.MetadataPrefixEQ(prefix)).
 		OnlyID(ctx)
 	if err != nil {
 		return rollback(tx, err)
 	}
 
 	err = tx.Metadata.Create().
-		SetMetadata(metadata).
+		SetMetadata(md).
 		SetRecordID(recordID).
 		SetMetadataFormatID(metadataFormatID).
+		OnConflictColumns(metadata.FieldRecordID, metadata.FieldMetadataFormatID).
+		UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
 		return rollback(tx, err)
