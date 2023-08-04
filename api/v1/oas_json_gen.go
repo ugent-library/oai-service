@@ -160,15 +160,15 @@ func (s *AddRecordMetadataRequest) encodeFields(e *jx.Encoder) {
 		e.Str(s.MetadataPrefix)
 	}
 	{
-		e.FieldStart("metadata")
-		e.Str(s.Metadata)
+		e.FieldStart("xml")
+		e.Str(s.XML)
 	}
 }
 
 var jsonFieldsNameOfAddRecordMetadataRequest = [3]string{
 	0: "identifier",
 	1: "metadata_prefix",
-	2: "metadata",
+	2: "xml",
 }
 
 // Decode decodes AddRecordMetadataRequest from json.
@@ -204,17 +204,17 @@ func (s *AddRecordMetadataRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"metadata_prefix\"")
 			}
-		case "metadata":
+		case "xml":
 			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
-				s.Metadata = string(v)
+				s.XML = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"xml\"")
 			}
 		default:
 			return d.Skip()

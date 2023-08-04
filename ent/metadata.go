@@ -23,8 +23,8 @@ type Metadata struct {
 	RecordID int64 `json:"record_id,omitempty"`
 	// MetadataFormatID holds the value of the "metadata_format_id" field.
 	MetadataFormatID int64 `json:"metadata_format_id,omitempty"`
-	// Metadata holds the value of the "metadata" field.
-	Metadata string `json:"metadata,omitempty"`
+	// XML holds the value of the "xml" field.
+	XML string `json:"xml,omitempty"`
 	// Datestamp holds the value of the "datestamp" field.
 	Datestamp time.Time `json:"datestamp,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -77,7 +77,7 @@ func (*Metadata) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case metadata.FieldID, metadata.FieldRecordID, metadata.FieldMetadataFormatID:
 			values[i] = new(sql.NullInt64)
-		case metadata.FieldMetadata:
+		case metadata.FieldXML:
 			values[i] = new(sql.NullString)
 		case metadata.FieldDatestamp:
 			values[i] = new(sql.NullTime)
@@ -114,11 +114,11 @@ func (m *Metadata) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				m.MetadataFormatID = value.Int64
 			}
-		case metadata.FieldMetadata:
+		case metadata.FieldXML:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field metadata", values[i])
+				return fmt.Errorf("unexpected type %T for field xml", values[i])
 			} else if value.Valid {
-				m.Metadata = value.String
+				m.XML = value.String
 			}
 		case metadata.FieldDatestamp:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -178,8 +178,8 @@ func (m *Metadata) String() string {
 	builder.WriteString("metadata_format_id=")
 	builder.WriteString(fmt.Sprintf("%v", m.MetadataFormatID))
 	builder.WriteString(", ")
-	builder.WriteString("metadata=")
-	builder.WriteString(m.Metadata)
+	builder.WriteString("xml=")
+	builder.WriteString(m.XML)
 	builder.WriteString(", ")
 	builder.WriteString("datestamp=")
 	builder.WriteString(m.Datestamp.Format(time.ANSIC))

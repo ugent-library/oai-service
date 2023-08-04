@@ -20,8 +20,6 @@ func init() {
 	metadataDescDatestamp := metadataFields[4].Descriptor()
 	// metadata.DefaultDatestamp holds the default value on creation for the datestamp field.
 	metadata.DefaultDatestamp = metadataDescDatestamp.Default.(func() time.Time)
-	// metadata.UpdateDefaultDatestamp holds the default value on update for the datestamp field.
-	metadata.UpdateDefaultDatestamp = metadataDescDatestamp.UpdateDefault.(func() time.Time)
 	recordFields := schema.Record{}.Fields()
 	_ = recordFields
 	// recordDescDeleted is the schema descriptor for deleted field.

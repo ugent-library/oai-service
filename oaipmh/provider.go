@@ -64,15 +64,16 @@ var (
 	}
 
 	// TODO make all errors private and remove Error method
+	ErrCannotDisseminateFormat = &Error{Code: "cannotDisseminateFormat", Value: "the metadata format identified by the value given for the metadataPrefix argument is not supported by the item or by the repository"}
+	ErrBadResumptionToken      = &Error{Code: "badResumptionToken", Value: "the value of the resumptionToken argument is invalid or expired"}
+
 	errVerbMissing              = &Error{Code: "badVerb", Value: "verb is missing"}
 	errVerbRepeated             = &Error{Code: "badVerb", Value: "verb can't be repeated"}
 	errVerbInvalid              = &Error{Code: "badVerb", Value: "verb is invalid"}
 	errNoSetHierarchy           = &Error{Code: "noSetHierarchy", Value: "sets are not supported"}
-	ErrIDDoesNotExist           = &Error{Code: "idDoesNotExist", Value: "identifier is unknown or illegal"}
+	errIDDoesNotExist           = &Error{Code: "idDoesNotExist", Value: "identifier is unknown or illegal"}
 	errNoRecordsMatch           = &Error{Code: "noRecordsMatch", Value: "no records match"}
 	errNoMetadataFormats        = &Error{Code: "noMetadataFormats", Value: "there are no metadata formats available for the specified item"}
-	ErrCannotDisseminateFormat  = &Error{Code: "cannotDisseminateFormat", Value: "the metadata format identified by the value given for the metadataPrefix argument is not supported by the item or by the repository"}
-	ErrBadResumptionToken       = &Error{Code: "badResumptionToken", Value: "the value of the resumptionToken argument is invalid or expired"}
 	errResumptiontokenExclusive = &Error{Code: "badArgument", Value: "resumptionToken cannot be combined with other attributes"}
 	errMetadataPrefixMissing    = &Error{Code: "badArgument", Value: "metadataPrefix is missing"}
 	errIdentifierMissing        = &Error{Code: "badArgument", Value: "identifier is missing"}
@@ -218,6 +219,7 @@ type ProviderBackend interface {
 	// TODO pass from, until as time objects
 	GetIdentifiers(context.Context, string, string, string, string) ([]*Header, *ResumptionToken, error)
 	GetMoreIdentifiers(context.Context, string) ([]*Header, *ResumptionToken, error)
+	HasRecord(context.Context, string) (bool, error)
 	GetRecords(context.Context, string, string, string, string) ([]*Record, *ResumptionToken, error)
 	GetMoreRecords(context.Context, string) ([]*Record, *ResumptionToken, error)
 	GetRecord(context.Context, string, string) (*Record, error)
@@ -350,10 +352,6 @@ func listMetadataFormats(ctx context.Context, p *Provider, res *response, q url.
 	var err error
 	if identifier := res.Request.Identifier; identifier != "" {
 		formats, err = p.Backend.GetRecordMetadataFormats(ctx, identifier)
-		if err == ErrIDDoesNotExist {
-			res.Errors = append(res.Errors, err.(*Error))
-			return nil
-		}
 	} else {
 		formats, err = p.Backend.GetMetadataFormats(ctx)
 	}
@@ -479,7 +477,7 @@ func listRecords(ctx context.Context, p *Provider, res *response, args url.Value
 
 func getRecord(ctx context.Context, p *Provider, res *response, args url.Values) error {
 	rec, err := p.Backend.GetRecord(ctx, res.Request.Identifier, res.Request.MetadataPrefix)
-	if err == ErrIDDoesNotExist || err == ErrCannotDisseminateFormat {
+	if err == ErrCannotDisseminateFormat {
 		res.Errors = append(res.Errors, err.(*Error))
 		return nil
 	}
@@ -521,7 +519,21 @@ func setResumptionToken(ctx context.Context, p *Provider, res *response, args ur
 }
 
 func setIdentifier(ctx context.Context, p *Provider, res *response, args url.Values) error {
-	res.Request.Identifier = getArg(res, args, "identifier")
+	val := getArg(res, args, "identifier")
+
+	if val != "" {
+		exists, err := p.Backend.HasRecord(ctx, val)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			res.Errors = append(res.Errors, errIDDoesNotExist)
+			return nil
+		}
+
+		res.Request.Identifier = val
+	}
+
 	return nil
 }
 
@@ -552,10 +564,23 @@ func setRequiredMetadataPrefix(ctx context.Context, p *Provider, res *response, 
 }
 
 func setRequiredIdentifier(ctx context.Context, p *Provider, res *response, args url.Values) error {
-	res.Request.Identifier = getArg(res, args, "identifier")
-	if res.Request.Identifier == "" {
+	val := getArg(res, args, "identifier")
+
+	if val == "" {
 		res.Errors = append(res.Errors, errIdentifierMissing)
 	}
+
+	exists, err := p.Backend.HasRecord(ctx, val)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		res.Errors = append(res.Errors, errIDDoesNotExist)
+		return nil
+	}
+
+	res.Request.Identifier = val
+
 	return nil
 }
 

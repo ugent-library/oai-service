@@ -57,7 +57,7 @@ type AddRecordMetadataOK struct{}
 type AddRecordMetadataRequest struct {
 	Identifier     string `json:"identifier"`
 	MetadataPrefix string `json:"metadata_prefix"`
-	Metadata       string `json:"metadata"`
+	XML            string `json:"xml"`
 }
 
 // GetIdentifier returns the value of Identifier.
@@ -70,9 +70,9 @@ func (s *AddRecordMetadataRequest) GetMetadataPrefix() string {
 	return s.MetadataPrefix
 }
 
-// GetMetadata returns the value of Metadata.
-func (s *AddRecordMetadataRequest) GetMetadata() string {
-	return s.Metadata
+// GetXML returns the value of XML.
+func (s *AddRecordMetadataRequest) GetXML() string {
+	return s.XML
 }
 
 // SetIdentifier sets the value of Identifier.
@@ -85,9 +85,9 @@ func (s *AddRecordMetadataRequest) SetMetadataPrefix(val string) {
 	s.MetadataPrefix = val
 }
 
-// SetMetadata sets the value of Metadata.
-func (s *AddRecordMetadataRequest) SetMetadata(val string) {
-	s.Metadata = val
+// SetXML sets the value of XML.
+func (s *AddRecordMetadataRequest) SetXML(val string) {
+	s.XML = val
 }
 
 // AddRecordSetsOK is response for AddRecordSets operation.

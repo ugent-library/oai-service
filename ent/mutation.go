@@ -39,7 +39,7 @@ type MetadataMutation struct {
 	op                     Op
 	typ                    string
 	id                     *int64
-	metadata               *string
+	xml                    *string
 	datestamp              *time.Time
 	clearedFields          map[string]struct{}
 	record                 *int64
@@ -227,40 +227,40 @@ func (m *MetadataMutation) ResetMetadataFormatID() {
 	m.metadata_format = nil
 }
 
-// SetMetadata sets the "metadata" field.
-func (m *MetadataMutation) SetMetadata(s string) {
-	m.metadata = &s
+// SetXML sets the "xml" field.
+func (m *MetadataMutation) SetXML(s string) {
+	m.xml = &s
 }
 
-// Metadata returns the value of the "metadata" field in the mutation.
-func (m *MetadataMutation) Metadata() (r string, exists bool) {
-	v := m.metadata
+// XML returns the value of the "xml" field in the mutation.
+func (m *MetadataMutation) XML() (r string, exists bool) {
+	v := m.xml
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldMetadata returns the old "metadata" field's value of the Metadata entity.
+// OldXML returns the old "xml" field's value of the Metadata entity.
 // If the Metadata object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MetadataMutation) OldMetadata(ctx context.Context) (v string, err error) {
+func (m *MetadataMutation) OldXML(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+		return v, errors.New("OldXML is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldMetadata requires an ID field in the mutation")
+		return v, errors.New("OldXML requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+		return v, fmt.Errorf("querying old value for OldXML: %w", err)
 	}
-	return oldValue.Metadata, nil
+	return oldValue.XML, nil
 }
 
-// ResetMetadata resets all changes to the "metadata" field.
-func (m *MetadataMutation) ResetMetadata() {
-	m.metadata = nil
+// ResetXML resets all changes to the "xml" field.
+func (m *MetadataMutation) ResetXML() {
+	m.xml = nil
 }
 
 // SetDatestamp sets the "datestamp" field.
@@ -392,8 +392,8 @@ func (m *MetadataMutation) Fields() []string {
 	if m.metadata_format != nil {
 		fields = append(fields, metadata.FieldMetadataFormatID)
 	}
-	if m.metadata != nil {
-		fields = append(fields, metadata.FieldMetadata)
+	if m.xml != nil {
+		fields = append(fields, metadata.FieldXML)
 	}
 	if m.datestamp != nil {
 		fields = append(fields, metadata.FieldDatestamp)
@@ -410,8 +410,8 @@ func (m *MetadataMutation) Field(name string) (ent.Value, bool) {
 		return m.RecordID()
 	case metadata.FieldMetadataFormatID:
 		return m.MetadataFormatID()
-	case metadata.FieldMetadata:
-		return m.Metadata()
+	case metadata.FieldXML:
+		return m.XML()
 	case metadata.FieldDatestamp:
 		return m.Datestamp()
 	}
@@ -427,8 +427,8 @@ func (m *MetadataMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldRecordID(ctx)
 	case metadata.FieldMetadataFormatID:
 		return m.OldMetadataFormatID(ctx)
-	case metadata.FieldMetadata:
-		return m.OldMetadata(ctx)
+	case metadata.FieldXML:
+		return m.OldXML(ctx)
 	case metadata.FieldDatestamp:
 		return m.OldDatestamp(ctx)
 	}
@@ -454,12 +454,12 @@ func (m *MetadataMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetMetadataFormatID(v)
 		return nil
-	case metadata.FieldMetadata:
+	case metadata.FieldXML:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetMetadata(v)
+		m.SetXML(v)
 		return nil
 	case metadata.FieldDatestamp:
 		v, ok := value.(time.Time)
@@ -526,8 +526,8 @@ func (m *MetadataMutation) ResetField(name string) error {
 	case metadata.FieldMetadataFormatID:
 		m.ResetMetadataFormatID()
 		return nil
-	case metadata.FieldMetadata:
-		m.ResetMetadata()
+	case metadata.FieldXML:
+		m.ResetXML()
 		return nil
 	case metadata.FieldDatestamp:
 		m.ResetDatestamp()

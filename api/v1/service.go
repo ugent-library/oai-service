@@ -46,7 +46,7 @@ func (s *Service) AddRecordMetadata(ctx context.Context, req *AddRecordMetadataR
 	err := s.repo.AddRecordMetadata(ctx,
 		req.Identifier,
 		req.MetadataPrefix,
-		req.Metadata,
+		req.XML,
 	)
 	return err
 }

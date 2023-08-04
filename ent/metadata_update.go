@@ -42,15 +42,23 @@ func (mu *MetadataUpdate) SetMetadataFormatID(i int64) *MetadataUpdate {
 	return mu
 }
 
-// SetMetadata sets the "metadata" field.
-func (mu *MetadataUpdate) SetMetadata(s string) *MetadataUpdate {
-	mu.mutation.SetMetadata(s)
+// SetXML sets the "xml" field.
+func (mu *MetadataUpdate) SetXML(s string) *MetadataUpdate {
+	mu.mutation.SetXML(s)
 	return mu
 }
 
 // SetDatestamp sets the "datestamp" field.
 func (mu *MetadataUpdate) SetDatestamp(t time.Time) *MetadataUpdate {
 	mu.mutation.SetDatestamp(t)
+	return mu
+}
+
+// SetNillableDatestamp sets the "datestamp" field if the given value is not nil.
+func (mu *MetadataUpdate) SetNillableDatestamp(t *time.Time) *MetadataUpdate {
+	if t != nil {
+		mu.SetDatestamp(*t)
+	}
 	return mu
 }
 
@@ -83,7 +91,6 @@ func (mu *MetadataUpdate) ClearMetadataFormat() *MetadataUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (mu *MetadataUpdate) Save(ctx context.Context) (int, error) {
-	mu.defaults()
 	return withHooks(ctx, mu.sqlSave, mu.mutation, mu.hooks)
 }
 
@@ -106,14 +113,6 @@ func (mu *MetadataUpdate) Exec(ctx context.Context) error {
 func (mu *MetadataUpdate) ExecX(ctx context.Context) {
 	if err := mu.Exec(ctx); err != nil {
 		panic(err)
-	}
-}
-
-// defaults sets the default values of the builder before save.
-func (mu *MetadataUpdate) defaults() {
-	if _, ok := mu.mutation.Datestamp(); !ok {
-		v := metadata.UpdateDefaultDatestamp()
-		mu.mutation.SetDatestamp(v)
 	}
 }
 
@@ -140,8 +139,8 @@ func (mu *MetadataUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := mu.mutation.Metadata(); ok {
-		_spec.SetField(metadata.FieldMetadata, field.TypeString, value)
+	if value, ok := mu.mutation.XML(); ok {
+		_spec.SetField(metadata.FieldXML, field.TypeString, value)
 	}
 	if value, ok := mu.mutation.Datestamp(); ok {
 		_spec.SetField(metadata.FieldDatestamp, field.TypeTime, value)
@@ -236,15 +235,23 @@ func (muo *MetadataUpdateOne) SetMetadataFormatID(i int64) *MetadataUpdateOne {
 	return muo
 }
 
-// SetMetadata sets the "metadata" field.
-func (muo *MetadataUpdateOne) SetMetadata(s string) *MetadataUpdateOne {
-	muo.mutation.SetMetadata(s)
+// SetXML sets the "xml" field.
+func (muo *MetadataUpdateOne) SetXML(s string) *MetadataUpdateOne {
+	muo.mutation.SetXML(s)
 	return muo
 }
 
 // SetDatestamp sets the "datestamp" field.
 func (muo *MetadataUpdateOne) SetDatestamp(t time.Time) *MetadataUpdateOne {
 	muo.mutation.SetDatestamp(t)
+	return muo
+}
+
+// SetNillableDatestamp sets the "datestamp" field if the given value is not nil.
+func (muo *MetadataUpdateOne) SetNillableDatestamp(t *time.Time) *MetadataUpdateOne {
+	if t != nil {
+		muo.SetDatestamp(*t)
+	}
 	return muo
 }
 
@@ -290,7 +297,6 @@ func (muo *MetadataUpdateOne) Select(field string, fields ...string) *MetadataUp
 
 // Save executes the query and returns the updated Metadata entity.
 func (muo *MetadataUpdateOne) Save(ctx context.Context) (*Metadata, error) {
-	muo.defaults()
 	return withHooks(ctx, muo.sqlSave, muo.mutation, muo.hooks)
 }
 
@@ -313,14 +319,6 @@ func (muo *MetadataUpdateOne) Exec(ctx context.Context) error {
 func (muo *MetadataUpdateOne) ExecX(ctx context.Context) {
 	if err := muo.Exec(ctx); err != nil {
 		panic(err)
-	}
-}
-
-// defaults sets the default values of the builder before save.
-func (muo *MetadataUpdateOne) defaults() {
-	if _, ok := muo.mutation.Datestamp(); !ok {
-		v := metadata.UpdateDefaultDatestamp()
-		muo.mutation.SetDatestamp(v)
 	}
 }
 
@@ -364,8 +362,8 @@ func (muo *MetadataUpdateOne) sqlSave(ctx context.Context) (_node *Metadata, err
 			}
 		}
 	}
-	if value, ok := muo.mutation.Metadata(); ok {
-		_spec.SetField(metadata.FieldMetadata, field.TypeString, value)
+	if value, ok := muo.mutation.XML(); ok {
+		_spec.SetField(metadata.FieldXML, field.TypeString, value)
 	}
 	if value, ok := muo.mutation.Datestamp(); ok {
 		_spec.SetField(metadata.FieldDatestamp, field.TypeTime, value)

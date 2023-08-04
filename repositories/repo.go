@@ -190,17 +190,13 @@ func (r *Repo) GetEarliestDatestamp(ctx context.Context) (time.Time, error) {
 	return row.Datestamp, nil
 }
 
-func (r *Repo) GetRecord(ctx context.Context, identifier, prefix string) (*oaipmh.Record, error) {
-	exists, err := r.client.Record.Query().
+func (r *Repo) HasRecord(ctx context.Context, identifier string) (bool, error) {
+	return r.client.Record.Query().
 		Where(record.IdentifierEQ(identifier)).
 		Exist(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, oaipmh.ErrIDDoesNotExist
-	}
+}
 
+func (r *Repo) GetRecord(ctx context.Context, identifier, prefix string) (*oaipmh.Record, error) {
 	row, err := r.client.Metadata.Query().
 		Where(
 			metadata.HasRecordWith(record.IdentifierEQ(identifier)),
@@ -232,7 +228,7 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, prefix string) (*oaipm
 		rec.Header.Status = "deleted"
 	} else {
 		rec.Metadata = &oaipmh.Payload{
-			XML: row.Metadata,
+			XML: row.XML,
 		}
 	}
 
@@ -367,7 +363,7 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 			rec.Header.Status = "deleted"
 		} else {
 			rec.Metadata = &oaipmh.Payload{
-				XML: row.Metadata,
+				XML: row.XML,
 			}
 		}
 		recs[i] = rec
@@ -394,18 +390,13 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 	return recs, token, nil
 }
 
+// TODO scan directly into []*oaipmh.MetadataFormat?
 func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) ([]*oaipmh.MetadataFormat, error) {
 	rows, err := r.client.Metadata.Query().
 		Where(metadata.HasRecordWith(record.IdentifierEQ(identifier))).
 		QueryMetadataFormat().All(ctx)
-	if ent.IsNotFound(err) {
-		return nil, oaipmh.ErrIDDoesNotExist
-	}
 	if err != nil {
 		return nil, err
-	}
-	if len(rows) == 0 {
-		return nil, nil
 	}
 	formats := make([]*oaipmh.MetadataFormat, len(rows))
 	for i, row := range rows {
@@ -418,81 +409,57 @@ func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) 
 	return formats, nil
 }
 
-// TODO do this in one query
 func (r *Repo) AddRecordSets(ctx context.Context, identifier string, specs []string) error {
-	tx, err := r.client.Tx(ctx)
-	if err != nil {
-		return err
-	}
-
-	setIDs := make([]int64, len(specs))
-	for i, spec := range specs {
-		id, err := tx.Set.Query().
-			Where(set.SetSpecEQ(spec)).
-			OnlyID(ctx)
-		if err != nil {
-			return rollback(tx, err)
-		}
-		setIDs[i] = id
-	}
-
-	// remove old sets
-	err = tx.Record.Update().
-		Where(record.IdentifierEQ(identifier)).
-		ClearSets().
-		Exec(ctx)
-	if err != nil {
-		return rollback(tx, err)
-	}
-
-	err = tx.Record.Create().
-		SetIdentifier(identifier).
-		AddSetIDs(setIDs...).
-		OnConflictColumns(record.FieldIdentifier).
-		UpdateNewValues().
-		Exec(ctx)
-	if err != nil {
-		return rollback(tx, err)
-	}
-
-	return tx.Commit()
+	sql := `
+  	with add_rec as (
+			insert into records (identifier) values($1)
+	    on conflict (identifier)
+		  do nothing
+	    returning id
+	  ), rec as (
+    	select id from add_rec
+      union
+      select id from records where identifier = $1
+	  ), rec_sets as (
+		  select id from sets where set_spec = any($2)
+	  ), del_sets as (
+	  	delete from record_sets
+	  	using rec, rec_sets
+	  	where record_id = rec.id and set_id not in (select id from rec_sets)
+	  )
+    insert into record_sets (record_id, set_id)
+	  select rec.id, rec_sets.id
+	  from rec, rec_sets
+	  on conflict (record_id, set_id)
+	  do nothing
+	`
+	_, err := r.client.ExecContext(ctx, sql, identifier, specs)
+	return err
 }
 
-// TODO do this in one query
-func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, prefix, md string) error {
-	tx, err := r.client.Tx(ctx)
-	if err != nil {
-		return err
-	}
-
-	recordID, err := tx.Record.Create().
-		SetIdentifier(identifier).
-		OnConflictColumns(record.FieldIdentifier).
-		UpdateNewValues(). // TODO DoNothing returns no rows error if record already exists
-		ID(ctx)
-	if err != nil {
-		return rollback(tx, err)
-	}
-
-	metadataFormatID, err := tx.MetadataFormat.Query().
-		Where(metadataformat.MetadataPrefixEQ(prefix)).
-		OnlyID(ctx)
-	if err != nil {
-		return rollback(tx, err)
-	}
-
-	err = tx.Metadata.Create().
-		SetMetadata(md).
-		SetRecordID(recordID).
-		SetMetadataFormatID(metadataFormatID).
-		OnConflictColumns(metadata.FieldRecordID, metadata.FieldMetadataFormatID).
-		UpdateNewValues().
-		Exec(ctx)
-	if err != nil {
-		return rollback(tx, err)
-	}
-
-	return tx.Commit()
+func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, prefix, xml string) error {
+	sql := `
+  	with add_rec as (
+			insert into records (identifier) values($1)
+	    on conflict (identifier)
+		  do nothing
+	    returning id
+	  ), rec as (
+    	select id from add_rec
+      union
+      select id from records where identifier = $1
+	  ), fmt as (
+		  select id from metadata_formats where metadata_prefix = $2
+	  )
+    insert into metadata (record_id, metadata_format_id, xml, datestamp)
+	  select rec.id, fmt.id, $3, current_timestamp
+	  from rec, fmt
+	  on conflict (record_id, metadata_format_id)
+	  do update set xml = excluded.xml, datestamp = excluded.datestamp
+	  where xml != excluded.xml
+	`
+	_, err := r.client.ExecContext(ctx, sql, identifier, prefix, xml)
+	return err
 }
 
 func (r *Repo) DeleteRecord(ctx context.Context, identifier string) error {

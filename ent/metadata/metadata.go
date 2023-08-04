@@ -18,8 +18,8 @@ const (
 	FieldRecordID = "record_id"
 	// FieldMetadataFormatID holds the string denoting the metadata_format_id field in the database.
 	FieldMetadataFormatID = "metadata_format_id"
-	// FieldMetadata holds the string denoting the metadata field in the database.
-	FieldMetadata = "metadata"
+	// FieldXML holds the string denoting the xml field in the database.
+	FieldXML = "xml"
 	// FieldDatestamp holds the string denoting the datestamp field in the database.
 	FieldDatestamp = "datestamp"
 	// EdgeRecord holds the string denoting the record edge name in mutations.
@@ -49,7 +49,7 @@ var Columns = []string{
 	FieldID,
 	FieldRecordID,
 	FieldMetadataFormatID,
-	FieldMetadata,
+	FieldXML,
 	FieldDatestamp,
 }
 
@@ -66,8 +66,6 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultDatestamp holds the default value on creation for the "datestamp" field.
 	DefaultDatestamp func() time.Time
-	// UpdateDefaultDatestamp holds the default value on update for the "datestamp" field.
-	UpdateDefaultDatestamp func() time.Time
 )
 
 // OrderOption defines the ordering options for the Metadata queries.
@@ -88,9 +86,9 @@ func ByMetadataFormatID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMetadataFormatID, opts...).ToFunc()
 }
 
-// ByMetadata orders the results by the metadata field.
-func ByMetadata(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldMetadata, opts...).ToFunc()
+// ByXML orders the results by the xml field.
+func ByXML(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldXML, opts...).ToFunc()
 }
 
 // ByDatestamp orders the results by the datestamp field.

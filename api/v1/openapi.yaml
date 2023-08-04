@@ -149,9 +149,9 @@ components:
           type: string
         metadata_prefix:
           type: string
-        metadata:
+        xml:
           type: string
-      required: [identifier, metadata_prefix, metadata]
+      required: [identifier, metadata_prefix, xml]
 
     DeleteRecordRequest:
       type: object
