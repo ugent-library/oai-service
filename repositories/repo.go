@@ -235,7 +235,7 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, prefix string) (*oaipm
 	return rec, nil
 }
 
-// TODO this loads the complete record, maken an efficient version
+// TODO this loads the complete record, make an efficient version
 func (r *Repo) GetIdentifiers(ctx context.Context,
 	metadataPrefix string,
 	setSpec string,
