@@ -456,7 +456,7 @@ func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, prefix, conten
 	  from rec, fmt
 	  on conflict (record_id, metadata_format_id)
 	  do update set content = excluded.content, datestamp = excluded.datestamp
-	  where content != excluded.content
+	  where metadata.content != excluded.content
 	`
 	_, err := r.client.ExecContext(ctx, sql, identifier, prefix, content)
 	return err
