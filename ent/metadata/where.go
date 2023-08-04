@@ -65,9 +65,9 @@ func MetadataFormatID(v int64) predicate.Metadata {
 	return predicate.Metadata(sql.FieldEQ(FieldMetadataFormatID, v))
 }
 
-// XML applies equality check predicate on the "xml" field. It's identical to XMLEQ.
-func XML(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldEQ(FieldXML, v))
+// Content applies equality check predicate on the "content" field. It's identical to ContentEQ.
+func Content(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldEQ(FieldContent, v))
 }
 
 // Datestamp applies equality check predicate on the "datestamp" field. It's identical to DatestampEQ.
@@ -115,69 +115,69 @@ func MetadataFormatIDNotIn(vs ...int64) predicate.Metadata {
 	return predicate.Metadata(sql.FieldNotIn(FieldMetadataFormatID, vs...))
 }
 
-// XMLEQ applies the EQ predicate on the "xml" field.
-func XMLEQ(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldEQ(FieldXML, v))
+// ContentEQ applies the EQ predicate on the "content" field.
+func ContentEQ(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldEQ(FieldContent, v))
 }
 
-// XMLNEQ applies the NEQ predicate on the "xml" field.
-func XMLNEQ(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldNEQ(FieldXML, v))
+// ContentNEQ applies the NEQ predicate on the "content" field.
+func ContentNEQ(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldNEQ(FieldContent, v))
 }
 
-// XMLIn applies the In predicate on the "xml" field.
-func XMLIn(vs ...string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldIn(FieldXML, vs...))
+// ContentIn applies the In predicate on the "content" field.
+func ContentIn(vs ...string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldIn(FieldContent, vs...))
 }
 
-// XMLNotIn applies the NotIn predicate on the "xml" field.
-func XMLNotIn(vs ...string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldNotIn(FieldXML, vs...))
+// ContentNotIn applies the NotIn predicate on the "content" field.
+func ContentNotIn(vs ...string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldNotIn(FieldContent, vs...))
 }
 
-// XMLGT applies the GT predicate on the "xml" field.
-func XMLGT(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldGT(FieldXML, v))
+// ContentGT applies the GT predicate on the "content" field.
+func ContentGT(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldGT(FieldContent, v))
 }
 
-// XMLGTE applies the GTE predicate on the "xml" field.
-func XMLGTE(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldGTE(FieldXML, v))
+// ContentGTE applies the GTE predicate on the "content" field.
+func ContentGTE(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldGTE(FieldContent, v))
 }
 
-// XMLLT applies the LT predicate on the "xml" field.
-func XMLLT(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldLT(FieldXML, v))
+// ContentLT applies the LT predicate on the "content" field.
+func ContentLT(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldLT(FieldContent, v))
 }
 
-// XMLLTE applies the LTE predicate on the "xml" field.
-func XMLLTE(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldLTE(FieldXML, v))
+// ContentLTE applies the LTE predicate on the "content" field.
+func ContentLTE(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldLTE(FieldContent, v))
 }
 
-// XMLContains applies the Contains predicate on the "xml" field.
-func XMLContains(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldContains(FieldXML, v))
+// ContentContains applies the Contains predicate on the "content" field.
+func ContentContains(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldContains(FieldContent, v))
 }
 
-// XMLHasPrefix applies the HasPrefix predicate on the "xml" field.
-func XMLHasPrefix(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldHasPrefix(FieldXML, v))
+// ContentHasPrefix applies the HasPrefix predicate on the "content" field.
+func ContentHasPrefix(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldHasPrefix(FieldContent, v))
 }
 
-// XMLHasSuffix applies the HasSuffix predicate on the "xml" field.
-func XMLHasSuffix(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldHasSuffix(FieldXML, v))
+// ContentHasSuffix applies the HasSuffix predicate on the "content" field.
+func ContentHasSuffix(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldHasSuffix(FieldContent, v))
 }
 
-// XMLEqualFold applies the EqualFold predicate on the "xml" field.
-func XMLEqualFold(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldEqualFold(FieldXML, v))
+// ContentEqualFold applies the EqualFold predicate on the "content" field.
+func ContentEqualFold(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldEqualFold(FieldContent, v))
 }
 
-// XMLContainsFold applies the ContainsFold predicate on the "xml" field.
-func XMLContainsFold(v string) predicate.Metadata {
-	return predicate.Metadata(sql.FieldContainsFold(FieldXML, v))
+// ContentContainsFold applies the ContainsFold predicate on the "content" field.
+func ContentContainsFold(v string) predicate.Metadata {
+	return predicate.Metadata(sql.FieldContainsFold(FieldContent, v))
 }
 
 // DatestampEQ applies the EQ predicate on the "datestamp" field.

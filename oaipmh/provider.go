@@ -174,7 +174,7 @@ type Header struct {
 }
 
 type Payload struct {
-	XML string `xml:",innerxml"`
+	Content string `xml:",innerxml"`
 }
 
 type Record struct {

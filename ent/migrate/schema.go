@@ -12,7 +12,7 @@ var (
 	// MetadataColumns holds the columns for the "metadata" table.
 	MetadataColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "xml", Type: field.TypeString},
+		{Name: "content", Type: field.TypeString},
 		{Name: "datestamp", Type: field.TypeTime},
 		{Name: "metadata_format_id", Type: field.TypeInt64},
 		{Name: "record_id", Type: field.TypeInt64},

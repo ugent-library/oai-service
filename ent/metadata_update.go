@@ -42,9 +42,9 @@ func (mu *MetadataUpdate) SetMetadataFormatID(i int64) *MetadataUpdate {
 	return mu
 }
 
-// SetXML sets the "xml" field.
-func (mu *MetadataUpdate) SetXML(s string) *MetadataUpdate {
-	mu.mutation.SetXML(s)
+// SetContent sets the "content" field.
+func (mu *MetadataUpdate) SetContent(s string) *MetadataUpdate {
+	mu.mutation.SetContent(s)
 	return mu
 }
 
@@ -139,8 +139,8 @@ func (mu *MetadataUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := mu.mutation.XML(); ok {
-		_spec.SetField(metadata.FieldXML, field.TypeString, value)
+	if value, ok := mu.mutation.Content(); ok {
+		_spec.SetField(metadata.FieldContent, field.TypeString, value)
 	}
 	if value, ok := mu.mutation.Datestamp(); ok {
 		_spec.SetField(metadata.FieldDatestamp, field.TypeTime, value)
@@ -235,9 +235,9 @@ func (muo *MetadataUpdateOne) SetMetadataFormatID(i int64) *MetadataUpdateOne {
 	return muo
 }
 
-// SetXML sets the "xml" field.
-func (muo *MetadataUpdateOne) SetXML(s string) *MetadataUpdateOne {
-	muo.mutation.SetXML(s)
+// SetContent sets the "content" field.
+func (muo *MetadataUpdateOne) SetContent(s string) *MetadataUpdateOne {
+	muo.mutation.SetContent(s)
 	return muo
 }
 
@@ -362,8 +362,8 @@ func (muo *MetadataUpdateOne) sqlSave(ctx context.Context) (_node *Metadata, err
 			}
 		}
 	}
-	if value, ok := muo.mutation.XML(); ok {
-		_spec.SetField(metadata.FieldXML, field.TypeString, value)
+	if value, ok := muo.mutation.Content(); ok {
+		_spec.SetField(metadata.FieldContent, field.TypeString, value)
 	}
 	if value, ok := muo.mutation.Datestamp(); ok {
 		_spec.SetField(metadata.FieldDatestamp, field.TypeTime, value)

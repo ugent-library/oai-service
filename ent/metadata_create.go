@@ -36,9 +36,9 @@ func (mc *MetadataCreate) SetMetadataFormatID(i int64) *MetadataCreate {
 	return mc
 }
 
-// SetXML sets the "xml" field.
-func (mc *MetadataCreate) SetXML(s string) *MetadataCreate {
-	mc.mutation.SetXML(s)
+// SetContent sets the "content" field.
+func (mc *MetadataCreate) SetContent(s string) *MetadataCreate {
+	mc.mutation.SetContent(s)
 	return mc
 }
 
@@ -121,8 +121,8 @@ func (mc *MetadataCreate) check() error {
 	if _, ok := mc.mutation.MetadataFormatID(); !ok {
 		return &ValidationError{Name: "metadata_format_id", err: errors.New(`ent: missing required field "Metadata.metadata_format_id"`)}
 	}
-	if _, ok := mc.mutation.XML(); !ok {
-		return &ValidationError{Name: "xml", err: errors.New(`ent: missing required field "Metadata.xml"`)}
+	if _, ok := mc.mutation.Content(); !ok {
+		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "Metadata.content"`)}
 	}
 	if _, ok := mc.mutation.Datestamp(); !ok {
 		return &ValidationError{Name: "datestamp", err: errors.New(`ent: missing required field "Metadata.datestamp"`)}
@@ -166,9 +166,9 @@ func (mc *MetadataCreate) createSpec() (*Metadata, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := mc.mutation.XML(); ok {
-		_spec.SetField(metadata.FieldXML, field.TypeString, value)
-		_node.XML = value
+	if value, ok := mc.mutation.Content(); ok {
+		_spec.SetField(metadata.FieldContent, field.TypeString, value)
+		_node.Content = value
 	}
 	if value, ok := mc.mutation.Datestamp(); ok {
 		_spec.SetField(metadata.FieldDatestamp, field.TypeTime, value)
@@ -284,15 +284,15 @@ func (u *MetadataUpsert) UpdateMetadataFormatID() *MetadataUpsert {
 	return u
 }
 
-// SetXML sets the "xml" field.
-func (u *MetadataUpsert) SetXML(v string) *MetadataUpsert {
-	u.Set(metadata.FieldXML, v)
+// SetContent sets the "content" field.
+func (u *MetadataUpsert) SetContent(v string) *MetadataUpsert {
+	u.Set(metadata.FieldContent, v)
 	return u
 }
 
-// UpdateXML sets the "xml" field to the value that was provided on create.
-func (u *MetadataUpsert) UpdateXML() *MetadataUpsert {
-	u.SetExcluded(metadata.FieldXML)
+// UpdateContent sets the "content" field to the value that was provided on create.
+func (u *MetadataUpsert) UpdateContent() *MetadataUpsert {
+	u.SetExcluded(metadata.FieldContent)
 	return u
 }
 
@@ -384,17 +384,17 @@ func (u *MetadataUpsertOne) UpdateMetadataFormatID() *MetadataUpsertOne {
 	})
 }
 
-// SetXML sets the "xml" field.
-func (u *MetadataUpsertOne) SetXML(v string) *MetadataUpsertOne {
+// SetContent sets the "content" field.
+func (u *MetadataUpsertOne) SetContent(v string) *MetadataUpsertOne {
 	return u.Update(func(s *MetadataUpsert) {
-		s.SetXML(v)
+		s.SetContent(v)
 	})
 }
 
-// UpdateXML sets the "xml" field to the value that was provided on create.
-func (u *MetadataUpsertOne) UpdateXML() *MetadataUpsertOne {
+// UpdateContent sets the "content" field to the value that was provided on create.
+func (u *MetadataUpsertOne) UpdateContent() *MetadataUpsertOne {
 	return u.Update(func(s *MetadataUpsert) {
-		s.UpdateXML()
+		s.UpdateContent()
 	})
 }
 
@@ -650,17 +650,17 @@ func (u *MetadataUpsertBulk) UpdateMetadataFormatID() *MetadataUpsertBulk {
 	})
 }
 
-// SetXML sets the "xml" field.
-func (u *MetadataUpsertBulk) SetXML(v string) *MetadataUpsertBulk {
+// SetContent sets the "content" field.
+func (u *MetadataUpsertBulk) SetContent(v string) *MetadataUpsertBulk {
 	return u.Update(func(s *MetadataUpsert) {
-		s.SetXML(v)
+		s.SetContent(v)
 	})
 }
 
-// UpdateXML sets the "xml" field to the value that was provided on create.
-func (u *MetadataUpsertBulk) UpdateXML() *MetadataUpsertBulk {
+// UpdateContent sets the "content" field to the value that was provided on create.
+func (u *MetadataUpsertBulk) UpdateContent() *MetadataUpsertBulk {
 	return u.Update(func(s *MetadataUpsert) {
-		s.UpdateXML()
+		s.UpdateContent()
 	})
 }
 

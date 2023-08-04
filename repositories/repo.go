@@ -147,7 +147,7 @@ func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh
 			SetSpec: row.SetSpec,
 			SetName: row.SetName,
 			SetDescription: &oaipmh.Payload{
-				XML: row.SetDescription,
+				Content: row.SetDescription,
 			},
 		}
 	}
@@ -228,7 +228,7 @@ func (r *Repo) GetRecord(ctx context.Context, identifier, prefix string) (*oaipm
 		rec.Header.Status = "deleted"
 	} else {
 		rec.Metadata = &oaipmh.Payload{
-			XML: row.XML,
+			Content: row.Content,
 		}
 	}
 
@@ -363,7 +363,7 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 			rec.Header.Status = "deleted"
 		} else {
 			rec.Metadata = &oaipmh.Payload{
-				XML: row.XML,
+				Content: row.Content,
 			}
 		}
 		recs[i] = rec
@@ -437,7 +437,7 @@ func (r *Repo) AddRecordSets(ctx context.Context, identifier string, specs []str
 	return err
 }
 
-func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, prefix, xml string) error {
+func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, prefix, content string) error {
 	sql := `
   	with add_rec as (
 			insert into records (identifier) values($1)
@@ -451,14 +451,14 @@ func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, prefix, xml st
 	  ), fmt as (
 		  select id from metadata_formats where metadata_prefix = $2
 	  )
-    insert into metadata (record_id, metadata_format_id, xml, datestamp)
+    insert into metadata (record_id, metadata_format_id, content, datestamp)
 	  select rec.id, fmt.id, $3, current_timestamp
 	  from rec, fmt
 	  on conflict (record_id, metadata_format_id)
-	  do update set xml = excluded.xml, datestamp = excluded.datestamp
-	  where xml != excluded.xml
+	  do update set content = excluded.content, datestamp = excluded.datestamp
+	  where content != excluded.content
 	`
-	_, err := r.client.ExecContext(ctx, sql, identifier, prefix, xml)
+	_, err := r.client.ExecContext(ctx, sql, identifier, prefix, content)
 	return err
 }
 

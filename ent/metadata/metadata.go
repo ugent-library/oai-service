@@ -18,8 +18,8 @@ const (
 	FieldRecordID = "record_id"
 	// FieldMetadataFormatID holds the string denoting the metadata_format_id field in the database.
 	FieldMetadataFormatID = "metadata_format_id"
-	// FieldXML holds the string denoting the xml field in the database.
-	FieldXML = "xml"
+	// FieldContent holds the string denoting the content field in the database.
+	FieldContent = "content"
 	// FieldDatestamp holds the string denoting the datestamp field in the database.
 	FieldDatestamp = "datestamp"
 	// EdgeRecord holds the string denoting the record edge name in mutations.
@@ -49,7 +49,7 @@ var Columns = []string{
 	FieldID,
 	FieldRecordID,
 	FieldMetadataFormatID,
-	FieldXML,
+	FieldContent,
 	FieldDatestamp,
 }
 
@@ -86,9 +86,9 @@ func ByMetadataFormatID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMetadataFormatID, opts...).ToFunc()
 }
 
-// ByXML orders the results by the xml field.
-func ByXML(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldXML, opts...).ToFunc()
+// ByContent orders the results by the content field.
+func ByContent(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContent, opts...).ToFunc()
 }
 
 // ByDatestamp orders the results by the datestamp field.

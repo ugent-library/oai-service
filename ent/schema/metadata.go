@@ -26,7 +26,7 @@ func (Metadata) Fields() []ent.Field {
 		field.Int64("id"),
 		field.Int64("record_id"),
 		field.Int64("metadata_format_id"),
-		field.String("xml"),
+		field.String("content"),
 		field.Time("datestamp").
 			Default(time.Now),
 	}
