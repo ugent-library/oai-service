@@ -184,6 +184,9 @@ func (r *Repo) GetEarliestDatestamp(ctx context.Context) (time.Time, error) {
 		Select(metadata.FieldDatestamp).
 		Order(ent.Asc(metadata.FieldDatestamp)).
 		First(ctx)
+	if ent.IsNotFound(err) {
+		return time.Time{}, nil
+	}
 	if err != nil {
 		return time.Time{}, err
 	}
