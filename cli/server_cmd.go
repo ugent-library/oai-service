@@ -17,8 +17,6 @@ import (
 	"github.com/ugent-library/oai-service/repositories"
 	"github.com/ugent-library/zaphttp"
 	"github.com/ugent-library/zaphttp/zapchi"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 func init() {
@@ -110,7 +108,7 @@ var serverCmd = &cobra.Command{
 		// start server
 		server := graceful.WithDefaults(&http.Server{
 			Addr:         config.Addr(),
-			Handler:      h2c.NewHandler(mux, &http2.Server{}),
+			Handler:      mux,
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
 		})

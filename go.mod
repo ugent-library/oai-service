@@ -61,5 +61,5 @@ require (
 	github.com/ugent-library/zaphttp v0.0.0-20230513174723-52c27d21c5ce
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0
-	golang.org/x/net v0.12.0
+	golang.org/x/net v0.12.0 // indirect
 )
