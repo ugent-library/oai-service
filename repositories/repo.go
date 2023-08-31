@@ -467,10 +467,27 @@ func (r *Repo) AddRecordMetadata(ctx context.Context, identifier, prefix, conten
 }
 
 func (r *Repo) DeleteRecord(ctx context.Context, identifier string) error {
-	return r.client.Record.Update().
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	err = tx.Record.Update().
 		Where(record.IdentifierEQ(identifier)).
 		SetDeleted(true).
 		Exec(ctx)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	err = tx.Metadata.Update().
+		Where(metadata.HasRecordWith(record.IdentifierEQ(identifier))).
+		SetDatestamp(time.Now()).
+		Exec(ctx)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }
 
 func (r *Repo) encodeCursor(c any) (string, error) {
