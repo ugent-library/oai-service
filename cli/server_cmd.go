@@ -12,11 +12,12 @@ import (
 	"github.com/ory/graceful"
 	"github.com/spf13/cobra"
 	"github.com/ugent-library/httpx/render"
+	"github.com/ugent-library/zaphttp"
+	"github.com/ugent-library/zaphttp/zapchi"
+
 	"github.com/ugent-library/oai-service/api/v1"
 	"github.com/ugent-library/oai-service/oaipmh"
 	"github.com/ugent-library/oai-service/repositories"
-	"github.com/ugent-library/zaphttp"
-	"github.com/ugent-library/zaphttp/zapchi"
 )
 
 func init() {

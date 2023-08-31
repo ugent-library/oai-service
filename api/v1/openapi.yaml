@@ -1,5 +1,8 @@
 openapi: 3.1.0
 
+servers:
+  - url: /api/v1
+
 info:
   title: OAI Service
   version: 0.0.1

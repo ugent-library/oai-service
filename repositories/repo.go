@@ -13,6 +13,7 @@ import (
 	sqldialect "entgo.io/ent/dialect/sql"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/ugent-library/crypt"
+
 	"github.com/ugent-library/oai-service/ent"
 	"github.com/ugent-library/oai-service/ent/metadata"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
@@ -26,8 +27,8 @@ import (
 var ErrNotFound = errors.New("not found")
 
 type Repo struct {
-	config Config
 	client *ent.Client
+	config Config
 }
 
 type Config struct {
