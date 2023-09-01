@@ -16,8 +16,8 @@ type Record struct {
 func (Record) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id"),
-		field.String("metadata_format_id"),
-		field.String("item_id"),
+		field.Int64("metadata_format_id"),
+		field.Int64("item_id"),
 		field.String("metadata").
 			Optional().
 			Nillable().

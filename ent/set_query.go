@@ -106,8 +106,8 @@ func (sq *SetQuery) FirstX(ctx context.Context) *Set {
 
 // FirstID returns the first Set ID from the query.
 // Returns a *NotFoundError when no Set ID was found.
-func (sq *SetQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (sq *SetQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = sq.Limit(1).IDs(setContextOp(ctx, sq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -119,7 +119,7 @@ func (sq *SetQuery) FirstID(ctx context.Context) (id string, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (sq *SetQuery) FirstIDX(ctx context.Context) string {
+func (sq *SetQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := sq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -157,8 +157,8 @@ func (sq *SetQuery) OnlyX(ctx context.Context) *Set {
 // OnlyID is like Only, but returns the only Set ID in the query.
 // Returns a *NotSingularError when more than one Set ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (sq *SetQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (sq *SetQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = sq.Limit(2).IDs(setContextOp(ctx, sq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -174,7 +174,7 @@ func (sq *SetQuery) OnlyID(ctx context.Context) (id string, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (sq *SetQuery) OnlyIDX(ctx context.Context) string {
+func (sq *SetQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := sq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -202,7 +202,7 @@ func (sq *SetQuery) AllX(ctx context.Context) []*Set {
 }
 
 // IDs executes the query and returns a list of Set IDs.
-func (sq *SetQuery) IDs(ctx context.Context) (ids []string, err error) {
+func (sq *SetQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if sq.ctx.Unique == nil && sq.path != nil {
 		sq.Unique(true)
 	}
@@ -214,7 +214,7 @@ func (sq *SetQuery) IDs(ctx context.Context) (ids []string, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (sq *SetQuery) IDsX(ctx context.Context) []string {
+func (sq *SetQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := sq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -298,12 +298,12 @@ func (sq *SetQuery) WithItems(opts ...func(*ItemQuery)) *SetQuery {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Spec string `json:"spec,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Set.Query().
-//		GroupBy(set.FieldName).
+//		GroupBy(set.FieldSpec).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (sq *SetQuery) GroupBy(field string, fields ...string) *SetGroupBy {
@@ -321,11 +321,11 @@ func (sq *SetQuery) GroupBy(field string, fields ...string) *SetGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Spec string `json:"spec,omitempty"`
 //	}
 //
 //	client.Set.Query().
-//		Select(set.FieldName).
+//		Select(set.FieldSpec).
 //		Scan(ctx, &v)
 func (sq *SetQuery) Select(fields ...string) *SetSelect {
 	sq.ctx.Fields = append(sq.ctx.Fields, fields...)
@@ -404,8 +404,8 @@ func (sq *SetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Set, err
 
 func (sq *SetQuery) loadItems(ctx context.Context, query *ItemQuery, nodes []*Set, init func(*Set), assign func(*Set, *Item)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[string]*Set)
-	nids := make(map[string]map[*Set]struct{})
+	byID := make(map[int64]*Set)
+	nids := make(map[int64]map[*Set]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -434,11 +434,11 @@ func (sq *SetQuery) loadItems(ctx context.Context, query *ItemQuery, nodes []*Se
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullString)}, values...), nil
+				return append([]any{new(sql.NullInt64)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := values[0].(*sql.NullString).String
-				inValue := values[1].(*sql.NullString).String
+				outValue := values[0].(*sql.NullInt64).Int64
+				inValue := values[1].(*sql.NullInt64).Int64
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Set]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -474,7 +474,7 @@ func (sq *SetQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (sq *SetQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(set.Table, set.Columns, sqlgraph.NewFieldSpec(set.FieldID, field.TypeString))
+	_spec := sqlgraph.NewQuerySpec(set.Table, set.Columns, sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64))
 	_spec.From = sq.sql
 	if unique := sq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

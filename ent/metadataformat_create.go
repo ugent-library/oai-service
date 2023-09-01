@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 
-	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -23,6 +22,12 @@ type MetadataFormatCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetPrefix sets the "prefix" field.
+func (mfc *MetadataFormatCreate) SetPrefix(s string) *MetadataFormatCreate {
+	mfc.mutation.SetPrefix(s)
+	return mfc
+}
+
 // SetSchema sets the "schema" field.
 func (mfc *MetadataFormatCreate) SetSchema(s string) *MetadataFormatCreate {
 	mfc.mutation.SetSchema(s)
@@ -36,8 +41,8 @@ func (mfc *MetadataFormatCreate) SetNamespace(s string) *MetadataFormatCreate {
 }
 
 // SetID sets the "id" field.
-func (mfc *MetadataFormatCreate) SetID(s string) *MetadataFormatCreate {
-	mfc.mutation.SetID(s)
+func (mfc *MetadataFormatCreate) SetID(i int64) *MetadataFormatCreate {
+	mfc.mutation.SetID(i)
 	return mfc
 }
 
@@ -90,6 +95,9 @@ func (mfc *MetadataFormatCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (mfc *MetadataFormatCreate) check() error {
+	if _, ok := mfc.mutation.Prefix(); !ok {
+		return &ValidationError{Name: "prefix", err: errors.New(`ent: missing required field "MetadataFormat.prefix"`)}
+	}
 	if _, ok := mfc.mutation.Schema(); !ok {
 		return &ValidationError{Name: "schema", err: errors.New(`ent: missing required field "MetadataFormat.schema"`)}
 	}
@@ -110,12 +118,9 @@ func (mfc *MetadataFormatCreate) sqlSave(ctx context.Context) (*MetadataFormat, 
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(string); ok {
-			_node.ID = id
-		} else {
-			return nil, fmt.Errorf("unexpected MetadataFormat.ID type: %T", _spec.ID.Value)
-		}
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
 	}
 	mfc.mutation.id = &_node.ID
 	mfc.mutation.done = true
@@ -125,12 +130,16 @@ func (mfc *MetadataFormatCreate) sqlSave(ctx context.Context) (*MetadataFormat, 
 func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.CreateSpec) {
 	var (
 		_node = &MetadataFormat{config: mfc.config}
-		_spec = sqlgraph.NewCreateSpec(metadataformat.Table, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeString))
+		_spec = sqlgraph.NewCreateSpec(metadataformat.Table, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = mfc.conflict
 	if id, ok := mfc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if value, ok := mfc.mutation.Prefix(); ok {
+		_spec.SetField(metadataformat.FieldPrefix, field.TypeString, value)
+		_node.Prefix = value
 	}
 	if value, ok := mfc.mutation.Schema(); ok {
 		_spec.SetField(metadataformat.FieldSchema, field.TypeString, value)
@@ -163,7 +172,7 @@ func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.Create
 // of the `INSERT` statement. For example:
 //
 //	client.MetadataFormat.Create().
-//		SetSchema(v).
+//		SetPrefix(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -172,7 +181,7 @@ func (mfc *MetadataFormatCreate) createSpec() (*MetadataFormat, *sqlgraph.Create
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.MetadataFormatUpsert) {
-//			SetSchema(v+v).
+//			SetPrefix(v+v).
 //		}).
 //		Exec(ctx)
 func (mfc *MetadataFormatCreate) OnConflict(opts ...sql.ConflictOption) *MetadataFormatUpsertOne {
@@ -207,6 +216,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetPrefix sets the "prefix" field.
+func (u *MetadataFormatUpsert) SetPrefix(v string) *MetadataFormatUpsert {
+	u.Set(metadataformat.FieldPrefix, v)
+	return u
+}
+
+// UpdatePrefix sets the "prefix" field to the value that was provided on create.
+func (u *MetadataFormatUpsert) UpdatePrefix() *MetadataFormatUpsert {
+	u.SetExcluded(metadataformat.FieldPrefix)
+	return u
+}
 
 // SetSchema sets the "schema" field.
 func (u *MetadataFormatUpsert) SetSchema(v string) *MetadataFormatUpsert {
@@ -280,6 +301,20 @@ func (u *MetadataFormatUpsertOne) Update(set func(*MetadataFormatUpsert)) *Metad
 	return u
 }
 
+// SetPrefix sets the "prefix" field.
+func (u *MetadataFormatUpsertOne) SetPrefix(v string) *MetadataFormatUpsertOne {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.SetPrefix(v)
+	})
+}
+
+// UpdatePrefix sets the "prefix" field to the value that was provided on create.
+func (u *MetadataFormatUpsertOne) UpdatePrefix() *MetadataFormatUpsertOne {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.UpdatePrefix()
+	})
+}
+
 // SetSchema sets the "schema" field.
 func (u *MetadataFormatUpsertOne) SetSchema(v string) *MetadataFormatUpsertOne {
 	return u.Update(func(s *MetadataFormatUpsert) {
@@ -324,12 +359,7 @@ func (u *MetadataFormatUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *MetadataFormatUpsertOne) ID(ctx context.Context) (id string, err error) {
-	if u.create.driver.Dialect() == dialect.MySQL {
-		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
-		// fields from the database since MySQL does not support the RETURNING clause.
-		return id, errors.New("ent: MetadataFormatUpsertOne.ID is not supported by MySQL driver. Use MetadataFormatUpsertOne.Exec instead")
-	}
+func (u *MetadataFormatUpsertOne) ID(ctx context.Context) (id int64, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -338,7 +368,7 @@ func (u *MetadataFormatUpsertOne) ID(ctx context.Context) (id string, err error)
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *MetadataFormatUpsertOne) IDX(ctx context.Context) string {
+func (u *MetadataFormatUpsertOne) IDX(ctx context.Context) int64 {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -388,6 +418,10 @@ func (mfcb *MetadataFormatCreateBulk) Save(ctx context.Context) ([]*MetadataForm
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int64(id)
+				}
 				mutation.done = true
 				return nodes[i], nil
 			})
@@ -439,7 +473,7 @@ func (mfcb *MetadataFormatCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.MetadataFormatUpsert) {
-//			SetSchema(v+v).
+//			SetPrefix(v+v).
 //		}).
 //		Exec(ctx)
 func (mfcb *MetadataFormatCreateBulk) OnConflict(opts ...sql.ConflictOption) *MetadataFormatUpsertBulk {
@@ -516,6 +550,20 @@ func (u *MetadataFormatUpsertBulk) Update(set func(*MetadataFormatUpsert)) *Meta
 		set(&MetadataFormatUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetPrefix sets the "prefix" field.
+func (u *MetadataFormatUpsertBulk) SetPrefix(v string) *MetadataFormatUpsertBulk {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.SetPrefix(v)
+	})
+}
+
+// UpdatePrefix sets the "prefix" field to the value that was provided on create.
+func (u *MetadataFormatUpsertBulk) UpdatePrefix() *MetadataFormatUpsertBulk {
+	return u.Update(func(s *MetadataFormatUpsert) {
+		s.UpdatePrefix()
+	})
 }
 
 // SetSchema sets the "schema" field.

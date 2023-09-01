@@ -10,7 +10,8 @@ import (
 var (
 	// ItemsColumns holds the columns for the "items" table.
 	ItemsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "identifier", Type: field.TypeString, Unique: true},
 	}
 	// ItemsTable holds the schema information for the "items" table.
 	ItemsTable = &schema.Table{
@@ -20,7 +21,8 @@ var (
 	}
 	// MetadataFormatsColumns holds the columns for the "metadata_formats" table.
 	MetadataFormatsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "prefix", Type: field.TypeString, Unique: true},
 		{Name: "schema", Type: field.TypeString},
 		{Name: "namespace", Type: field.TypeString},
 	}
@@ -35,8 +37,8 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "metadata", Type: field.TypeString, Nullable: true},
 		{Name: "datestamp", Type: field.TypeTime},
-		{Name: "item_id", Type: field.TypeString},
-		{Name: "metadata_format_id", Type: field.TypeString},
+		{Name: "item_id", Type: field.TypeInt64},
+		{Name: "metadata_format_id", Type: field.TypeInt64},
 	}
 	// RecordsTable holds the schema information for the "records" table.
 	RecordsTable = &schema.Table{
@@ -72,7 +74,8 @@ var (
 	}
 	// SetsColumns holds the columns for the "sets" table.
 	SetsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "spec", Type: field.TypeString, Unique: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 	}
@@ -84,8 +87,8 @@ var (
 	}
 	// ItemSetsColumns holds the columns for the "item_sets" table.
 	ItemSetsColumns = []*schema.Column{
-		{Name: "item_id", Type: field.TypeString},
-		{Name: "set_id", Type: field.TypeString},
+		{Name: "item_id", Type: field.TypeInt64},
+		{Name: "set_id", Type: field.TypeInt64},
 	}
 	// ItemSetsTable holds the schema information for the "item_sets" table.
 	ItemSetsTable = &schema.Table{

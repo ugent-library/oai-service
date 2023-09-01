@@ -25,14 +25,14 @@ type RecordCreate struct {
 }
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (rc *RecordCreate) SetMetadataFormatID(s string) *RecordCreate {
-	rc.mutation.SetMetadataFormatID(s)
+func (rc *RecordCreate) SetMetadataFormatID(i int64) *RecordCreate {
+	rc.mutation.SetMetadataFormatID(i)
 	return rc
 }
 
 // SetItemID sets the "item_id" field.
-func (rc *RecordCreate) SetItemID(s string) *RecordCreate {
-	rc.mutation.SetItemID(s)
+func (rc *RecordCreate) SetItemID(i int64) *RecordCreate {
+	rc.mutation.SetItemID(i)
 	return rc
 }
 
@@ -187,7 +187,7 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -204,7 +204,7 @@ func (rc *RecordCreate) createSpec() (*Record, *sqlgraph.CreateSpec) {
 			Columns: []string{record.ItemColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -266,7 +266,7 @@ type (
 )
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (u *RecordUpsert) SetMetadataFormatID(v string) *RecordUpsert {
+func (u *RecordUpsert) SetMetadataFormatID(v int64) *RecordUpsert {
 	u.Set(record.FieldMetadataFormatID, v)
 	return u
 }
@@ -278,7 +278,7 @@ func (u *RecordUpsert) UpdateMetadataFormatID() *RecordUpsert {
 }
 
 // SetItemID sets the "item_id" field.
-func (u *RecordUpsert) SetItemID(v string) *RecordUpsert {
+func (u *RecordUpsert) SetItemID(v int64) *RecordUpsert {
 	u.Set(record.FieldItemID, v)
 	return u
 }
@@ -368,7 +368,7 @@ func (u *RecordUpsertOne) Update(set func(*RecordUpsert)) *RecordUpsertOne {
 }
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (u *RecordUpsertOne) SetMetadataFormatID(v string) *RecordUpsertOne {
+func (u *RecordUpsertOne) SetMetadataFormatID(v int64) *RecordUpsertOne {
 	return u.Update(func(s *RecordUpsert) {
 		s.SetMetadataFormatID(v)
 	})
@@ -382,7 +382,7 @@ func (u *RecordUpsertOne) UpdateMetadataFormatID() *RecordUpsertOne {
 }
 
 // SetItemID sets the "item_id" field.
-func (u *RecordUpsertOne) SetItemID(v string) *RecordUpsertOne {
+func (u *RecordUpsertOne) SetItemID(v int64) *RecordUpsertOne {
 	return u.Update(func(s *RecordUpsert) {
 		s.SetItemID(v)
 	})
@@ -641,7 +641,7 @@ func (u *RecordUpsertBulk) Update(set func(*RecordUpsert)) *RecordUpsertBulk {
 }
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (u *RecordUpsertBulk) SetMetadataFormatID(v string) *RecordUpsertBulk {
+func (u *RecordUpsertBulk) SetMetadataFormatID(v int64) *RecordUpsertBulk {
 	return u.Update(func(s *RecordUpsert) {
 		s.SetMetadataFormatID(v)
 	})
@@ -655,7 +655,7 @@ func (u *RecordUpsertBulk) UpdateMetadataFormatID() *RecordUpsertBulk {
 }
 
 // SetItemID sets the "item_id" field.
-func (u *RecordUpsertBulk) SetItemID(v string) *RecordUpsertBulk {
+func (u *RecordUpsertBulk) SetItemID(v int64) *RecordUpsertBulk {
 	return u.Update(func(s *RecordUpsert) {
 		s.SetItemID(v)
 	})

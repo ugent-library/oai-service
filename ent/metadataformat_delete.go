@@ -40,7 +40,7 @@ func (mfd *MetadataFormatDelete) ExecX(ctx context.Context) int {
 }
 
 func (mfd *MetadataFormatDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(metadataformat.Table, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeString))
+	_spec := sqlgraph.NewDeleteSpec(metadataformat.Table, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64))
 	if ps := mfd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {

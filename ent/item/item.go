@@ -12,6 +12,8 @@ const (
 	Label = "item"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldIdentifier holds the string denoting the identifier field in the database.
+	FieldIdentifier = "identifier"
 	// EdgeRecords holds the string denoting the records edge name in mutations.
 	EdgeRecords = "records"
 	// EdgeSets holds the string denoting the sets edge name in mutations.
@@ -35,6 +37,7 @@ const (
 // Columns holds all SQL columns for item fields.
 var Columns = []string{
 	FieldID,
+	FieldIdentifier,
 }
 
 var (
@@ -59,6 +62,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByIdentifier orders the results by the identifier field.
+func ByIdentifier(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIdentifier, opts...).ToFunc()
 }
 
 // ByRecordsCount orders the results by records count.

@@ -9,58 +9,118 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id string) predicate.Item {
+func ID(id int64) predicate.Item {
 	return predicate.Item(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id string) predicate.Item {
+func IDEQ(id int64) predicate.Item {
 	return predicate.Item(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id string) predicate.Item {
+func IDNEQ(id int64) predicate.Item {
 	return predicate.Item(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...string) predicate.Item {
+func IDIn(ids ...int64) predicate.Item {
 	return predicate.Item(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...string) predicate.Item {
+func IDNotIn(ids ...int64) predicate.Item {
 	return predicate.Item(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id string) predicate.Item {
+func IDGT(id int64) predicate.Item {
 	return predicate.Item(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id string) predicate.Item {
+func IDGTE(id int64) predicate.Item {
 	return predicate.Item(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id string) predicate.Item {
+func IDLT(id int64) predicate.Item {
 	return predicate.Item(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id string) predicate.Item {
+func IDLTE(id int64) predicate.Item {
 	return predicate.Item(sql.FieldLTE(FieldID, id))
 }
 
-// IDEqualFold applies the EqualFold predicate on the ID field.
-func IDEqualFold(id string) predicate.Item {
-	return predicate.Item(sql.FieldEqualFold(FieldID, id))
+// Identifier applies equality check predicate on the "identifier" field. It's identical to IdentifierEQ.
+func Identifier(v string) predicate.Item {
+	return predicate.Item(sql.FieldEQ(FieldIdentifier, v))
 }
 
-// IDContainsFold applies the ContainsFold predicate on the ID field.
-func IDContainsFold(id string) predicate.Item {
-	return predicate.Item(sql.FieldContainsFold(FieldID, id))
+// IdentifierEQ applies the EQ predicate on the "identifier" field.
+func IdentifierEQ(v string) predicate.Item {
+	return predicate.Item(sql.FieldEQ(FieldIdentifier, v))
+}
+
+// IdentifierNEQ applies the NEQ predicate on the "identifier" field.
+func IdentifierNEQ(v string) predicate.Item {
+	return predicate.Item(sql.FieldNEQ(FieldIdentifier, v))
+}
+
+// IdentifierIn applies the In predicate on the "identifier" field.
+func IdentifierIn(vs ...string) predicate.Item {
+	return predicate.Item(sql.FieldIn(FieldIdentifier, vs...))
+}
+
+// IdentifierNotIn applies the NotIn predicate on the "identifier" field.
+func IdentifierNotIn(vs ...string) predicate.Item {
+	return predicate.Item(sql.FieldNotIn(FieldIdentifier, vs...))
+}
+
+// IdentifierGT applies the GT predicate on the "identifier" field.
+func IdentifierGT(v string) predicate.Item {
+	return predicate.Item(sql.FieldGT(FieldIdentifier, v))
+}
+
+// IdentifierGTE applies the GTE predicate on the "identifier" field.
+func IdentifierGTE(v string) predicate.Item {
+	return predicate.Item(sql.FieldGTE(FieldIdentifier, v))
+}
+
+// IdentifierLT applies the LT predicate on the "identifier" field.
+func IdentifierLT(v string) predicate.Item {
+	return predicate.Item(sql.FieldLT(FieldIdentifier, v))
+}
+
+// IdentifierLTE applies the LTE predicate on the "identifier" field.
+func IdentifierLTE(v string) predicate.Item {
+	return predicate.Item(sql.FieldLTE(FieldIdentifier, v))
+}
+
+// IdentifierContains applies the Contains predicate on the "identifier" field.
+func IdentifierContains(v string) predicate.Item {
+	return predicate.Item(sql.FieldContains(FieldIdentifier, v))
+}
+
+// IdentifierHasPrefix applies the HasPrefix predicate on the "identifier" field.
+func IdentifierHasPrefix(v string) predicate.Item {
+	return predicate.Item(sql.FieldHasPrefix(FieldIdentifier, v))
+}
+
+// IdentifierHasSuffix applies the HasSuffix predicate on the "identifier" field.
+func IdentifierHasSuffix(v string) predicate.Item {
+	return predicate.Item(sql.FieldHasSuffix(FieldIdentifier, v))
+}
+
+// IdentifierEqualFold applies the EqualFold predicate on the "identifier" field.
+func IdentifierEqualFold(v string) predicate.Item {
+	return predicate.Item(sql.FieldEqualFold(FieldIdentifier, v))
+}
+
+// IdentifierContainsFold applies the ContainsFold predicate on the "identifier" field.
+func IdentifierContainsFold(v string) predicate.Item {
+	return predicate.Item(sql.FieldContainsFold(FieldIdentifier, v))
 }
 
 // HasRecords applies the HasEdge predicate on the "records" edge.

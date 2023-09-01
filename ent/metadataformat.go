@@ -15,7 +15,9 @@ import (
 type MetadataFormat struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
+	// Prefix holds the value of the "prefix" field.
+	Prefix string `json:"prefix,omitempty"`
 	// Schema holds the value of the "schema" field.
 	Schema string `json:"schema,omitempty"`
 	// Namespace holds the value of the "namespace" field.
@@ -49,7 +51,9 @@ func (*MetadataFormat) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case metadataformat.FieldID, metadataformat.FieldSchema, metadataformat.FieldNamespace:
+		case metadataformat.FieldID:
+			values[i] = new(sql.NullInt64)
+		case metadataformat.FieldPrefix, metadataformat.FieldSchema, metadataformat.FieldNamespace:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -67,10 +71,16 @@ func (mf *MetadataFormat) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case metadataformat.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			mf.ID = int64(value.Int64)
+		case metadataformat.FieldPrefix:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+				return fmt.Errorf("unexpected type %T for field prefix", values[i])
 			} else if value.Valid {
-				mf.ID = value.String
+				mf.Prefix = value.String
 			}
 		case metadataformat.FieldSchema:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -125,6 +135,9 @@ func (mf *MetadataFormat) String() string {
 	var builder strings.Builder
 	builder.WriteString("MetadataFormat(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", mf.ID))
+	builder.WriteString("prefix=")
+	builder.WriteString(mf.Prefix)
+	builder.WriteString(", ")
 	builder.WriteString("schema=")
 	builder.WriteString(mf.Schema)
 	builder.WriteString(", ")

@@ -12,7 +12,9 @@ type Item struct {
 
 func (Item) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id"),
+		field.Int64("id"),
+		field.String("identifier").
+			Unique(),
 	}
 }
 

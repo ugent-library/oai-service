@@ -38,13 +38,14 @@ type ItemMutation struct {
 	config
 	op             Op
 	typ            string
-	id             *string
+	id             *int64
+	identifier     *string
 	clearedFields  map[string]struct{}
 	records        map[int64]struct{}
 	removedrecords map[int64]struct{}
 	clearedrecords bool
-	sets           map[string]struct{}
-	removedsets    map[string]struct{}
+	sets           map[int64]struct{}
+	removedsets    map[int64]struct{}
 	clearedsets    bool
 	done           bool
 	oldValue       func(context.Context) (*Item, error)
@@ -71,7 +72,7 @@ func newItemMutation(c config, op Op, opts ...itemOption) *ItemMutation {
 }
 
 // withItemID sets the ID field of the mutation.
-func withItemID(id string) itemOption {
+func withItemID(id int64) itemOption {
 	return func(m *ItemMutation) {
 		var (
 			err   error
@@ -123,13 +124,13 @@ func (m ItemMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of Item entities.
-func (m *ItemMutation) SetID(id string) {
+func (m *ItemMutation) SetID(id int64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *ItemMutation) ID() (id string, exists bool) {
+func (m *ItemMutation) ID() (id int64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -140,12 +141,12 @@ func (m *ItemMutation) ID() (id string, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *ItemMutation) IDs(ctx context.Context) ([]string, error) {
+func (m *ItemMutation) IDs(ctx context.Context) ([]int64, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []string{id}, nil
+			return []int64{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -153,6 +154,42 @@ func (m *ItemMutation) IDs(ctx context.Context) ([]string, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetIdentifier sets the "identifier" field.
+func (m *ItemMutation) SetIdentifier(s string) {
+	m.identifier = &s
+}
+
+// Identifier returns the value of the "identifier" field in the mutation.
+func (m *ItemMutation) Identifier() (r string, exists bool) {
+	v := m.identifier
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIdentifier returns the old "identifier" field's value of the Item entity.
+// If the Item object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ItemMutation) OldIdentifier(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIdentifier is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIdentifier requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIdentifier: %w", err)
+	}
+	return oldValue.Identifier, nil
+}
+
+// ResetIdentifier resets all changes to the "identifier" field.
+func (m *ItemMutation) ResetIdentifier() {
+	m.identifier = nil
 }
 
 // AddRecordIDs adds the "records" edge to the Record entity by ids.
@@ -210,9 +247,9 @@ func (m *ItemMutation) ResetRecords() {
 }
 
 // AddSetIDs adds the "sets" edge to the Set entity by ids.
-func (m *ItemMutation) AddSetIDs(ids ...string) {
+func (m *ItemMutation) AddSetIDs(ids ...int64) {
 	if m.sets == nil {
-		m.sets = make(map[string]struct{})
+		m.sets = make(map[int64]struct{})
 	}
 	for i := range ids {
 		m.sets[ids[i]] = struct{}{}
@@ -230,9 +267,9 @@ func (m *ItemMutation) SetsCleared() bool {
 }
 
 // RemoveSetIDs removes the "sets" edge to the Set entity by IDs.
-func (m *ItemMutation) RemoveSetIDs(ids ...string) {
+func (m *ItemMutation) RemoveSetIDs(ids ...int64) {
 	if m.removedsets == nil {
-		m.removedsets = make(map[string]struct{})
+		m.removedsets = make(map[int64]struct{})
 	}
 	for i := range ids {
 		delete(m.sets, ids[i])
@@ -241,7 +278,7 @@ func (m *ItemMutation) RemoveSetIDs(ids ...string) {
 }
 
 // RemovedSets returns the removed IDs of the "sets" edge to the Set entity.
-func (m *ItemMutation) RemovedSetsIDs() (ids []string) {
+func (m *ItemMutation) RemovedSetsIDs() (ids []int64) {
 	for id := range m.removedsets {
 		ids = append(ids, id)
 	}
@@ -249,7 +286,7 @@ func (m *ItemMutation) RemovedSetsIDs() (ids []string) {
 }
 
 // SetsIDs returns the "sets" edge IDs in the mutation.
-func (m *ItemMutation) SetsIDs() (ids []string) {
+func (m *ItemMutation) SetsIDs() (ids []int64) {
 	for id := range m.sets {
 		ids = append(ids, id)
 	}
@@ -297,7 +334,10 @@ func (m *ItemMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ItemMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+	fields := make([]string, 0, 1)
+	if m.identifier != nil {
+		fields = append(fields, item.FieldIdentifier)
+	}
 	return fields
 }
 
@@ -305,6 +345,10 @@ func (m *ItemMutation) Fields() []string {
 // return value indicates that this field was not set, or was not defined in the
 // schema.
 func (m *ItemMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case item.FieldIdentifier:
+		return m.Identifier()
+	}
 	return nil, false
 }
 
@@ -312,6 +356,10 @@ func (m *ItemMutation) Field(name string) (ent.Value, bool) {
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
 func (m *ItemMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case item.FieldIdentifier:
+		return m.OldIdentifier(ctx)
+	}
 	return nil, fmt.Errorf("unknown Item field %s", name)
 }
 
@@ -320,6 +368,13 @@ func (m *ItemMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *ItemMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case item.FieldIdentifier:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIdentifier(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Item field %s", name)
 }
@@ -341,6 +396,8 @@ func (m *ItemMutation) AddedField(name string) (ent.Value, bool) {
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
 func (m *ItemMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Item numeric field %s", name)
 }
 
@@ -366,6 +423,11 @@ func (m *ItemMutation) ClearField(name string) error {
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
 func (m *ItemMutation) ResetField(name string) error {
+	switch name {
+	case item.FieldIdentifier:
+		m.ResetIdentifier()
+		return nil
+	}
 	return fmt.Errorf("unknown Item field %s", name)
 }
 
@@ -484,7 +546,8 @@ type MetadataFormatMutation struct {
 	config
 	op             Op
 	typ            string
-	id             *string
+	id             *int64
+	prefix         *string
 	schema         *string
 	namespace      *string
 	clearedFields  map[string]struct{}
@@ -516,7 +579,7 @@ func newMetadataFormatMutation(c config, op Op, opts ...metadataformatOption) *M
 }
 
 // withMetadataFormatID sets the ID field of the mutation.
-func withMetadataFormatID(id string) metadataformatOption {
+func withMetadataFormatID(id int64) metadataformatOption {
 	return func(m *MetadataFormatMutation) {
 		var (
 			err   error
@@ -568,13 +631,13 @@ func (m MetadataFormatMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of MetadataFormat entities.
-func (m *MetadataFormatMutation) SetID(id string) {
+func (m *MetadataFormatMutation) SetID(id int64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *MetadataFormatMutation) ID() (id string, exists bool) {
+func (m *MetadataFormatMutation) ID() (id int64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -585,12 +648,12 @@ func (m *MetadataFormatMutation) ID() (id string, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *MetadataFormatMutation) IDs(ctx context.Context) ([]string, error) {
+func (m *MetadataFormatMutation) IDs(ctx context.Context) ([]int64, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []string{id}, nil
+			return []int64{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -598,6 +661,42 @@ func (m *MetadataFormatMutation) IDs(ctx context.Context) ([]string, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetPrefix sets the "prefix" field.
+func (m *MetadataFormatMutation) SetPrefix(s string) {
+	m.prefix = &s
+}
+
+// Prefix returns the value of the "prefix" field in the mutation.
+func (m *MetadataFormatMutation) Prefix() (r string, exists bool) {
+	v := m.prefix
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPrefix returns the old "prefix" field's value of the MetadataFormat entity.
+// If the MetadataFormat object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MetadataFormatMutation) OldPrefix(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPrefix is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPrefix requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPrefix: %w", err)
+	}
+	return oldValue.Prefix, nil
+}
+
+// ResetPrefix resets all changes to the "prefix" field.
+func (m *MetadataFormatMutation) ResetPrefix() {
+	m.prefix = nil
 }
 
 // SetSchema sets the "schema" field.
@@ -760,7 +859,10 @@ func (m *MetadataFormatMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MetadataFormatMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 3)
+	if m.prefix != nil {
+		fields = append(fields, metadataformat.FieldPrefix)
+	}
 	if m.schema != nil {
 		fields = append(fields, metadataformat.FieldSchema)
 	}
@@ -775,6 +877,8 @@ func (m *MetadataFormatMutation) Fields() []string {
 // schema.
 func (m *MetadataFormatMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case metadataformat.FieldPrefix:
+		return m.Prefix()
 	case metadataformat.FieldSchema:
 		return m.Schema()
 	case metadataformat.FieldNamespace:
@@ -788,6 +892,8 @@ func (m *MetadataFormatMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *MetadataFormatMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case metadataformat.FieldPrefix:
+		return m.OldPrefix(ctx)
 	case metadataformat.FieldSchema:
 		return m.OldSchema(ctx)
 	case metadataformat.FieldNamespace:
@@ -801,6 +907,13 @@ func (m *MetadataFormatMutation) OldField(ctx context.Context, name string) (ent
 // type.
 func (m *MetadataFormatMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case metadataformat.FieldPrefix:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPrefix(v)
+		return nil
 	case metadataformat.FieldSchema:
 		v, ok := value.(string)
 		if !ok {
@@ -864,6 +977,9 @@ func (m *MetadataFormatMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *MetadataFormatMutation) ResetField(name string) error {
 	switch name {
+	case metadataformat.FieldPrefix:
+		m.ResetPrefix()
+		return nil
 	case metadataformat.FieldSchema:
 		m.ResetSchema()
 		return nil
@@ -967,9 +1083,9 @@ type RecordMutation struct {
 	metadata               *string
 	datestamp              *time.Time
 	clearedFields          map[string]struct{}
-	metadata_format        *string
+	metadata_format        *int64
 	clearedmetadata_format bool
-	item                   *string
+	item                   *int64
 	cleareditem            bool
 	done                   bool
 	oldValue               func(context.Context) (*Record, error)
@@ -1081,12 +1197,12 @@ func (m *RecordMutation) IDs(ctx context.Context) ([]int64, error) {
 }
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (m *RecordMutation) SetMetadataFormatID(s string) {
-	m.metadata_format = &s
+func (m *RecordMutation) SetMetadataFormatID(i int64) {
+	m.metadata_format = &i
 }
 
 // MetadataFormatID returns the value of the "metadata_format_id" field in the mutation.
-func (m *RecordMutation) MetadataFormatID() (r string, exists bool) {
+func (m *RecordMutation) MetadataFormatID() (r int64, exists bool) {
 	v := m.metadata_format
 	if v == nil {
 		return
@@ -1097,7 +1213,7 @@ func (m *RecordMutation) MetadataFormatID() (r string, exists bool) {
 // OldMetadataFormatID returns the old "metadata_format_id" field's value of the Record entity.
 // If the Record object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RecordMutation) OldMetadataFormatID(ctx context.Context) (v string, err error) {
+func (m *RecordMutation) OldMetadataFormatID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMetadataFormatID is only allowed on UpdateOne operations")
 	}
@@ -1117,12 +1233,12 @@ func (m *RecordMutation) ResetMetadataFormatID() {
 }
 
 // SetItemID sets the "item_id" field.
-func (m *RecordMutation) SetItemID(s string) {
-	m.item = &s
+func (m *RecordMutation) SetItemID(i int64) {
+	m.item = &i
 }
 
 // ItemID returns the value of the "item_id" field in the mutation.
-func (m *RecordMutation) ItemID() (r string, exists bool) {
+func (m *RecordMutation) ItemID() (r int64, exists bool) {
 	v := m.item
 	if v == nil {
 		return
@@ -1133,7 +1249,7 @@ func (m *RecordMutation) ItemID() (r string, exists bool) {
 // OldItemID returns the old "item_id" field's value of the Record entity.
 // If the Record object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RecordMutation) OldItemID(ctx context.Context) (v string, err error) {
+func (m *RecordMutation) OldItemID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldItemID is only allowed on UpdateOne operations")
 	}
@@ -1250,7 +1366,7 @@ func (m *RecordMutation) MetadataFormatCleared() bool {
 // MetadataFormatIDs returns the "metadata_format" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // MetadataFormatID instead. It exists only for internal usage by the builders.
-func (m *RecordMutation) MetadataFormatIDs() (ids []string) {
+func (m *RecordMutation) MetadataFormatIDs() (ids []int64) {
 	if id := m.metadata_format; id != nil {
 		ids = append(ids, *id)
 	}
@@ -1276,7 +1392,7 @@ func (m *RecordMutation) ItemCleared() bool {
 // ItemIDs returns the "item" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // ItemID instead. It exists only for internal usage by the builders.
-func (m *RecordMutation) ItemIDs() (ids []string) {
+func (m *RecordMutation) ItemIDs() (ids []int64) {
 	if id := m.item; id != nil {
 		ids = append(ids, *id)
 	}
@@ -1379,14 +1495,14 @@ func (m *RecordMutation) OldField(ctx context.Context, name string) (ent.Value, 
 func (m *RecordMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case record.FieldMetadataFormatID:
-		v, ok := value.(string)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMetadataFormatID(v)
 		return nil
 	case record.FieldItemID:
-		v, ok := value.(string)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1413,13 +1529,16 @@ func (m *RecordMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *RecordMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *RecordMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
 	return nil, false
 }
 
@@ -1577,12 +1696,13 @@ type SetMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *string
+	id            *int64
+	spec          *string
 	name          *string
 	description   *string
 	clearedFields map[string]struct{}
-	items         map[string]struct{}
-	removeditems  map[string]struct{}
+	items         map[int64]struct{}
+	removeditems  map[int64]struct{}
 	cleareditems  bool
 	done          bool
 	oldValue      func(context.Context) (*Set, error)
@@ -1609,7 +1729,7 @@ func newSetMutation(c config, op Op, opts ...setOption) *SetMutation {
 }
 
 // withSetID sets the ID field of the mutation.
-func withSetID(id string) setOption {
+func withSetID(id int64) setOption {
 	return func(m *SetMutation) {
 		var (
 			err   error
@@ -1661,13 +1781,13 @@ func (m SetMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of Set entities.
-func (m *SetMutation) SetID(id string) {
+func (m *SetMutation) SetID(id int64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *SetMutation) ID() (id string, exists bool) {
+func (m *SetMutation) ID() (id int64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -1678,12 +1798,12 @@ func (m *SetMutation) ID() (id string, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *SetMutation) IDs(ctx context.Context) ([]string, error) {
+func (m *SetMutation) IDs(ctx context.Context) ([]int64, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []string{id}, nil
+			return []int64{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -1691,6 +1811,42 @@ func (m *SetMutation) IDs(ctx context.Context) ([]string, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetSpec sets the "spec" field.
+func (m *SetMutation) SetSpec(s string) {
+	m.spec = &s
+}
+
+// Spec returns the value of the "spec" field in the mutation.
+func (m *SetMutation) Spec() (r string, exists bool) {
+	v := m.spec
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSpec returns the old "spec" field's value of the Set entity.
+// If the Set object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SetMutation) OldSpec(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSpec is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSpec requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSpec: %w", err)
+	}
+	return oldValue.Spec, nil
+}
+
+// ResetSpec resets all changes to the "spec" field.
+func (m *SetMutation) ResetSpec() {
+	m.spec = nil
 }
 
 // SetName sets the "name" field.
@@ -1779,9 +1935,9 @@ func (m *SetMutation) ResetDescription() {
 }
 
 // AddItemIDs adds the "items" edge to the Item entity by ids.
-func (m *SetMutation) AddItemIDs(ids ...string) {
+func (m *SetMutation) AddItemIDs(ids ...int64) {
 	if m.items == nil {
-		m.items = make(map[string]struct{})
+		m.items = make(map[int64]struct{})
 	}
 	for i := range ids {
 		m.items[ids[i]] = struct{}{}
@@ -1799,9 +1955,9 @@ func (m *SetMutation) ItemsCleared() bool {
 }
 
 // RemoveItemIDs removes the "items" edge to the Item entity by IDs.
-func (m *SetMutation) RemoveItemIDs(ids ...string) {
+func (m *SetMutation) RemoveItemIDs(ids ...int64) {
 	if m.removeditems == nil {
-		m.removeditems = make(map[string]struct{})
+		m.removeditems = make(map[int64]struct{})
 	}
 	for i := range ids {
 		delete(m.items, ids[i])
@@ -1810,7 +1966,7 @@ func (m *SetMutation) RemoveItemIDs(ids ...string) {
 }
 
 // RemovedItems returns the removed IDs of the "items" edge to the Item entity.
-func (m *SetMutation) RemovedItemsIDs() (ids []string) {
+func (m *SetMutation) RemovedItemsIDs() (ids []int64) {
 	for id := range m.removeditems {
 		ids = append(ids, id)
 	}
@@ -1818,7 +1974,7 @@ func (m *SetMutation) RemovedItemsIDs() (ids []string) {
 }
 
 // ItemsIDs returns the "items" edge IDs in the mutation.
-func (m *SetMutation) ItemsIDs() (ids []string) {
+func (m *SetMutation) ItemsIDs() (ids []int64) {
 	for id := range m.items {
 		ids = append(ids, id)
 	}
@@ -1866,7 +2022,10 @@ func (m *SetMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SetMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 3)
+	if m.spec != nil {
+		fields = append(fields, set.FieldSpec)
+	}
 	if m.name != nil {
 		fields = append(fields, set.FieldName)
 	}
@@ -1881,6 +2040,8 @@ func (m *SetMutation) Fields() []string {
 // schema.
 func (m *SetMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case set.FieldSpec:
+		return m.Spec()
 	case set.FieldName:
 		return m.Name()
 	case set.FieldDescription:
@@ -1894,6 +2055,8 @@ func (m *SetMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *SetMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case set.FieldSpec:
+		return m.OldSpec(ctx)
 	case set.FieldName:
 		return m.OldName(ctx)
 	case set.FieldDescription:
@@ -1907,6 +2070,13 @@ func (m *SetMutation) OldField(ctx context.Context, name string) (ent.Value, err
 // type.
 func (m *SetMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case set.FieldSpec:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSpec(v)
+		return nil
 	case set.FieldName:
 		v, ok := value.(string)
 		if !ok {
@@ -1979,6 +2149,9 @@ func (m *SetMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *SetMutation) ResetField(name string) error {
 	switch name {
+	case set.FieldSpec:
+		m.ResetSpec()
+		return nil
 	case set.FieldName:
 		m.ResetName()
 		return nil

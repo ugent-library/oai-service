@@ -12,7 +12,9 @@ type MetadataFormat struct {
 
 func (MetadataFormat) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id"),
+		field.Int64("id"),
+		field.String("prefix").
+			Unique(),
 		field.String("schema"),
 		field.String("namespace"),
 	}

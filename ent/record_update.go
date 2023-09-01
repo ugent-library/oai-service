@@ -31,14 +31,14 @@ func (ru *RecordUpdate) Where(ps ...predicate.Record) *RecordUpdate {
 }
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (ru *RecordUpdate) SetMetadataFormatID(s string) *RecordUpdate {
-	ru.mutation.SetMetadataFormatID(s)
+func (ru *RecordUpdate) SetMetadataFormatID(i int64) *RecordUpdate {
+	ru.mutation.SetMetadataFormatID(i)
 	return ru
 }
 
 // SetItemID sets the "item_id" field.
-func (ru *RecordUpdate) SetItemID(s string) *RecordUpdate {
-	ru.mutation.SetItemID(s)
+func (ru *RecordUpdate) SetItemID(i int64) *RecordUpdate {
+	ru.mutation.SetItemID(i)
 	return ru
 }
 
@@ -170,7 +170,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -183,7 +183,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -199,7 +199,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{record.ItemColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -212,7 +212,7 @@ func (ru *RecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{record.ItemColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -241,14 +241,14 @@ type RecordUpdateOne struct {
 }
 
 // SetMetadataFormatID sets the "metadata_format_id" field.
-func (ruo *RecordUpdateOne) SetMetadataFormatID(s string) *RecordUpdateOne {
-	ruo.mutation.SetMetadataFormatID(s)
+func (ruo *RecordUpdateOne) SetMetadataFormatID(i int64) *RecordUpdateOne {
+	ruo.mutation.SetMetadataFormatID(i)
 	return ruo
 }
 
 // SetItemID sets the "item_id" field.
-func (ruo *RecordUpdateOne) SetItemID(s string) *RecordUpdateOne {
-	ruo.mutation.SetItemID(s)
+func (ruo *RecordUpdateOne) SetItemID(i int64) *RecordUpdateOne {
+	ruo.mutation.SetItemID(i)
 	return ruo
 }
 
@@ -410,7 +410,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -423,7 +423,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Columns: []string{record.MetadataFormatColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -439,7 +439,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Columns: []string{record.ItemColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -452,7 +452,7 @@ func (ruo *RecordUpdateOne) sqlSave(ctx context.Context) (_node *Record, err err
 			Columns: []string{record.ItemColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

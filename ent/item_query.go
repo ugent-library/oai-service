@@ -130,8 +130,8 @@ func (iq *ItemQuery) FirstX(ctx context.Context) *Item {
 
 // FirstID returns the first Item ID from the query.
 // Returns a *NotFoundError when no Item ID was found.
-func (iq *ItemQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (iq *ItemQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = iq.Limit(1).IDs(setContextOp(ctx, iq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -143,7 +143,7 @@ func (iq *ItemQuery) FirstID(ctx context.Context) (id string, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (iq *ItemQuery) FirstIDX(ctx context.Context) string {
+func (iq *ItemQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := iq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -181,8 +181,8 @@ func (iq *ItemQuery) OnlyX(ctx context.Context) *Item {
 // OnlyID is like Only, but returns the only Item ID in the query.
 // Returns a *NotSingularError when more than one Item ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (iq *ItemQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (iq *ItemQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = iq.Limit(2).IDs(setContextOp(ctx, iq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -198,7 +198,7 @@ func (iq *ItemQuery) OnlyID(ctx context.Context) (id string, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (iq *ItemQuery) OnlyIDX(ctx context.Context) string {
+func (iq *ItemQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := iq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -226,7 +226,7 @@ func (iq *ItemQuery) AllX(ctx context.Context) []*Item {
 }
 
 // IDs executes the query and returns a list of Item IDs.
-func (iq *ItemQuery) IDs(ctx context.Context) (ids []string, err error) {
+func (iq *ItemQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if iq.ctx.Unique == nil && iq.path != nil {
 		iq.Unique(true)
 	}
@@ -238,7 +238,7 @@ func (iq *ItemQuery) IDs(ctx context.Context) (ids []string, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (iq *ItemQuery) IDsX(ctx context.Context) []string {
+func (iq *ItemQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := iq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -330,6 +330,18 @@ func (iq *ItemQuery) WithSets(opts ...func(*SetQuery)) *ItemQuery {
 
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		Identifier string `json:"identifier,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.Item.Query().
+//		GroupBy(item.FieldIdentifier).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (iq *ItemQuery) GroupBy(field string, fields ...string) *ItemGroupBy {
 	iq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &ItemGroupBy{build: iq}
@@ -341,6 +353,16 @@ func (iq *ItemQuery) GroupBy(field string, fields ...string) *ItemGroupBy {
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		Identifier string `json:"identifier,omitempty"`
+//	}
+//
+//	client.Item.Query().
+//		Select(item.FieldIdentifier).
+//		Scan(ctx, &v)
 func (iq *ItemQuery) Select(fields ...string) *ItemSelect {
 	iq.ctx.Fields = append(iq.ctx.Fields, fields...)
 	sbuild := &ItemSelect{ItemQuery: iq}
@@ -426,7 +448,7 @@ func (iq *ItemQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Item, e
 
 func (iq *ItemQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes []*Item, init func(*Item), assign func(*Item, *Record)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[string]*Item)
+	nodeids := make(map[int64]*Item)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -456,8 +478,8 @@ func (iq *ItemQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes 
 }
 func (iq *ItemQuery) loadSets(ctx context.Context, query *SetQuery, nodes []*Item, init func(*Item), assign func(*Item, *Set)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[string]*Item)
-	nids := make(map[string]map[*Item]struct{})
+	byID := make(map[int64]*Item)
+	nids := make(map[int64]map[*Item]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -486,11 +508,11 @@ func (iq *ItemQuery) loadSets(ctx context.Context, query *SetQuery, nodes []*Ite
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullString)}, values...), nil
+				return append([]any{new(sql.NullInt64)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := values[0].(*sql.NullString).String
-				inValue := values[1].(*sql.NullString).String
+				outValue := values[0].(*sql.NullInt64).Int64
+				inValue := values[1].(*sql.NullInt64).Int64
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Item]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -526,7 +548,7 @@ func (iq *ItemQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (iq *ItemQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(item.Table, item.Columns, sqlgraph.NewFieldSpec(item.FieldID, field.TypeString))
+	_spec := sqlgraph.NewQuerySpec(item.Table, item.Columns, sqlgraph.NewFieldSpec(item.FieldID, field.TypeInt64))
 	_spec.From = iq.sql
 	if unique := iq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

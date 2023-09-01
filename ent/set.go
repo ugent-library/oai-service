@@ -15,7 +15,9 @@ import (
 type Set struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
+	// Spec holds the value of the "spec" field.
+	Spec string `json:"spec,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Description holds the value of the "description" field.
@@ -49,7 +51,9 @@ func (*Set) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case set.FieldID, set.FieldName, set.FieldDescription:
+		case set.FieldID:
+			values[i] = new(sql.NullInt64)
+		case set.FieldSpec, set.FieldName, set.FieldDescription:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -67,10 +71,16 @@ func (s *Set) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case set.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			s.ID = int64(value.Int64)
+		case set.FieldSpec:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+				return fmt.Errorf("unexpected type %T for field spec", values[i])
 			} else if value.Valid {
-				s.ID = value.String
+				s.Spec = value.String
 			}
 		case set.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -125,6 +135,9 @@ func (s *Set) String() string {
 	var builder strings.Builder
 	builder.WriteString("Set(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", s.ID))
+	builder.WriteString("spec=")
+	builder.WriteString(s.Spec)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(s.Name)
 	builder.WriteString(", ")

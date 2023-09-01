@@ -56,12 +56,12 @@ func IDLTE(id int64) predicate.Record {
 }
 
 // MetadataFormatID applies equality check predicate on the "metadata_format_id" field. It's identical to MetadataFormatIDEQ.
-func MetadataFormatID(v string) predicate.Record {
+func MetadataFormatID(v int64) predicate.Record {
 	return predicate.Record(sql.FieldEQ(FieldMetadataFormatID, v))
 }
 
 // ItemID applies equality check predicate on the "item_id" field. It's identical to ItemIDEQ.
-func ItemID(v string) predicate.Record {
+func ItemID(v int64) predicate.Record {
 	return predicate.Record(sql.FieldEQ(FieldItemID, v))
 }
 
@@ -76,133 +76,43 @@ func Datestamp(v time.Time) predicate.Record {
 }
 
 // MetadataFormatIDEQ applies the EQ predicate on the "metadata_format_id" field.
-func MetadataFormatIDEQ(v string) predicate.Record {
+func MetadataFormatIDEQ(v int64) predicate.Record {
 	return predicate.Record(sql.FieldEQ(FieldMetadataFormatID, v))
 }
 
 // MetadataFormatIDNEQ applies the NEQ predicate on the "metadata_format_id" field.
-func MetadataFormatIDNEQ(v string) predicate.Record {
+func MetadataFormatIDNEQ(v int64) predicate.Record {
 	return predicate.Record(sql.FieldNEQ(FieldMetadataFormatID, v))
 }
 
 // MetadataFormatIDIn applies the In predicate on the "metadata_format_id" field.
-func MetadataFormatIDIn(vs ...string) predicate.Record {
+func MetadataFormatIDIn(vs ...int64) predicate.Record {
 	return predicate.Record(sql.FieldIn(FieldMetadataFormatID, vs...))
 }
 
 // MetadataFormatIDNotIn applies the NotIn predicate on the "metadata_format_id" field.
-func MetadataFormatIDNotIn(vs ...string) predicate.Record {
+func MetadataFormatIDNotIn(vs ...int64) predicate.Record {
 	return predicate.Record(sql.FieldNotIn(FieldMetadataFormatID, vs...))
 }
 
-// MetadataFormatIDGT applies the GT predicate on the "metadata_format_id" field.
-func MetadataFormatIDGT(v string) predicate.Record {
-	return predicate.Record(sql.FieldGT(FieldMetadataFormatID, v))
-}
-
-// MetadataFormatIDGTE applies the GTE predicate on the "metadata_format_id" field.
-func MetadataFormatIDGTE(v string) predicate.Record {
-	return predicate.Record(sql.FieldGTE(FieldMetadataFormatID, v))
-}
-
-// MetadataFormatIDLT applies the LT predicate on the "metadata_format_id" field.
-func MetadataFormatIDLT(v string) predicate.Record {
-	return predicate.Record(sql.FieldLT(FieldMetadataFormatID, v))
-}
-
-// MetadataFormatIDLTE applies the LTE predicate on the "metadata_format_id" field.
-func MetadataFormatIDLTE(v string) predicate.Record {
-	return predicate.Record(sql.FieldLTE(FieldMetadataFormatID, v))
-}
-
-// MetadataFormatIDContains applies the Contains predicate on the "metadata_format_id" field.
-func MetadataFormatIDContains(v string) predicate.Record {
-	return predicate.Record(sql.FieldContains(FieldMetadataFormatID, v))
-}
-
-// MetadataFormatIDHasPrefix applies the HasPrefix predicate on the "metadata_format_id" field.
-func MetadataFormatIDHasPrefix(v string) predicate.Record {
-	return predicate.Record(sql.FieldHasPrefix(FieldMetadataFormatID, v))
-}
-
-// MetadataFormatIDHasSuffix applies the HasSuffix predicate on the "metadata_format_id" field.
-func MetadataFormatIDHasSuffix(v string) predicate.Record {
-	return predicate.Record(sql.FieldHasSuffix(FieldMetadataFormatID, v))
-}
-
-// MetadataFormatIDEqualFold applies the EqualFold predicate on the "metadata_format_id" field.
-func MetadataFormatIDEqualFold(v string) predicate.Record {
-	return predicate.Record(sql.FieldEqualFold(FieldMetadataFormatID, v))
-}
-
-// MetadataFormatIDContainsFold applies the ContainsFold predicate on the "metadata_format_id" field.
-func MetadataFormatIDContainsFold(v string) predicate.Record {
-	return predicate.Record(sql.FieldContainsFold(FieldMetadataFormatID, v))
-}
-
 // ItemIDEQ applies the EQ predicate on the "item_id" field.
-func ItemIDEQ(v string) predicate.Record {
+func ItemIDEQ(v int64) predicate.Record {
 	return predicate.Record(sql.FieldEQ(FieldItemID, v))
 }
 
 // ItemIDNEQ applies the NEQ predicate on the "item_id" field.
-func ItemIDNEQ(v string) predicate.Record {
+func ItemIDNEQ(v int64) predicate.Record {
 	return predicate.Record(sql.FieldNEQ(FieldItemID, v))
 }
 
 // ItemIDIn applies the In predicate on the "item_id" field.
-func ItemIDIn(vs ...string) predicate.Record {
+func ItemIDIn(vs ...int64) predicate.Record {
 	return predicate.Record(sql.FieldIn(FieldItemID, vs...))
 }
 
 // ItemIDNotIn applies the NotIn predicate on the "item_id" field.
-func ItemIDNotIn(vs ...string) predicate.Record {
+func ItemIDNotIn(vs ...int64) predicate.Record {
 	return predicate.Record(sql.FieldNotIn(FieldItemID, vs...))
-}
-
-// ItemIDGT applies the GT predicate on the "item_id" field.
-func ItemIDGT(v string) predicate.Record {
-	return predicate.Record(sql.FieldGT(FieldItemID, v))
-}
-
-// ItemIDGTE applies the GTE predicate on the "item_id" field.
-func ItemIDGTE(v string) predicate.Record {
-	return predicate.Record(sql.FieldGTE(FieldItemID, v))
-}
-
-// ItemIDLT applies the LT predicate on the "item_id" field.
-func ItemIDLT(v string) predicate.Record {
-	return predicate.Record(sql.FieldLT(FieldItemID, v))
-}
-
-// ItemIDLTE applies the LTE predicate on the "item_id" field.
-func ItemIDLTE(v string) predicate.Record {
-	return predicate.Record(sql.FieldLTE(FieldItemID, v))
-}
-
-// ItemIDContains applies the Contains predicate on the "item_id" field.
-func ItemIDContains(v string) predicate.Record {
-	return predicate.Record(sql.FieldContains(FieldItemID, v))
-}
-
-// ItemIDHasPrefix applies the HasPrefix predicate on the "item_id" field.
-func ItemIDHasPrefix(v string) predicate.Record {
-	return predicate.Record(sql.FieldHasPrefix(FieldItemID, v))
-}
-
-// ItemIDHasSuffix applies the HasSuffix predicate on the "item_id" field.
-func ItemIDHasSuffix(v string) predicate.Record {
-	return predicate.Record(sql.FieldHasSuffix(FieldItemID, v))
-}
-
-// ItemIDEqualFold applies the EqualFold predicate on the "item_id" field.
-func ItemIDEqualFold(v string) predicate.Record {
-	return predicate.Record(sql.FieldEqualFold(FieldItemID, v))
-}
-
-// ItemIDContainsFold applies the ContainsFold predicate on the "item_id" field.
-func ItemIDContainsFold(v string) predicate.Record {
-	return predicate.Record(sql.FieldContainsFold(FieldItemID, v))
 }
 
 // MetadataEQ applies the EQ predicate on the "metadata" field.

@@ -12,6 +12,8 @@ const (
 	Label = "metadata_format"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldPrefix holds the string denoting the prefix field in the database.
+	FieldPrefix = "prefix"
 	// FieldSchema holds the string denoting the schema field in the database.
 	FieldSchema = "schema"
 	// FieldNamespace holds the string denoting the namespace field in the database.
@@ -32,6 +34,7 @@ const (
 // Columns holds all SQL columns for metadataformat fields.
 var Columns = []string{
 	FieldID,
+	FieldPrefix,
 	FieldSchema,
 	FieldNamespace,
 }
@@ -52,6 +55,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByPrefix orders the results by the prefix field.
+func ByPrefix(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPrefix, opts...).ToFunc()
 }
 
 // BySchema orders the results by the schema field.

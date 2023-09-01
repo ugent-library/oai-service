@@ -12,6 +12,8 @@ const (
 	Label = "set"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldSpec holds the string denoting the spec field in the database.
+	FieldSpec = "spec"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldDescription holds the string denoting the description field in the database.
@@ -30,6 +32,7 @@ const (
 // Columns holds all SQL columns for set fields.
 var Columns = []string{
 	FieldID,
+	FieldSpec,
 	FieldName,
 	FieldDescription,
 }
@@ -56,6 +59,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// BySpec orders the results by the spec field.
+func BySpec(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSpec, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

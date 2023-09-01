@@ -13,9 +13,11 @@ import (
 
 // Item is the model entity for the Item schema.
 type Item struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
+	// Identifier holds the value of the "identifier" field.
+	Identifier string `json:"identifier,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ItemQuery when eager-loading is set.
 	Edges        ItemEdges `json:"edges"`
@@ -57,6 +59,8 @@ func (*Item) scanValues(columns []string) ([]any, error) {
 	for i := range columns {
 		switch columns[i] {
 		case item.FieldID:
+			values[i] = new(sql.NullInt64)
+		case item.FieldIdentifier:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -74,10 +78,16 @@ func (i *Item) assignValues(columns []string, values []any) error {
 	for j := range columns {
 		switch columns[j] {
 		case item.FieldID:
+			value, ok := values[j].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			i.ID = int64(value.Int64)
+		case item.FieldIdentifier:
 			if value, ok := values[j].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[j])
+				return fmt.Errorf("unexpected type %T for field identifier", values[j])
 			} else if value.Valid {
-				i.ID = value.String
+				i.Identifier = value.String
 			}
 		default:
 			i.selectValues.Set(columns[j], values[j])
@@ -124,7 +134,9 @@ func (i *Item) Unwrap() *Item {
 func (i *Item) String() string {
 	var builder strings.Builder
 	builder.WriteString("Item(")
-	builder.WriteString(fmt.Sprintf("id=%v", i.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", i.ID))
+	builder.WriteString("identifier=")
+	builder.WriteString(i.Identifier)
 	builder.WriteByte(')')
 	return builder.String()
 }

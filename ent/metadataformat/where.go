@@ -9,58 +9,53 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id string) predicate.MetadataFormat {
+func ID(id int64) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id string) predicate.MetadataFormat {
+func IDEQ(id int64) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id string) predicate.MetadataFormat {
+func IDNEQ(id int64) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...string) predicate.MetadataFormat {
+func IDIn(ids ...int64) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...string) predicate.MetadataFormat {
+func IDNotIn(ids ...int64) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id string) predicate.MetadataFormat {
+func IDGT(id int64) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id string) predicate.MetadataFormat {
+func IDGTE(id int64) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id string) predicate.MetadataFormat {
+func IDLT(id int64) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id string) predicate.MetadataFormat {
+func IDLTE(id int64) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldLTE(FieldID, id))
 }
 
-// IDEqualFold applies the EqualFold predicate on the ID field.
-func IDEqualFold(id string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldEqualFold(FieldID, id))
-}
-
-// IDContainsFold applies the ContainsFold predicate on the ID field.
-func IDContainsFold(id string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldContainsFold(FieldID, id))
+// Prefix applies equality check predicate on the "prefix" field. It's identical to PrefixEQ.
+func Prefix(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldEQ(FieldPrefix, v))
 }
 
 // Schema applies equality check predicate on the "schema" field. It's identical to SchemaEQ.
@@ -71,6 +66,71 @@ func Schema(v string) predicate.MetadataFormat {
 // Namespace applies equality check predicate on the "namespace" field. It's identical to NamespaceEQ.
 func Namespace(v string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldEQ(FieldNamespace, v))
+}
+
+// PrefixEQ applies the EQ predicate on the "prefix" field.
+func PrefixEQ(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldEQ(FieldPrefix, v))
+}
+
+// PrefixNEQ applies the NEQ predicate on the "prefix" field.
+func PrefixNEQ(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldNEQ(FieldPrefix, v))
+}
+
+// PrefixIn applies the In predicate on the "prefix" field.
+func PrefixIn(vs ...string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldIn(FieldPrefix, vs...))
+}
+
+// PrefixNotIn applies the NotIn predicate on the "prefix" field.
+func PrefixNotIn(vs ...string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldNotIn(FieldPrefix, vs...))
+}
+
+// PrefixGT applies the GT predicate on the "prefix" field.
+func PrefixGT(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldGT(FieldPrefix, v))
+}
+
+// PrefixGTE applies the GTE predicate on the "prefix" field.
+func PrefixGTE(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldGTE(FieldPrefix, v))
+}
+
+// PrefixLT applies the LT predicate on the "prefix" field.
+func PrefixLT(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldLT(FieldPrefix, v))
+}
+
+// PrefixLTE applies the LTE predicate on the "prefix" field.
+func PrefixLTE(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldLTE(FieldPrefix, v))
+}
+
+// PrefixContains applies the Contains predicate on the "prefix" field.
+func PrefixContains(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldContains(FieldPrefix, v))
+}
+
+// PrefixHasPrefix applies the HasPrefix predicate on the "prefix" field.
+func PrefixHasPrefix(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldHasPrefix(FieldPrefix, v))
+}
+
+// PrefixHasSuffix applies the HasSuffix predicate on the "prefix" field.
+func PrefixHasSuffix(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldHasSuffix(FieldPrefix, v))
+}
+
+// PrefixEqualFold applies the EqualFold predicate on the "prefix" field.
+func PrefixEqualFold(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldEqualFold(FieldPrefix, v))
+}
+
+// PrefixContainsFold applies the ContainsFold predicate on the "prefix" field.
+func PrefixContainsFold(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldContainsFold(FieldPrefix, v))
 }
 
 // SchemaEQ applies the EQ predicate on the "schema" field.

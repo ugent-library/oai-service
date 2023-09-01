@@ -20,9 +20,9 @@ type Record struct {
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
 	// MetadataFormatID holds the value of the "metadata_format_id" field.
-	MetadataFormatID string `json:"metadata_format_id,omitempty"`
+	MetadataFormatID int64 `json:"metadata_format_id,omitempty"`
 	// ItemID holds the value of the "item_id" field.
-	ItemID string `json:"item_id,omitempty"`
+	ItemID int64 `json:"item_id,omitempty"`
 	// A record with NULL metadata is considered deleted.
 	Metadata *string `json:"metadata,omitempty"`
 	// Datestamp holds the value of the "datestamp" field.
@@ -75,9 +75,9 @@ func (*Record) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case record.FieldID:
+		case record.FieldID, record.FieldMetadataFormatID, record.FieldItemID:
 			values[i] = new(sql.NullInt64)
-		case record.FieldMetadataFormatID, record.FieldItemID, record.FieldMetadata:
+		case record.FieldMetadata:
 			values[i] = new(sql.NullString)
 		case record.FieldDatestamp:
 			values[i] = new(sql.NullTime)
@@ -103,16 +103,16 @@ func (r *Record) assignValues(columns []string, values []any) error {
 			}
 			r.ID = int64(value.Int64)
 		case record.FieldMetadataFormatID:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field metadata_format_id", values[i])
 			} else if value.Valid {
-				r.MetadataFormatID = value.String
+				r.MetadataFormatID = value.Int64
 			}
 		case record.FieldItemID:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field item_id", values[i])
 			} else if value.Valid {
-				r.ItemID = value.String
+				r.ItemID = value.Int64
 			}
 		case record.FieldMetadata:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -174,10 +174,10 @@ func (r *Record) String() string {
 	builder.WriteString("Record(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", r.ID))
 	builder.WriteString("metadata_format_id=")
-	builder.WriteString(r.MetadataFormatID)
+	builder.WriteString(fmt.Sprintf("%v", r.MetadataFormatID))
 	builder.WriteString(", ")
 	builder.WriteString("item_id=")
-	builder.WriteString(r.ItemID)
+	builder.WriteString(fmt.Sprintf("%v", r.ItemID))
 	builder.WriteString(", ")
 	if v := r.Metadata; v != nil {
 		builder.WriteString("metadata=")

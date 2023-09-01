@@ -29,6 +29,12 @@ func (iu *ItemUpdate) Where(ps ...predicate.Item) *ItemUpdate {
 	return iu
 }
 
+// SetIdentifier sets the "identifier" field.
+func (iu *ItemUpdate) SetIdentifier(s string) *ItemUpdate {
+	iu.mutation.SetIdentifier(s)
+	return iu
+}
+
 // AddRecordIDs adds the "records" edge to the Record entity by IDs.
 func (iu *ItemUpdate) AddRecordIDs(ids ...int64) *ItemUpdate {
 	iu.mutation.AddRecordIDs(ids...)
@@ -45,14 +51,14 @@ func (iu *ItemUpdate) AddRecords(r ...*Record) *ItemUpdate {
 }
 
 // AddSetIDs adds the "sets" edge to the Set entity by IDs.
-func (iu *ItemUpdate) AddSetIDs(ids ...string) *ItemUpdate {
+func (iu *ItemUpdate) AddSetIDs(ids ...int64) *ItemUpdate {
 	iu.mutation.AddSetIDs(ids...)
 	return iu
 }
 
 // AddSets adds the "sets" edges to the Set entity.
 func (iu *ItemUpdate) AddSets(s ...*Set) *ItemUpdate {
-	ids := make([]string, len(s))
+	ids := make([]int64, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -92,14 +98,14 @@ func (iu *ItemUpdate) ClearSets() *ItemUpdate {
 }
 
 // RemoveSetIDs removes the "sets" edge to Set entities by IDs.
-func (iu *ItemUpdate) RemoveSetIDs(ids ...string) *ItemUpdate {
+func (iu *ItemUpdate) RemoveSetIDs(ids ...int64) *ItemUpdate {
 	iu.mutation.RemoveSetIDs(ids...)
 	return iu
 }
 
 // RemoveSets removes "sets" edges to Set entities.
 func (iu *ItemUpdate) RemoveSets(s ...*Set) *ItemUpdate {
-	ids := make([]string, len(s))
+	ids := make([]int64, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -134,13 +140,16 @@ func (iu *ItemUpdate) ExecX(ctx context.Context) {
 }
 
 func (iu *ItemUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(item.Table, item.Columns, sqlgraph.NewFieldSpec(item.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(item.Table, item.Columns, sqlgraph.NewFieldSpec(item.FieldID, field.TypeInt64))
 	if ps := iu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := iu.mutation.Identifier(); ok {
+		_spec.SetField(item.FieldIdentifier, field.TypeString, value)
 	}
 	if iu.mutation.RecordsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -195,7 +204,7 @@ func (iu *ItemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: item.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -208,7 +217,7 @@ func (iu *ItemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: item.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -224,7 +233,7 @@ func (iu *ItemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: item.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -252,6 +261,12 @@ type ItemUpdateOne struct {
 	mutation *ItemMutation
 }
 
+// SetIdentifier sets the "identifier" field.
+func (iuo *ItemUpdateOne) SetIdentifier(s string) *ItemUpdateOne {
+	iuo.mutation.SetIdentifier(s)
+	return iuo
+}
+
 // AddRecordIDs adds the "records" edge to the Record entity by IDs.
 func (iuo *ItemUpdateOne) AddRecordIDs(ids ...int64) *ItemUpdateOne {
 	iuo.mutation.AddRecordIDs(ids...)
@@ -268,14 +283,14 @@ func (iuo *ItemUpdateOne) AddRecords(r ...*Record) *ItemUpdateOne {
 }
 
 // AddSetIDs adds the "sets" edge to the Set entity by IDs.
-func (iuo *ItemUpdateOne) AddSetIDs(ids ...string) *ItemUpdateOne {
+func (iuo *ItemUpdateOne) AddSetIDs(ids ...int64) *ItemUpdateOne {
 	iuo.mutation.AddSetIDs(ids...)
 	return iuo
 }
 
 // AddSets adds the "sets" edges to the Set entity.
 func (iuo *ItemUpdateOne) AddSets(s ...*Set) *ItemUpdateOne {
-	ids := make([]string, len(s))
+	ids := make([]int64, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -315,14 +330,14 @@ func (iuo *ItemUpdateOne) ClearSets() *ItemUpdateOne {
 }
 
 // RemoveSetIDs removes the "sets" edge to Set entities by IDs.
-func (iuo *ItemUpdateOne) RemoveSetIDs(ids ...string) *ItemUpdateOne {
+func (iuo *ItemUpdateOne) RemoveSetIDs(ids ...int64) *ItemUpdateOne {
 	iuo.mutation.RemoveSetIDs(ids...)
 	return iuo
 }
 
 // RemoveSets removes "sets" edges to Set entities.
 func (iuo *ItemUpdateOne) RemoveSets(s ...*Set) *ItemUpdateOne {
-	ids := make([]string, len(s))
+	ids := make([]int64, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -370,7 +385,7 @@ func (iuo *ItemUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (iuo *ItemUpdateOne) sqlSave(ctx context.Context) (_node *Item, err error) {
-	_spec := sqlgraph.NewUpdateSpec(item.Table, item.Columns, sqlgraph.NewFieldSpec(item.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(item.Table, item.Columns, sqlgraph.NewFieldSpec(item.FieldID, field.TypeInt64))
 	id, ok := iuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Item.id" for update`)}
@@ -394,6 +409,9 @@ func (iuo *ItemUpdateOne) sqlSave(ctx context.Context) (_node *Item, err error) 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := iuo.mutation.Identifier(); ok {
+		_spec.SetField(item.FieldIdentifier, field.TypeString, value)
 	}
 	if iuo.mutation.RecordsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -448,7 +466,7 @@ func (iuo *ItemUpdateOne) sqlSave(ctx context.Context) (_node *Item, err error) 
 			Columns: item.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -461,7 +479,7 @@ func (iuo *ItemUpdateOne) sqlSave(ctx context.Context) (_node *Item, err error) 
 			Columns: item.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -477,7 +495,7 @@ func (iuo *ItemUpdateOne) sqlSave(ctx context.Context) (_node *Item, err error) 
 			Columns: item.SetsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

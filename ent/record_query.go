@@ -333,7 +333,7 @@ func (rq *RecordQuery) WithItem(opts ...func(*ItemQuery)) *RecordQuery {
 // Example:
 //
 //	var v []struct {
-//		MetadataFormatID string `json:"metadata_format_id,omitempty"`
+//		MetadataFormatID int64 `json:"metadata_format_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -356,7 +356,7 @@ func (rq *RecordQuery) GroupBy(field string, fields ...string) *RecordGroupBy {
 // Example:
 //
 //	var v []struct {
-//		MetadataFormatID string `json:"metadata_format_id,omitempty"`
+//		MetadataFormatID int64 `json:"metadata_format_id,omitempty"`
 //	}
 //
 //	client.Record.Query().
@@ -444,8 +444,8 @@ func (rq *RecordQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Recor
 }
 
 func (rq *RecordQuery) loadMetadataFormat(ctx context.Context, query *MetadataFormatQuery, nodes []*Record, init func(*Record), assign func(*Record, *MetadataFormat)) error {
-	ids := make([]string, 0, len(nodes))
-	nodeids := make(map[string][]*Record)
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Record)
 	for i := range nodes {
 		fk := nodes[i].MetadataFormatID
 		if _, ok := nodeids[fk]; !ok {
@@ -473,8 +473,8 @@ func (rq *RecordQuery) loadMetadataFormat(ctx context.Context, query *MetadataFo
 	return nil
 }
 func (rq *RecordQuery) loadItem(ctx context.Context, query *ItemQuery, nodes []*Record, init func(*Record), assign func(*Record, *Item)) error {
-	ids := make([]string, 0, len(nodes))
-	nodeids := make(map[string][]*Record)
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Record)
 	for i := range nodes {
 		fk := nodes[i].ItemID
 		if _, ok := nodeids[fk]; !ok {

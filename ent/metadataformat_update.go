@@ -28,6 +28,12 @@ func (mfu *MetadataFormatUpdate) Where(ps ...predicate.MetadataFormat) *Metadata
 	return mfu
 }
 
+// SetPrefix sets the "prefix" field.
+func (mfu *MetadataFormatUpdate) SetPrefix(s string) *MetadataFormatUpdate {
+	mfu.mutation.SetPrefix(s)
+	return mfu
+}
+
 // SetSchema sets the "schema" field.
 func (mfu *MetadataFormatUpdate) SetSchema(s string) *MetadataFormatUpdate {
 	mfu.mutation.SetSchema(s)
@@ -109,13 +115,16 @@ func (mfu *MetadataFormatUpdate) ExecX(ctx context.Context) {
 }
 
 func (mfu *MetadataFormatUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(metadataformat.Table, metadataformat.Columns, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(metadataformat.Table, metadataformat.Columns, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64))
 	if ps := mfu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := mfu.mutation.Prefix(); ok {
+		_spec.SetField(metadataformat.FieldPrefix, field.TypeString, value)
 	}
 	if value, ok := mfu.mutation.Schema(); ok {
 		_spec.SetField(metadataformat.FieldSchema, field.TypeString, value)
@@ -186,6 +195,12 @@ type MetadataFormatUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *MetadataFormatMutation
+}
+
+// SetPrefix sets the "prefix" field.
+func (mfuo *MetadataFormatUpdateOne) SetPrefix(s string) *MetadataFormatUpdateOne {
+	mfuo.mutation.SetPrefix(s)
+	return mfuo
 }
 
 // SetSchema sets the "schema" field.
@@ -282,7 +297,7 @@ func (mfuo *MetadataFormatUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *MetadataFormat, err error) {
-	_spec := sqlgraph.NewUpdateSpec(metadataformat.Table, metadataformat.Columns, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(metadataformat.Table, metadataformat.Columns, sqlgraph.NewFieldSpec(metadataformat.FieldID, field.TypeInt64))
 	id, ok := mfuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "MetadataFormat.id" for update`)}
@@ -306,6 +321,9 @@ func (mfuo *MetadataFormatUpdateOne) sqlSave(ctx context.Context) (_node *Metada
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := mfuo.mutation.Prefix(); ok {
+		_spec.SetField(metadataformat.FieldPrefix, field.TypeString, value)
 	}
 	if value, ok := mfuo.mutation.Schema(); ok {
 		_spec.SetField(metadataformat.FieldSchema, field.TypeString, value)

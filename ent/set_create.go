@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 
-	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -21,6 +20,12 @@ type SetCreate struct {
 	mutation *SetMutation
 	hooks    []Hook
 	conflict []sql.ConflictOption
+}
+
+// SetSpec sets the "spec" field.
+func (sc *SetCreate) SetSpec(s string) *SetCreate {
+	sc.mutation.SetSpec(s)
+	return sc
 }
 
 // SetName sets the "name" field.
@@ -44,20 +49,20 @@ func (sc *SetCreate) SetNillableDescription(s *string) *SetCreate {
 }
 
 // SetID sets the "id" field.
-func (sc *SetCreate) SetID(s string) *SetCreate {
-	sc.mutation.SetID(s)
+func (sc *SetCreate) SetID(i int64) *SetCreate {
+	sc.mutation.SetID(i)
 	return sc
 }
 
 // AddItemIDs adds the "items" edge to the Item entity by IDs.
-func (sc *SetCreate) AddItemIDs(ids ...string) *SetCreate {
+func (sc *SetCreate) AddItemIDs(ids ...int64) *SetCreate {
 	sc.mutation.AddItemIDs(ids...)
 	return sc
 }
 
 // AddItems adds the "items" edges to the Item entity.
 func (sc *SetCreate) AddItems(i ...*Item) *SetCreate {
-	ids := make([]string, len(i))
+	ids := make([]int64, len(i))
 	for j := range i {
 		ids[j] = i[j].ID
 	}
@@ -98,6 +103,9 @@ func (sc *SetCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (sc *SetCreate) check() error {
+	if _, ok := sc.mutation.Spec(); !ok {
+		return &ValidationError{Name: "spec", err: errors.New(`ent: missing required field "Set.spec"`)}
+	}
 	if _, ok := sc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Set.name"`)}
 	}
@@ -115,12 +123,9 @@ func (sc *SetCreate) sqlSave(ctx context.Context) (*Set, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(string); ok {
-			_node.ID = id
-		} else {
-			return nil, fmt.Errorf("unexpected Set.ID type: %T", _spec.ID.Value)
-		}
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
 	}
 	sc.mutation.id = &_node.ID
 	sc.mutation.done = true
@@ -130,12 +135,16 @@ func (sc *SetCreate) sqlSave(ctx context.Context) (*Set, error) {
 func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Set{config: sc.config}
-		_spec = sqlgraph.NewCreateSpec(set.Table, sqlgraph.NewFieldSpec(set.FieldID, field.TypeString))
+		_spec = sqlgraph.NewCreateSpec(set.Table, sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = sc.conflict
 	if id, ok := sc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if value, ok := sc.mutation.Spec(); ok {
+		_spec.SetField(set.FieldSpec, field.TypeString, value)
+		_node.Spec = value
 	}
 	if value, ok := sc.mutation.Name(); ok {
 		_spec.SetField(set.FieldName, field.TypeString, value)
@@ -153,7 +162,7 @@ func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 			Columns: set.ItemsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -168,7 +177,7 @@ func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Set.Create().
-//		SetName(v).
+//		SetSpec(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -177,7 +186,7 @@ func (sc *SetCreate) createSpec() (*Set, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SetUpsert) {
-//			SetName(v+v).
+//			SetSpec(v+v).
 //		}).
 //		Exec(ctx)
 func (sc *SetCreate) OnConflict(opts ...sql.ConflictOption) *SetUpsertOne {
@@ -212,6 +221,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetSpec sets the "spec" field.
+func (u *SetUpsert) SetSpec(v string) *SetUpsert {
+	u.Set(set.FieldSpec, v)
+	return u
+}
+
+// UpdateSpec sets the "spec" field to the value that was provided on create.
+func (u *SetUpsert) UpdateSpec() *SetUpsert {
+	u.SetExcluded(set.FieldSpec)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *SetUpsert) SetName(v string) *SetUpsert {
@@ -291,6 +312,20 @@ func (u *SetUpsertOne) Update(set func(*SetUpsert)) *SetUpsertOne {
 	return u
 }
 
+// SetSpec sets the "spec" field.
+func (u *SetUpsertOne) SetSpec(v string) *SetUpsertOne {
+	return u.Update(func(s *SetUpsert) {
+		s.SetSpec(v)
+	})
+}
+
+// UpdateSpec sets the "spec" field to the value that was provided on create.
+func (u *SetUpsertOne) UpdateSpec() *SetUpsertOne {
+	return u.Update(func(s *SetUpsert) {
+		s.UpdateSpec()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *SetUpsertOne) SetName(v string) *SetUpsertOne {
 	return u.Update(func(s *SetUpsert) {
@@ -342,12 +377,7 @@ func (u *SetUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *SetUpsertOne) ID(ctx context.Context) (id string, err error) {
-	if u.create.driver.Dialect() == dialect.MySQL {
-		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
-		// fields from the database since MySQL does not support the RETURNING clause.
-		return id, errors.New("ent: SetUpsertOne.ID is not supported by MySQL driver. Use SetUpsertOne.Exec instead")
-	}
+func (u *SetUpsertOne) ID(ctx context.Context) (id int64, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -356,7 +386,7 @@ func (u *SetUpsertOne) ID(ctx context.Context) (id string, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *SetUpsertOne) IDX(ctx context.Context) string {
+func (u *SetUpsertOne) IDX(ctx context.Context) int64 {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -406,6 +436,10 @@ func (scb *SetCreateBulk) Save(ctx context.Context) ([]*Set, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int64(id)
+				}
 				mutation.done = true
 				return nodes[i], nil
 			})
@@ -457,7 +491,7 @@ func (scb *SetCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SetUpsert) {
-//			SetName(v+v).
+//			SetSpec(v+v).
 //		}).
 //		Exec(ctx)
 func (scb *SetCreateBulk) OnConflict(opts ...sql.ConflictOption) *SetUpsertBulk {
@@ -534,6 +568,20 @@ func (u *SetUpsertBulk) Update(set func(*SetUpsert)) *SetUpsertBulk {
 		set(&SetUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetSpec sets the "spec" field.
+func (u *SetUpsertBulk) SetSpec(v string) *SetUpsertBulk {
+	return u.Update(func(s *SetUpsert) {
+		s.SetSpec(v)
+	})
+}
+
+// UpdateSpec sets the "spec" field to the value that was provided on create.
+func (u *SetUpsertBulk) UpdateSpec() *SetUpsertBulk {
+	return u.Update(func(s *SetUpsert) {
+		s.UpdateSpec()
+	})
 }
 
 // SetName sets the "name" field.
