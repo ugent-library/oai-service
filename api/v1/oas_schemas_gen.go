@@ -10,6 +10,35 @@ func (s *ErrorStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
+// AddItemOK is response for AddItem operation.
+type AddItemOK struct{}
+
+// Ref: #/components/schemas/AddItemRequest
+type AddItemRequest struct {
+	Identifier string   `json:"identifier"`
+	SetSpecs   []string `json:"set_specs"`
+}
+
+// GetIdentifier returns the value of Identifier.
+func (s *AddItemRequest) GetIdentifier() string {
+	return s.Identifier
+}
+
+// GetSetSpecs returns the value of SetSpecs.
+func (s *AddItemRequest) GetSetSpecs() []string {
+	return s.SetSpecs
+}
+
+// SetIdentifier sets the value of Identifier.
+func (s *AddItemRequest) SetIdentifier(val string) {
+	s.Identifier = val
+}
+
+// SetSetSpecs sets the value of SetSpecs.
+func (s *AddItemRequest) SetSetSpecs(val []string) {
+	s.SetSpecs = val
+}
+
 // AddMetadataFormatOK is response for AddMetadataFormat operation.
 type AddMetadataFormatOK struct{}
 
@@ -50,73 +79,44 @@ func (s *AddMetadataFormatRequest) SetMetadataNamespace(val string) {
 	s.MetadataNamespace = val
 }
 
-// AddRecordMetadataOK is response for AddRecordMetadata operation.
-type AddRecordMetadataOK struct{}
+// AddRecordOK is response for AddRecord operation.
+type AddRecordOK struct{}
 
-// Ref: #/components/schemas/AddRecordMetadataRequest
-type AddRecordMetadataRequest struct {
+// Ref: #/components/schemas/AddRecordRequest
+type AddRecordRequest struct {
 	Identifier     string `json:"identifier"`
 	MetadataPrefix string `json:"metadata_prefix"`
 	Content        string `json:"content"`
 }
 
 // GetIdentifier returns the value of Identifier.
-func (s *AddRecordMetadataRequest) GetIdentifier() string {
+func (s *AddRecordRequest) GetIdentifier() string {
 	return s.Identifier
 }
 
 // GetMetadataPrefix returns the value of MetadataPrefix.
-func (s *AddRecordMetadataRequest) GetMetadataPrefix() string {
+func (s *AddRecordRequest) GetMetadataPrefix() string {
 	return s.MetadataPrefix
 }
 
 // GetContent returns the value of Content.
-func (s *AddRecordMetadataRequest) GetContent() string {
+func (s *AddRecordRequest) GetContent() string {
 	return s.Content
 }
 
 // SetIdentifier sets the value of Identifier.
-func (s *AddRecordMetadataRequest) SetIdentifier(val string) {
+func (s *AddRecordRequest) SetIdentifier(val string) {
 	s.Identifier = val
 }
 
 // SetMetadataPrefix sets the value of MetadataPrefix.
-func (s *AddRecordMetadataRequest) SetMetadataPrefix(val string) {
+func (s *AddRecordRequest) SetMetadataPrefix(val string) {
 	s.MetadataPrefix = val
 }
 
 // SetContent sets the value of Content.
-func (s *AddRecordMetadataRequest) SetContent(val string) {
+func (s *AddRecordRequest) SetContent(val string) {
 	s.Content = val
-}
-
-// AddRecordSetsOK is response for AddRecordSets operation.
-type AddRecordSetsOK struct{}
-
-// Ref: #/components/schemas/AddRecordSetsRequest
-type AddRecordSetsRequest struct {
-	Identifier string   `json:"identifier"`
-	SetSpecs   []string `json:"set_specs"`
-}
-
-// GetIdentifier returns the value of Identifier.
-func (s *AddRecordSetsRequest) GetIdentifier() string {
-	return s.Identifier
-}
-
-// GetSetSpecs returns the value of SetSpecs.
-func (s *AddRecordSetsRequest) GetSetSpecs() []string {
-	return s.SetSpecs
-}
-
-// SetIdentifier sets the value of Identifier.
-func (s *AddRecordSetsRequest) SetIdentifier(val string) {
-	s.Identifier = val
-}
-
-// SetSetSpecs sets the value of SetSpecs.
-func (s *AddRecordSetsRequest) SetSetSpecs(val []string) {
-	s.SetSpecs = val
 }
 
 // AddSetOK is response for AddSet operation.
@@ -178,7 +178,8 @@ type DeleteRecordOK struct{}
 
 // Ref: #/components/schemas/DeleteRecordRequest
 type DeleteRecordRequest struct {
-	Identifier string `json:"identifier"`
+	Identifier     string `json:"identifier"`
+	MetadataPrefix string `json:"metadata_prefix"`
 }
 
 // GetIdentifier returns the value of Identifier.
@@ -186,9 +187,19 @@ func (s *DeleteRecordRequest) GetIdentifier() string {
 	return s.Identifier
 }
 
+// GetMetadataPrefix returns the value of MetadataPrefix.
+func (s *DeleteRecordRequest) GetMetadataPrefix() string {
+	return s.MetadataPrefix
+}
+
 // SetIdentifier sets the value of Identifier.
 func (s *DeleteRecordRequest) SetIdentifier(val string) {
 	s.Identifier = val
+}
+
+// SetMetadataPrefix sets the value of MetadataPrefix.
+func (s *DeleteRecordRequest) SetMetadataPrefix(val string) {
+	s.MetadataPrefix = val
 }
 
 // Ref: #/components/schemas/Error

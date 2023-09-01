@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// AddItem implements addItem operation.
+//
+// Add item.
+//
+// POST /add-item
+func (UnimplementedHandler) AddItem(ctx context.Context, req *AddItemRequest) error {
+	return ht.ErrNotImplemented
+}
+
 // AddMetadataFormat implements addMetadataFormat operation.
 //
 // Add a metadata format.
@@ -22,21 +31,12 @@ func (UnimplementedHandler) AddMetadataFormat(ctx context.Context, req *AddMetad
 	return ht.ErrNotImplemented
 }
 
-// AddRecordMetadata implements addRecordMetadata operation.
+// AddRecord implements addRecord operation.
 //
-// Add record metadata.
+// Add record.
 //
-// POST /add-record-metadata
-func (UnimplementedHandler) AddRecordMetadata(ctx context.Context, req *AddRecordMetadataRequest) error {
-	return ht.ErrNotImplemented
-}
-
-// AddRecordSets implements addRecordSets operation.
-//
-// Add record sets.
-//
-// POST /add-record-sets
-func (UnimplementedHandler) AddRecordSets(ctx context.Context, req *AddRecordSetsRequest) error {
+// POST /add-record
+func (UnimplementedHandler) AddRecord(ctx context.Context, req *AddRecordRequest) error {
 	return ht.ErrNotImplemented
 }
 

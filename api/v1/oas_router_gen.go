@@ -65,6 +65,24 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 				switch elem[0] {
+				case 'i': // Prefix: "item"
+					if l := len("item"); len(elem) >= l && elem[0:l] == "item" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleAddItemRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
 				case 'm': // Prefix: "metadata-format"
 					if l := len("metadata-format"); len(elem) >= l && elem[0:l] == "metadata-format" {
 						elem = elem[l:]
@@ -83,53 +101,23 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 						return
 					}
-				case 'r': // Prefix: "record-"
-					if l := len("record-"); len(elem) >= l && elem[0:l] == "record-" {
+				case 'r': // Prefix: "record"
+					if l := len("record"); len(elem) >= l && elem[0:l] == "record" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						break
-					}
-					switch elem[0] {
-					case 'm': // Prefix: "metadata"
-						if l := len("metadata"); len(elem) >= l && elem[0:l] == "metadata" {
-							elem = elem[l:]
-						} else {
-							break
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleAddRecordRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
 						}
 
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleAddRecordMetadataRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
-							}
-
-							return
-						}
-					case 's': // Prefix: "sets"
-						if l := len("sets"); len(elem) >= l && elem[0:l] == "sets" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleAddRecordSetsRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
-							}
-
-							return
-						}
+						return
 					}
 				case 's': // Prefix: "set"
 					if l := len("set"); len(elem) >= l && elem[0:l] == "set" {
@@ -260,6 +248,27 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					break
 				}
 				switch elem[0] {
+				case 'i': // Prefix: "item"
+					if l := len("item"); len(elem) >= l && elem[0:l] == "item" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: AddItem
+							r.name = "AddItem"
+							r.operationID = "addItem"
+							r.pathPattern = "/add-item"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
 				case 'm': // Prefix: "metadata-format"
 					if l := len("metadata-format"); len(elem) >= l && elem[0:l] == "metadata-format" {
 						elem = elem[l:]
@@ -281,58 +290,25 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							return
 						}
 					}
-				case 'r': // Prefix: "record-"
-					if l := len("record-"); len(elem) >= l && elem[0:l] == "record-" {
+				case 'r': // Prefix: "record"
+					if l := len("record"); len(elem) >= l && elem[0:l] == "record" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						break
-					}
-					switch elem[0] {
-					case 'm': // Prefix: "metadata"
-						if l := len("metadata"); len(elem) >= l && elem[0:l] == "metadata" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							switch method {
-							case "POST":
-								// Leaf: AddRecordMetadata
-								r.name = "AddRecordMetadata"
-								r.operationID = "addRecordMetadata"
-								r.pathPattern = "/add-record-metadata"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
-						}
-					case 's': // Prefix: "sets"
-						if l := len("sets"); len(elem) >= l && elem[0:l] == "sets" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							switch method {
-							case "POST":
-								// Leaf: AddRecordSets
-								r.name = "AddRecordSets"
-								r.operationID = "addRecordSets"
-								r.pathPattern = "/add-record-sets"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
+						switch method {
+						case "POST":
+							// Leaf: AddRecord
+							r.name = "AddRecord"
+							r.operationID = "addRecord"
+							r.pathPattern = "/add-record"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
 						}
 					}
 				case 's': // Prefix: "set"

@@ -9,53 +9,58 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int64) predicate.MetadataFormat {
+func ID(id string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int64) predicate.MetadataFormat {
+func IDEQ(id string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int64) predicate.MetadataFormat {
+func IDNEQ(id string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int64) predicate.MetadataFormat {
+func IDIn(ids ...string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int64) predicate.MetadataFormat {
+func IDNotIn(ids ...string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int64) predicate.MetadataFormat {
+func IDGT(id string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int64) predicate.MetadataFormat {
+func IDGTE(id string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int64) predicate.MetadataFormat {
+func IDLT(id string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int64) predicate.MetadataFormat {
+func IDLTE(id string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldLTE(FieldID, id))
 }
 
-// MetadataPrefix applies equality check predicate on the "metadata_prefix" field. It's identical to MetadataPrefixEQ.
-func MetadataPrefix(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldEQ(FieldMetadataPrefix, v))
+// IDEqualFold applies the EqualFold predicate on the ID field.
+func IDEqualFold(id string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldEqualFold(FieldID, id))
+}
+
+// IDContainsFold applies the ContainsFold predicate on the ID field.
+func IDContainsFold(id string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldContainsFold(FieldID, id))
 }
 
 // Schema applies equality check predicate on the "schema" field. It's identical to SchemaEQ.
@@ -63,74 +68,9 @@ func Schema(v string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldEQ(FieldSchema, v))
 }
 
-// MetadataNamespace applies equality check predicate on the "metadata_namespace" field. It's identical to MetadataNamespaceEQ.
-func MetadataNamespace(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldEQ(FieldMetadataNamespace, v))
-}
-
-// MetadataPrefixEQ applies the EQ predicate on the "metadata_prefix" field.
-func MetadataPrefixEQ(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldEQ(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixNEQ applies the NEQ predicate on the "metadata_prefix" field.
-func MetadataPrefixNEQ(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldNEQ(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixIn applies the In predicate on the "metadata_prefix" field.
-func MetadataPrefixIn(vs ...string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldIn(FieldMetadataPrefix, vs...))
-}
-
-// MetadataPrefixNotIn applies the NotIn predicate on the "metadata_prefix" field.
-func MetadataPrefixNotIn(vs ...string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldNotIn(FieldMetadataPrefix, vs...))
-}
-
-// MetadataPrefixGT applies the GT predicate on the "metadata_prefix" field.
-func MetadataPrefixGT(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldGT(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixGTE applies the GTE predicate on the "metadata_prefix" field.
-func MetadataPrefixGTE(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldGTE(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixLT applies the LT predicate on the "metadata_prefix" field.
-func MetadataPrefixLT(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldLT(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixLTE applies the LTE predicate on the "metadata_prefix" field.
-func MetadataPrefixLTE(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldLTE(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixContains applies the Contains predicate on the "metadata_prefix" field.
-func MetadataPrefixContains(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldContains(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixHasPrefix applies the HasPrefix predicate on the "metadata_prefix" field.
-func MetadataPrefixHasPrefix(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldHasPrefix(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixHasSuffix applies the HasSuffix predicate on the "metadata_prefix" field.
-func MetadataPrefixHasSuffix(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldHasSuffix(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixEqualFold applies the EqualFold predicate on the "metadata_prefix" field.
-func MetadataPrefixEqualFold(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldEqualFold(FieldMetadataPrefix, v))
-}
-
-// MetadataPrefixContainsFold applies the ContainsFold predicate on the "metadata_prefix" field.
-func MetadataPrefixContainsFold(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldContainsFold(FieldMetadataPrefix, v))
+// Namespace applies equality check predicate on the "namespace" field. It's identical to NamespaceEQ.
+func Namespace(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldEQ(FieldNamespace, v))
 }
 
 // SchemaEQ applies the EQ predicate on the "schema" field.
@@ -198,86 +138,86 @@ func SchemaContainsFold(v string) predicate.MetadataFormat {
 	return predicate.MetadataFormat(sql.FieldContainsFold(FieldSchema, v))
 }
 
-// MetadataNamespaceEQ applies the EQ predicate on the "metadata_namespace" field.
-func MetadataNamespaceEQ(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldEQ(FieldMetadataNamespace, v))
+// NamespaceEQ applies the EQ predicate on the "namespace" field.
+func NamespaceEQ(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldEQ(FieldNamespace, v))
 }
 
-// MetadataNamespaceNEQ applies the NEQ predicate on the "metadata_namespace" field.
-func MetadataNamespaceNEQ(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldNEQ(FieldMetadataNamespace, v))
+// NamespaceNEQ applies the NEQ predicate on the "namespace" field.
+func NamespaceNEQ(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldNEQ(FieldNamespace, v))
 }
 
-// MetadataNamespaceIn applies the In predicate on the "metadata_namespace" field.
-func MetadataNamespaceIn(vs ...string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldIn(FieldMetadataNamespace, vs...))
+// NamespaceIn applies the In predicate on the "namespace" field.
+func NamespaceIn(vs ...string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldIn(FieldNamespace, vs...))
 }
 
-// MetadataNamespaceNotIn applies the NotIn predicate on the "metadata_namespace" field.
-func MetadataNamespaceNotIn(vs ...string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldNotIn(FieldMetadataNamespace, vs...))
+// NamespaceNotIn applies the NotIn predicate on the "namespace" field.
+func NamespaceNotIn(vs ...string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldNotIn(FieldNamespace, vs...))
 }
 
-// MetadataNamespaceGT applies the GT predicate on the "metadata_namespace" field.
-func MetadataNamespaceGT(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldGT(FieldMetadataNamespace, v))
+// NamespaceGT applies the GT predicate on the "namespace" field.
+func NamespaceGT(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldGT(FieldNamespace, v))
 }
 
-// MetadataNamespaceGTE applies the GTE predicate on the "metadata_namespace" field.
-func MetadataNamespaceGTE(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldGTE(FieldMetadataNamespace, v))
+// NamespaceGTE applies the GTE predicate on the "namespace" field.
+func NamespaceGTE(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldGTE(FieldNamespace, v))
 }
 
-// MetadataNamespaceLT applies the LT predicate on the "metadata_namespace" field.
-func MetadataNamespaceLT(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldLT(FieldMetadataNamespace, v))
+// NamespaceLT applies the LT predicate on the "namespace" field.
+func NamespaceLT(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldLT(FieldNamespace, v))
 }
 
-// MetadataNamespaceLTE applies the LTE predicate on the "metadata_namespace" field.
-func MetadataNamespaceLTE(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldLTE(FieldMetadataNamespace, v))
+// NamespaceLTE applies the LTE predicate on the "namespace" field.
+func NamespaceLTE(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldLTE(FieldNamespace, v))
 }
 
-// MetadataNamespaceContains applies the Contains predicate on the "metadata_namespace" field.
-func MetadataNamespaceContains(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldContains(FieldMetadataNamespace, v))
+// NamespaceContains applies the Contains predicate on the "namespace" field.
+func NamespaceContains(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldContains(FieldNamespace, v))
 }
 
-// MetadataNamespaceHasPrefix applies the HasPrefix predicate on the "metadata_namespace" field.
-func MetadataNamespaceHasPrefix(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldHasPrefix(FieldMetadataNamespace, v))
+// NamespaceHasPrefix applies the HasPrefix predicate on the "namespace" field.
+func NamespaceHasPrefix(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldHasPrefix(FieldNamespace, v))
 }
 
-// MetadataNamespaceHasSuffix applies the HasSuffix predicate on the "metadata_namespace" field.
-func MetadataNamespaceHasSuffix(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldHasSuffix(FieldMetadataNamespace, v))
+// NamespaceHasSuffix applies the HasSuffix predicate on the "namespace" field.
+func NamespaceHasSuffix(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldHasSuffix(FieldNamespace, v))
 }
 
-// MetadataNamespaceEqualFold applies the EqualFold predicate on the "metadata_namespace" field.
-func MetadataNamespaceEqualFold(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldEqualFold(FieldMetadataNamespace, v))
+// NamespaceEqualFold applies the EqualFold predicate on the "namespace" field.
+func NamespaceEqualFold(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldEqualFold(FieldNamespace, v))
 }
 
-// MetadataNamespaceContainsFold applies the ContainsFold predicate on the "metadata_namespace" field.
-func MetadataNamespaceContainsFold(v string) predicate.MetadataFormat {
-	return predicate.MetadataFormat(sql.FieldContainsFold(FieldMetadataNamespace, v))
+// NamespaceContainsFold applies the ContainsFold predicate on the "namespace" field.
+func NamespaceContainsFold(v string) predicate.MetadataFormat {
+	return predicate.MetadataFormat(sql.FieldContainsFold(FieldNamespace, v))
 }
 
-// HasMetadata applies the HasEdge predicate on the "metadata" edge.
-func HasMetadata() predicate.MetadataFormat {
+// HasRecords applies the HasEdge predicate on the "records" edge.
+func HasRecords() predicate.MetadataFormat {
 	return predicate.MetadataFormat(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, MetadataTable, MetadataColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, RecordsTable, RecordsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasMetadataWith applies the HasEdge predicate on the "metadata" edge with a given conditions (other predicates).
-func HasMetadataWith(preds ...predicate.Metadata) predicate.MetadataFormat {
+// HasRecordsWith applies the HasEdge predicate on the "records" edge with a given conditions (other predicates).
+func HasRecordsWith(preds ...predicate.Record) predicate.MetadataFormat {
 	return predicate.MetadataFormat(func(s *sql.Selector) {
-		step := newMetadataStep()
+		step := newRecordsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -12,16 +12,15 @@ type Set struct {
 
 func (Set) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("id"),
-		field.String("set_spec").Unique(),
-		field.String("set_name"),
-		field.String("set_description").Optional(),
+		field.String("id"),
+		field.String("name"),
+		field.String("description").Optional(),
 	}
 }
 
 func (Set) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("records", Record.Type).
+		edge.From("items", Item.Type).
 			Ref("sets"),
 	}
 }

@@ -74,6 +74,113 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 	return u
 }
 
+// AddItem invokes addItem operation.
+//
+// Add item.
+//
+// POST /add-item
+func (c *Client) AddItem(ctx context.Context, request *AddItemRequest) error {
+	res, err := c.sendAddItem(ctx, request)
+	_ = res
+	return err
+}
+
+func (c *Client) sendAddItem(ctx context.Context, request *AddItemRequest) (res *AddItemOK, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("addItem"),
+	}
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(float64(elapsedDuration)/float64(time.Millisecond)), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, "AddItem",
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/add-item"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeAddItemRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKey"
+			switch err := c.securityApiKey(ctx, "AddItem", r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKey\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeAddItemResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // AddMetadataFormat invokes addMetadataFormat operation.
 //
 // Add a metadata format.
@@ -161,7 +268,7 @@ func (c *Client) sendAddMetadataFormat(ctx context.Context, request *AddMetadata
 			}
 			return false
 		}(); !ok {
-			return res, errors.New("no security requirement satisfied")
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
 		}
 	}
 
@@ -181,20 +288,20 @@ func (c *Client) sendAddMetadataFormat(ctx context.Context, request *AddMetadata
 	return result, nil
 }
 
-// AddRecordMetadata invokes addRecordMetadata operation.
+// AddRecord invokes addRecord operation.
 //
-// Add record metadata.
+// Add record.
 //
-// POST /add-record-metadata
-func (c *Client) AddRecordMetadata(ctx context.Context, request *AddRecordMetadataRequest) error {
-	res, err := c.sendAddRecordMetadata(ctx, request)
+// POST /add-record
+func (c *Client) AddRecord(ctx context.Context, request *AddRecordRequest) error {
+	res, err := c.sendAddRecord(ctx, request)
 	_ = res
 	return err
 }
 
-func (c *Client) sendAddRecordMetadata(ctx context.Context, request *AddRecordMetadataRequest) (res *AddRecordMetadataOK, err error) {
+func (c *Client) sendAddRecord(ctx context.Context, request *AddRecordRequest) (res *AddRecordOK, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("addRecordMetadata"),
+		otelogen.OperationID("addRecord"),
 	}
 
 	// Run stopwatch.
@@ -209,7 +316,7 @@ func (c *Client) sendAddRecordMetadata(ctx context.Context, request *AddRecordMe
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, "AddRecordMetadata",
+	ctx, span := c.cfg.Tracer.Start(ctx, "AddRecord",
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -227,7 +334,7 @@ func (c *Client) sendAddRecordMetadata(ctx context.Context, request *AddRecordMe
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/add-record-metadata"
+	pathParts[0] = "/add-record"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -235,7 +342,7 @@ func (c *Client) sendAddRecordMetadata(ctx context.Context, request *AddRecordMe
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
-	if err := encodeAddRecordMetadataRequest(request, r); err != nil {
+	if err := encodeAddRecordRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
 	}
 
@@ -244,7 +351,7 @@ func (c *Client) sendAddRecordMetadata(ctx context.Context, request *AddRecordMe
 		var satisfied bitset
 		{
 			stage = "Security:ApiKey"
-			switch err := c.securityApiKey(ctx, "AddRecordMetadata", r); {
+			switch err := c.securityApiKey(ctx, "AddRecord", r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -268,7 +375,7 @@ func (c *Client) sendAddRecordMetadata(ctx context.Context, request *AddRecordMe
 			}
 			return false
 		}(); !ok {
-			return res, errors.New("no security requirement satisfied")
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
 		}
 	}
 
@@ -280,114 +387,7 @@ func (c *Client) sendAddRecordMetadata(ctx context.Context, request *AddRecordMe
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeAddRecordMetadataResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// AddRecordSets invokes addRecordSets operation.
-//
-// Add record sets.
-//
-// POST /add-record-sets
-func (c *Client) AddRecordSets(ctx context.Context, request *AddRecordSetsRequest) error {
-	res, err := c.sendAddRecordSets(ctx, request)
-	_ = res
-	return err
-}
-
-func (c *Client) sendAddRecordSets(ctx context.Context, request *AddRecordSetsRequest) (res *AddRecordSetsOK, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("addRecordSets"),
-	}
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(float64(elapsedDuration)/float64(time.Millisecond)), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, "AddRecordSets",
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/add-record-sets"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeAddRecordSetsRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:ApiKey"
-			switch err := c.securityApiKey(ctx, "AddRecordSets", r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"ApiKey\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, errors.New("no security requirement satisfied")
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeAddRecordSetsResponse(resp)
+	result, err := decodeAddRecordResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -482,7 +482,7 @@ func (c *Client) sendAddSet(ctx context.Context, request *AddSetRequest) (res *A
 			}
 			return false
 		}(); !ok {
-			return res, errors.New("no security requirement satisfied")
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
 		}
 	}
 
@@ -589,7 +589,7 @@ func (c *Client) sendDeleteRecord(ctx context.Context, request *DeleteRecordRequ
 			}
 			return false
 		}(); !ok {
-			return res, errors.New("no security requirement satisfied")
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
 		}
 	}
 

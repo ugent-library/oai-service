@@ -10,8 +10,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ugent-library/oai-service/ent/item"
 	"github.com/ugent-library/oai-service/ent/predicate"
-	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/set"
 )
 
@@ -28,51 +28,45 @@ func (su *SetUpdate) Where(ps ...predicate.Set) *SetUpdate {
 	return su
 }
 
-// SetSetSpec sets the "set_spec" field.
-func (su *SetUpdate) SetSetSpec(s string) *SetUpdate {
-	su.mutation.SetSetSpec(s)
+// SetName sets the "name" field.
+func (su *SetUpdate) SetName(s string) *SetUpdate {
+	su.mutation.SetName(s)
 	return su
 }
 
-// SetSetName sets the "set_name" field.
-func (su *SetUpdate) SetSetName(s string) *SetUpdate {
-	su.mutation.SetSetName(s)
+// SetDescription sets the "description" field.
+func (su *SetUpdate) SetDescription(s string) *SetUpdate {
+	su.mutation.SetDescription(s)
 	return su
 }
 
-// SetSetDescription sets the "set_description" field.
-func (su *SetUpdate) SetSetDescription(s string) *SetUpdate {
-	su.mutation.SetSetDescription(s)
-	return su
-}
-
-// SetNillableSetDescription sets the "set_description" field if the given value is not nil.
-func (su *SetUpdate) SetNillableSetDescription(s *string) *SetUpdate {
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (su *SetUpdate) SetNillableDescription(s *string) *SetUpdate {
 	if s != nil {
-		su.SetSetDescription(*s)
+		su.SetDescription(*s)
 	}
 	return su
 }
 
-// ClearSetDescription clears the value of the "set_description" field.
-func (su *SetUpdate) ClearSetDescription() *SetUpdate {
-	su.mutation.ClearSetDescription()
+// ClearDescription clears the value of the "description" field.
+func (su *SetUpdate) ClearDescription() *SetUpdate {
+	su.mutation.ClearDescription()
 	return su
 }
 
-// AddRecordIDs adds the "records" edge to the Record entity by IDs.
-func (su *SetUpdate) AddRecordIDs(ids ...int64) *SetUpdate {
-	su.mutation.AddRecordIDs(ids...)
+// AddItemIDs adds the "items" edge to the Item entity by IDs.
+func (su *SetUpdate) AddItemIDs(ids ...string) *SetUpdate {
+	su.mutation.AddItemIDs(ids...)
 	return su
 }
 
-// AddRecords adds the "records" edges to the Record entity.
-func (su *SetUpdate) AddRecords(r ...*Record) *SetUpdate {
-	ids := make([]int64, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+// AddItems adds the "items" edges to the Item entity.
+func (su *SetUpdate) AddItems(i ...*Item) *SetUpdate {
+	ids := make([]string, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
 	}
-	return su.AddRecordIDs(ids...)
+	return su.AddItemIDs(ids...)
 }
 
 // Mutation returns the SetMutation object of the builder.
@@ -80,25 +74,25 @@ func (su *SetUpdate) Mutation() *SetMutation {
 	return su.mutation
 }
 
-// ClearRecords clears all "records" edges to the Record entity.
-func (su *SetUpdate) ClearRecords() *SetUpdate {
-	su.mutation.ClearRecords()
+// ClearItems clears all "items" edges to the Item entity.
+func (su *SetUpdate) ClearItems() *SetUpdate {
+	su.mutation.ClearItems()
 	return su
 }
 
-// RemoveRecordIDs removes the "records" edge to Record entities by IDs.
-func (su *SetUpdate) RemoveRecordIDs(ids ...int64) *SetUpdate {
-	su.mutation.RemoveRecordIDs(ids...)
+// RemoveItemIDs removes the "items" edge to Item entities by IDs.
+func (su *SetUpdate) RemoveItemIDs(ids ...string) *SetUpdate {
+	su.mutation.RemoveItemIDs(ids...)
 	return su
 }
 
-// RemoveRecords removes "records" edges to Record entities.
-func (su *SetUpdate) RemoveRecords(r ...*Record) *SetUpdate {
-	ids := make([]int64, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+// RemoveItems removes "items" edges to Item entities.
+func (su *SetUpdate) RemoveItems(i ...*Item) *SetUpdate {
+	ids := make([]string, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
 	}
-	return su.RemoveRecordIDs(ids...)
+	return su.RemoveItemIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -129,7 +123,7 @@ func (su *SetUpdate) ExecX(ctx context.Context) {
 }
 
 func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(set.Table, set.Columns, sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64))
+	_spec := sqlgraph.NewUpdateSpec(set.Table, set.Columns, sqlgraph.NewFieldSpec(set.FieldID, field.TypeString))
 	if ps := su.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -137,40 +131,37 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := su.mutation.SetSpec(); ok {
-		_spec.SetField(set.FieldSetSpec, field.TypeString, value)
+	if value, ok := su.mutation.Name(); ok {
+		_spec.SetField(set.FieldName, field.TypeString, value)
 	}
-	if value, ok := su.mutation.SetName(); ok {
-		_spec.SetField(set.FieldSetName, field.TypeString, value)
+	if value, ok := su.mutation.Description(); ok {
+		_spec.SetField(set.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := su.mutation.SetDescription(); ok {
-		_spec.SetField(set.FieldSetDescription, field.TypeString, value)
+	if su.mutation.DescriptionCleared() {
+		_spec.ClearField(set.FieldDescription, field.TypeString)
 	}
-	if su.mutation.SetDescriptionCleared() {
-		_spec.ClearField(set.FieldSetDescription, field.TypeString)
-	}
-	if su.mutation.RecordsCleared() {
+	if su.mutation.ItemsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   set.RecordsTable,
-			Columns: set.RecordsPrimaryKey,
+			Table:   set.ItemsTable,
+			Columns: set.ItemsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.mutation.RemovedRecordsIDs(); len(nodes) > 0 && !su.mutation.RecordsCleared() {
+	if nodes := su.mutation.RemovedItemsIDs(); len(nodes) > 0 && !su.mutation.ItemsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   set.RecordsTable,
-			Columns: set.RecordsPrimaryKey,
+			Table:   set.ItemsTable,
+			Columns: set.ItemsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -178,15 +169,15 @@ func (su *SetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.mutation.RecordsIDs(); len(nodes) > 0 {
+	if nodes := su.mutation.ItemsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   set.RecordsTable,
-			Columns: set.RecordsPrimaryKey,
+			Table:   set.ItemsTable,
+			Columns: set.ItemsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -214,51 +205,45 @@ type SetUpdateOne struct {
 	mutation *SetMutation
 }
 
-// SetSetSpec sets the "set_spec" field.
-func (suo *SetUpdateOne) SetSetSpec(s string) *SetUpdateOne {
-	suo.mutation.SetSetSpec(s)
+// SetName sets the "name" field.
+func (suo *SetUpdateOne) SetName(s string) *SetUpdateOne {
+	suo.mutation.SetName(s)
 	return suo
 }
 
-// SetSetName sets the "set_name" field.
-func (suo *SetUpdateOne) SetSetName(s string) *SetUpdateOne {
-	suo.mutation.SetSetName(s)
+// SetDescription sets the "description" field.
+func (suo *SetUpdateOne) SetDescription(s string) *SetUpdateOne {
+	suo.mutation.SetDescription(s)
 	return suo
 }
 
-// SetSetDescription sets the "set_description" field.
-func (suo *SetUpdateOne) SetSetDescription(s string) *SetUpdateOne {
-	suo.mutation.SetSetDescription(s)
-	return suo
-}
-
-// SetNillableSetDescription sets the "set_description" field if the given value is not nil.
-func (suo *SetUpdateOne) SetNillableSetDescription(s *string) *SetUpdateOne {
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (suo *SetUpdateOne) SetNillableDescription(s *string) *SetUpdateOne {
 	if s != nil {
-		suo.SetSetDescription(*s)
+		suo.SetDescription(*s)
 	}
 	return suo
 }
 
-// ClearSetDescription clears the value of the "set_description" field.
-func (suo *SetUpdateOne) ClearSetDescription() *SetUpdateOne {
-	suo.mutation.ClearSetDescription()
+// ClearDescription clears the value of the "description" field.
+func (suo *SetUpdateOne) ClearDescription() *SetUpdateOne {
+	suo.mutation.ClearDescription()
 	return suo
 }
 
-// AddRecordIDs adds the "records" edge to the Record entity by IDs.
-func (suo *SetUpdateOne) AddRecordIDs(ids ...int64) *SetUpdateOne {
-	suo.mutation.AddRecordIDs(ids...)
+// AddItemIDs adds the "items" edge to the Item entity by IDs.
+func (suo *SetUpdateOne) AddItemIDs(ids ...string) *SetUpdateOne {
+	suo.mutation.AddItemIDs(ids...)
 	return suo
 }
 
-// AddRecords adds the "records" edges to the Record entity.
-func (suo *SetUpdateOne) AddRecords(r ...*Record) *SetUpdateOne {
-	ids := make([]int64, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+// AddItems adds the "items" edges to the Item entity.
+func (suo *SetUpdateOne) AddItems(i ...*Item) *SetUpdateOne {
+	ids := make([]string, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
 	}
-	return suo.AddRecordIDs(ids...)
+	return suo.AddItemIDs(ids...)
 }
 
 // Mutation returns the SetMutation object of the builder.
@@ -266,25 +251,25 @@ func (suo *SetUpdateOne) Mutation() *SetMutation {
 	return suo.mutation
 }
 
-// ClearRecords clears all "records" edges to the Record entity.
-func (suo *SetUpdateOne) ClearRecords() *SetUpdateOne {
-	suo.mutation.ClearRecords()
+// ClearItems clears all "items" edges to the Item entity.
+func (suo *SetUpdateOne) ClearItems() *SetUpdateOne {
+	suo.mutation.ClearItems()
 	return suo
 }
 
-// RemoveRecordIDs removes the "records" edge to Record entities by IDs.
-func (suo *SetUpdateOne) RemoveRecordIDs(ids ...int64) *SetUpdateOne {
-	suo.mutation.RemoveRecordIDs(ids...)
+// RemoveItemIDs removes the "items" edge to Item entities by IDs.
+func (suo *SetUpdateOne) RemoveItemIDs(ids ...string) *SetUpdateOne {
+	suo.mutation.RemoveItemIDs(ids...)
 	return suo
 }
 
-// RemoveRecords removes "records" edges to Record entities.
-func (suo *SetUpdateOne) RemoveRecords(r ...*Record) *SetUpdateOne {
-	ids := make([]int64, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+// RemoveItems removes "items" edges to Item entities.
+func (suo *SetUpdateOne) RemoveItems(i ...*Item) *SetUpdateOne {
+	ids := make([]string, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
 	}
-	return suo.RemoveRecordIDs(ids...)
+	return suo.RemoveItemIDs(ids...)
 }
 
 // Where appends a list predicates to the SetUpdate builder.
@@ -328,7 +313,7 @@ func (suo *SetUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
-	_spec := sqlgraph.NewUpdateSpec(set.Table, set.Columns, sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64))
+	_spec := sqlgraph.NewUpdateSpec(set.Table, set.Columns, sqlgraph.NewFieldSpec(set.FieldID, field.TypeString))
 	id, ok := suo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Set.id" for update`)}
@@ -353,40 +338,37 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 			}
 		}
 	}
-	if value, ok := suo.mutation.SetSpec(); ok {
-		_spec.SetField(set.FieldSetSpec, field.TypeString, value)
+	if value, ok := suo.mutation.Name(); ok {
+		_spec.SetField(set.FieldName, field.TypeString, value)
 	}
-	if value, ok := suo.mutation.SetName(); ok {
-		_spec.SetField(set.FieldSetName, field.TypeString, value)
+	if value, ok := suo.mutation.Description(); ok {
+		_spec.SetField(set.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := suo.mutation.SetDescription(); ok {
-		_spec.SetField(set.FieldSetDescription, field.TypeString, value)
+	if suo.mutation.DescriptionCleared() {
+		_spec.ClearField(set.FieldDescription, field.TypeString)
 	}
-	if suo.mutation.SetDescriptionCleared() {
-		_spec.ClearField(set.FieldSetDescription, field.TypeString)
-	}
-	if suo.mutation.RecordsCleared() {
+	if suo.mutation.ItemsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   set.RecordsTable,
-			Columns: set.RecordsPrimaryKey,
+			Table:   set.ItemsTable,
+			Columns: set.ItemsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.mutation.RemovedRecordsIDs(); len(nodes) > 0 && !suo.mutation.RecordsCleared() {
+	if nodes := suo.mutation.RemovedItemsIDs(); len(nodes) > 0 && !suo.mutation.ItemsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   set.RecordsTable,
-			Columns: set.RecordsPrimaryKey,
+			Table:   set.ItemsTable,
+			Columns: set.ItemsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -394,15 +376,15 @@ func (suo *SetUpdateOne) sqlSave(ctx context.Context) (_node *Set, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.mutation.RecordsIDs(); len(nodes) > 0 {
+	if nodes := suo.mutation.ItemsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   set.RecordsTable,
-			Columns: set.RecordsPrimaryKey,
+			Table:   set.ItemsTable,
+			Columns: set.ItemsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(record.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(item.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

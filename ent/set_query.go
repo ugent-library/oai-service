@@ -11,19 +11,19 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ugent-library/oai-service/ent/item"
 	"github.com/ugent-library/oai-service/ent/predicate"
-	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/set"
 )
 
 // SetQuery is the builder for querying Set entities.
 type SetQuery struct {
 	config
-	ctx         *QueryContext
-	order       []set.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.Set
-	withRecords *RecordQuery
+	ctx        *QueryContext
+	order      []set.OrderOption
+	inters     []Interceptor
+	predicates []predicate.Set
+	withItems  *ItemQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -60,9 +60,9 @@ func (sq *SetQuery) Order(o ...set.OrderOption) *SetQuery {
 	return sq
 }
 
-// QueryRecords chains the current query on the "records" edge.
-func (sq *SetQuery) QueryRecords() *RecordQuery {
-	query := (&RecordClient{config: sq.config}).Query()
+// QueryItems chains the current query on the "items" edge.
+func (sq *SetQuery) QueryItems() *ItemQuery {
+	query := (&ItemClient{config: sq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := sq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -73,8 +73,8 @@ func (sq *SetQuery) QueryRecords() *RecordQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(set.Table, set.FieldID, selector),
-			sqlgraph.To(record.Table, record.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, set.RecordsTable, set.RecordsPrimaryKey...),
+			sqlgraph.To(item.Table, item.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, set.ItemsTable, set.ItemsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -106,8 +106,8 @@ func (sq *SetQuery) FirstX(ctx context.Context) *Set {
 
 // FirstID returns the first Set ID from the query.
 // Returns a *NotFoundError when no Set ID was found.
-func (sq *SetQuery) FirstID(ctx context.Context) (id int64, err error) {
-	var ids []int64
+func (sq *SetQuery) FirstID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = sq.Limit(1).IDs(setContextOp(ctx, sq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -119,7 +119,7 @@ func (sq *SetQuery) FirstID(ctx context.Context) (id int64, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (sq *SetQuery) FirstIDX(ctx context.Context) int64 {
+func (sq *SetQuery) FirstIDX(ctx context.Context) string {
 	id, err := sq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -157,8 +157,8 @@ func (sq *SetQuery) OnlyX(ctx context.Context) *Set {
 // OnlyID is like Only, but returns the only Set ID in the query.
 // Returns a *NotSingularError when more than one Set ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (sq *SetQuery) OnlyID(ctx context.Context) (id int64, err error) {
-	var ids []int64
+func (sq *SetQuery) OnlyID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = sq.Limit(2).IDs(setContextOp(ctx, sq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -174,7 +174,7 @@ func (sq *SetQuery) OnlyID(ctx context.Context) (id int64, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (sq *SetQuery) OnlyIDX(ctx context.Context) int64 {
+func (sq *SetQuery) OnlyIDX(ctx context.Context) string {
 	id, err := sq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -202,7 +202,7 @@ func (sq *SetQuery) AllX(ctx context.Context) []*Set {
 }
 
 // IDs executes the query and returns a list of Set IDs.
-func (sq *SetQuery) IDs(ctx context.Context) (ids []int64, err error) {
+func (sq *SetQuery) IDs(ctx context.Context) (ids []string, err error) {
 	if sq.ctx.Unique == nil && sq.path != nil {
 		sq.Unique(true)
 	}
@@ -214,7 +214,7 @@ func (sq *SetQuery) IDs(ctx context.Context) (ids []int64, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (sq *SetQuery) IDsX(ctx context.Context) []int64 {
+func (sq *SetQuery) IDsX(ctx context.Context) []string {
 	ids, err := sq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -269,26 +269,26 @@ func (sq *SetQuery) Clone() *SetQuery {
 		return nil
 	}
 	return &SetQuery{
-		config:      sq.config,
-		ctx:         sq.ctx.Clone(),
-		order:       append([]set.OrderOption{}, sq.order...),
-		inters:      append([]Interceptor{}, sq.inters...),
-		predicates:  append([]predicate.Set{}, sq.predicates...),
-		withRecords: sq.withRecords.Clone(),
+		config:     sq.config,
+		ctx:        sq.ctx.Clone(),
+		order:      append([]set.OrderOption{}, sq.order...),
+		inters:     append([]Interceptor{}, sq.inters...),
+		predicates: append([]predicate.Set{}, sq.predicates...),
+		withItems:  sq.withItems.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
 	}
 }
 
-// WithRecords tells the query-builder to eager-load the nodes that are connected to
-// the "records" edge. The optional arguments are used to configure the query builder of the edge.
-func (sq *SetQuery) WithRecords(opts ...func(*RecordQuery)) *SetQuery {
-	query := (&RecordClient{config: sq.config}).Query()
+// WithItems tells the query-builder to eager-load the nodes that are connected to
+// the "items" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *SetQuery) WithItems(opts ...func(*ItemQuery)) *SetQuery {
+	query := (&ItemClient{config: sq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	sq.withRecords = query
+	sq.withItems = query
 	return sq
 }
 
@@ -298,12 +298,12 @@ func (sq *SetQuery) WithRecords(opts ...func(*RecordQuery)) *SetQuery {
 // Example:
 //
 //	var v []struct {
-//		SetSpec string `json:"set_spec,omitempty"`
+//		Name string `json:"name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Set.Query().
-//		GroupBy(set.FieldSetSpec).
+//		GroupBy(set.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (sq *SetQuery) GroupBy(field string, fields ...string) *SetGroupBy {
@@ -321,11 +321,11 @@ func (sq *SetQuery) GroupBy(field string, fields ...string) *SetGroupBy {
 // Example:
 //
 //	var v []struct {
-//		SetSpec string `json:"set_spec,omitempty"`
+//		Name string `json:"name,omitempty"`
 //	}
 //
 //	client.Set.Query().
-//		Select(set.FieldSetSpec).
+//		Select(set.FieldName).
 //		Scan(ctx, &v)
 func (sq *SetQuery) Select(fields ...string) *SetSelect {
 	sq.ctx.Fields = append(sq.ctx.Fields, fields...)
@@ -371,7 +371,7 @@ func (sq *SetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Set, err
 		nodes       = []*Set{}
 		_spec       = sq.querySpec()
 		loadedTypes = [1]bool{
-			sq.withRecords != nil,
+			sq.withItems != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -392,20 +392,20 @@ func (sq *SetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Set, err
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := sq.withRecords; query != nil {
-		if err := sq.loadRecords(ctx, query, nodes,
-			func(n *Set) { n.Edges.Records = []*Record{} },
-			func(n *Set, e *Record) { n.Edges.Records = append(n.Edges.Records, e) }); err != nil {
+	if query := sq.withItems; query != nil {
+		if err := sq.loadItems(ctx, query, nodes,
+			func(n *Set) { n.Edges.Items = []*Item{} },
+			func(n *Set, e *Item) { n.Edges.Items = append(n.Edges.Items, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (sq *SetQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes []*Set, init func(*Set), assign func(*Set, *Record)) error {
+func (sq *SetQuery) loadItems(ctx context.Context, query *ItemQuery, nodes []*Set, init func(*Set), assign func(*Set, *Item)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int64]*Set)
-	nids := make(map[int64]map[*Set]struct{})
+	byID := make(map[string]*Set)
+	nids := make(map[string]map[*Set]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -414,11 +414,11 @@ func (sq *SetQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes [
 		}
 	}
 	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(set.RecordsTable)
-		s.Join(joinT).On(s.C(record.FieldID), joinT.C(set.RecordsPrimaryKey[0]))
-		s.Where(sql.InValues(joinT.C(set.RecordsPrimaryKey[1]), edgeIDs...))
+		joinT := sql.Table(set.ItemsTable)
+		s.Join(joinT).On(s.C(item.FieldID), joinT.C(set.ItemsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(set.ItemsPrimaryKey[1]), edgeIDs...))
 		columns := s.SelectedColumns()
-		s.Select(joinT.C(set.RecordsPrimaryKey[1]))
+		s.Select(joinT.C(set.ItemsPrimaryKey[1]))
 		s.AppendSelect(columns...)
 		s.SetDistinct(false)
 	})
@@ -434,11 +434,11 @@ func (sq *SetQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes [
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(sql.NullString)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := values[0].(*sql.NullInt64).Int64
-				inValue := values[1].(*sql.NullInt64).Int64
+				outValue := values[0].(*sql.NullString).String
+				inValue := values[1].(*sql.NullString).String
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Set]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -448,14 +448,14 @@ func (sq *SetQuery) loadRecords(ctx context.Context, query *RecordQuery, nodes [
 			}
 		})
 	})
-	neighbors, err := withInterceptors[[]*Record](ctx, query, qr, query.inters)
+	neighbors, err := withInterceptors[[]*Item](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
 		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected "records" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected "items" node returned %v`, n.ID)
 		}
 		for kn := range nodes {
 			assign(kn, n)
@@ -474,7 +474,7 @@ func (sq *SetQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (sq *SetQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(set.Table, set.Columns, sqlgraph.NewFieldSpec(set.FieldID, field.TypeInt64))
+	_spec := sqlgraph.NewQuerySpec(set.Table, set.Columns, sqlgraph.NewFieldSpec(set.FieldID, field.TypeString))
 	_spec.From = sq.sql
 	if unique := sq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

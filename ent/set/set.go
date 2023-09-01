@@ -12,35 +12,32 @@ const (
 	Label = "set"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldSetSpec holds the string denoting the set_spec field in the database.
-	FieldSetSpec = "set_spec"
-	// FieldSetName holds the string denoting the set_name field in the database.
-	FieldSetName = "set_name"
-	// FieldSetDescription holds the string denoting the set_description field in the database.
-	FieldSetDescription = "set_description"
-	// EdgeRecords holds the string denoting the records edge name in mutations.
-	EdgeRecords = "records"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
+	// EdgeItems holds the string denoting the items edge name in mutations.
+	EdgeItems = "items"
 	// Table holds the table name of the set in the database.
 	Table = "sets"
-	// RecordsTable is the table that holds the records relation/edge. The primary key declared below.
-	RecordsTable = "record_sets"
-	// RecordsInverseTable is the table name for the Record entity.
-	// It exists in this package in order to avoid circular dependency with the "record" package.
-	RecordsInverseTable = "records"
+	// ItemsTable is the table that holds the items relation/edge. The primary key declared below.
+	ItemsTable = "item_sets"
+	// ItemsInverseTable is the table name for the Item entity.
+	// It exists in this package in order to avoid circular dependency with the "item" package.
+	ItemsInverseTable = "items"
 )
 
 // Columns holds all SQL columns for set fields.
 var Columns = []string{
 	FieldID,
-	FieldSetSpec,
-	FieldSetName,
-	FieldSetDescription,
+	FieldName,
+	FieldDescription,
 }
 
 var (
-	// RecordsPrimaryKey and RecordsColumn2 are the table columns denoting the
-	// primary key for the records relation (M2M).
-	RecordsPrimaryKey = []string{"record_id", "set_id"}
+	// ItemsPrimaryKey and ItemsColumn2 are the table columns denoting the
+	// primary key for the items relation (M2M).
+	ItemsPrimaryKey = []string{"item_id", "set_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -61,38 +58,33 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// BySetSpec orders the results by the set_spec field.
-func BySetSpec(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSetSpec, opts...).ToFunc()
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
-// BySetName orders the results by the set_name field.
-func BySetName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSetName, opts...).ToFunc()
+// ByDescription orders the results by the description field.
+func ByDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDescription, opts...).ToFunc()
 }
 
-// BySetDescription orders the results by the set_description field.
-func BySetDescription(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSetDescription, opts...).ToFunc()
-}
-
-// ByRecordsCount orders the results by records count.
-func ByRecordsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByItemsCount orders the results by items count.
+func ByItemsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newRecordsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newItemsStep(), opts...)
 	}
 }
 
-// ByRecords orders the results by records terms.
-func ByRecords(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByItems orders the results by items terms.
+func ByItems(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newRecordsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newItemsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newRecordsStep() *sqlgraph.Step {
+func newItemsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(RecordsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, true, RecordsTable, RecordsPrimaryKey...),
+		sqlgraph.To(ItemsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, ItemsTable, ItemsPrimaryKey...),
 	)
 }

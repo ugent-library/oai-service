@@ -15,13 +15,11 @@ import (
 type Set struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int64 `json:"id,omitempty"`
-	// SetSpec holds the value of the "set_spec" field.
-	SetSpec string `json:"set_spec,omitempty"`
-	// SetName holds the value of the "set_name" field.
-	SetName string `json:"set_name,omitempty"`
-	// SetDescription holds the value of the "set_description" field.
-	SetDescription string `json:"set_description,omitempty"`
+	ID string `json:"id,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
+	// Description holds the value of the "description" field.
+	Description string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SetQuery when eager-loading is set.
 	Edges        SetEdges `json:"edges"`
@@ -30,20 +28,20 @@ type Set struct {
 
 // SetEdges holds the relations/edges for other nodes in the graph.
 type SetEdges struct {
-	// Records holds the value of the records edge.
-	Records []*Record `json:"records,omitempty"`
+	// Items holds the value of the items edge.
+	Items []*Item `json:"items,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// RecordsOrErr returns the Records value or an error if the edge
+// ItemsOrErr returns the Items value or an error if the edge
 // was not loaded in eager-loading.
-func (e SetEdges) RecordsOrErr() ([]*Record, error) {
+func (e SetEdges) ItemsOrErr() ([]*Item, error) {
 	if e.loadedTypes[0] {
-		return e.Records, nil
+		return e.Items, nil
 	}
-	return nil, &NotLoadedError{edge: "records"}
+	return nil, &NotLoadedError{edge: "items"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -51,9 +49,7 @@ func (*Set) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case set.FieldID:
-			values[i] = new(sql.NullInt64)
-		case set.FieldSetSpec, set.FieldSetName, set.FieldSetDescription:
+		case set.FieldID, set.FieldName, set.FieldDescription:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -71,28 +67,22 @@ func (s *Set) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case set.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
-			}
-			s.ID = int64(value.Int64)
-		case set.FieldSetSpec:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field set_spec", values[i])
+				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
-				s.SetSpec = value.String
+				s.ID = value.String
 			}
-		case set.FieldSetName:
+		case set.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field set_name", values[i])
+				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				s.SetName = value.String
+				s.Name = value.String
 			}
-		case set.FieldSetDescription:
+		case set.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field set_description", values[i])
+				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				s.SetDescription = value.String
+				s.Description = value.String
 			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
@@ -107,9 +97,9 @@ func (s *Set) Value(name string) (ent.Value, error) {
 	return s.selectValues.Get(name)
 }
 
-// QueryRecords queries the "records" edge of the Set entity.
-func (s *Set) QueryRecords() *RecordQuery {
-	return NewSetClient(s.config).QueryRecords(s)
+// QueryItems queries the "items" edge of the Set entity.
+func (s *Set) QueryItems() *ItemQuery {
+	return NewSetClient(s.config).QueryItems(s)
 }
 
 // Update returns a builder for updating this Set.
@@ -135,14 +125,11 @@ func (s *Set) String() string {
 	var builder strings.Builder
 	builder.WriteString("Set(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", s.ID))
-	builder.WriteString("set_spec=")
-	builder.WriteString(s.SetSpec)
+	builder.WriteString("name=")
+	builder.WriteString(s.Name)
 	builder.WriteString(", ")
-	builder.WriteString("set_name=")
-	builder.WriteString(s.SetName)
-	builder.WriteString(", ")
-	builder.WriteString("set_description=")
-	builder.WriteString(s.SetDescription)
+	builder.WriteString("description=")
+	builder.WriteString(s.Description)
 	builder.WriteByte(')')
 	return builder.String()
 }

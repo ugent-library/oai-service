@@ -3,6 +3,8 @@
 package record
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/ugent-library/oai-service/ent/predicate"
@@ -53,106 +55,286 @@ func IDLTE(id int64) predicate.Record {
 	return predicate.Record(sql.FieldLTE(FieldID, id))
 }
 
-// Identifier applies equality check predicate on the "identifier" field. It's identical to IdentifierEQ.
-func Identifier(v string) predicate.Record {
-	return predicate.Record(sql.FieldEQ(FieldIdentifier, v))
+// MetadataFormatID applies equality check predicate on the "metadata_format_id" field. It's identical to MetadataFormatIDEQ.
+func MetadataFormatID(v string) predicate.Record {
+	return predicate.Record(sql.FieldEQ(FieldMetadataFormatID, v))
 }
 
-// Deleted applies equality check predicate on the "deleted" field. It's identical to DeletedEQ.
-func Deleted(v bool) predicate.Record {
-	return predicate.Record(sql.FieldEQ(FieldDeleted, v))
+// ItemID applies equality check predicate on the "item_id" field. It's identical to ItemIDEQ.
+func ItemID(v string) predicate.Record {
+	return predicate.Record(sql.FieldEQ(FieldItemID, v))
 }
 
-// IdentifierEQ applies the EQ predicate on the "identifier" field.
-func IdentifierEQ(v string) predicate.Record {
-	return predicate.Record(sql.FieldEQ(FieldIdentifier, v))
+// Metadata applies equality check predicate on the "metadata" field. It's identical to MetadataEQ.
+func Metadata(v string) predicate.Record {
+	return predicate.Record(sql.FieldEQ(FieldMetadata, v))
 }
 
-// IdentifierNEQ applies the NEQ predicate on the "identifier" field.
-func IdentifierNEQ(v string) predicate.Record {
-	return predicate.Record(sql.FieldNEQ(FieldIdentifier, v))
+// Datestamp applies equality check predicate on the "datestamp" field. It's identical to DatestampEQ.
+func Datestamp(v time.Time) predicate.Record {
+	return predicate.Record(sql.FieldEQ(FieldDatestamp, v))
 }
 
-// IdentifierIn applies the In predicate on the "identifier" field.
-func IdentifierIn(vs ...string) predicate.Record {
-	return predicate.Record(sql.FieldIn(FieldIdentifier, vs...))
+// MetadataFormatIDEQ applies the EQ predicate on the "metadata_format_id" field.
+func MetadataFormatIDEQ(v string) predicate.Record {
+	return predicate.Record(sql.FieldEQ(FieldMetadataFormatID, v))
 }
 
-// IdentifierNotIn applies the NotIn predicate on the "identifier" field.
-func IdentifierNotIn(vs ...string) predicate.Record {
-	return predicate.Record(sql.FieldNotIn(FieldIdentifier, vs...))
+// MetadataFormatIDNEQ applies the NEQ predicate on the "metadata_format_id" field.
+func MetadataFormatIDNEQ(v string) predicate.Record {
+	return predicate.Record(sql.FieldNEQ(FieldMetadataFormatID, v))
 }
 
-// IdentifierGT applies the GT predicate on the "identifier" field.
-func IdentifierGT(v string) predicate.Record {
-	return predicate.Record(sql.FieldGT(FieldIdentifier, v))
+// MetadataFormatIDIn applies the In predicate on the "metadata_format_id" field.
+func MetadataFormatIDIn(vs ...string) predicate.Record {
+	return predicate.Record(sql.FieldIn(FieldMetadataFormatID, vs...))
 }
 
-// IdentifierGTE applies the GTE predicate on the "identifier" field.
-func IdentifierGTE(v string) predicate.Record {
-	return predicate.Record(sql.FieldGTE(FieldIdentifier, v))
+// MetadataFormatIDNotIn applies the NotIn predicate on the "metadata_format_id" field.
+func MetadataFormatIDNotIn(vs ...string) predicate.Record {
+	return predicate.Record(sql.FieldNotIn(FieldMetadataFormatID, vs...))
 }
 
-// IdentifierLT applies the LT predicate on the "identifier" field.
-func IdentifierLT(v string) predicate.Record {
-	return predicate.Record(sql.FieldLT(FieldIdentifier, v))
+// MetadataFormatIDGT applies the GT predicate on the "metadata_format_id" field.
+func MetadataFormatIDGT(v string) predicate.Record {
+	return predicate.Record(sql.FieldGT(FieldMetadataFormatID, v))
 }
 
-// IdentifierLTE applies the LTE predicate on the "identifier" field.
-func IdentifierLTE(v string) predicate.Record {
-	return predicate.Record(sql.FieldLTE(FieldIdentifier, v))
+// MetadataFormatIDGTE applies the GTE predicate on the "metadata_format_id" field.
+func MetadataFormatIDGTE(v string) predicate.Record {
+	return predicate.Record(sql.FieldGTE(FieldMetadataFormatID, v))
 }
 
-// IdentifierContains applies the Contains predicate on the "identifier" field.
-func IdentifierContains(v string) predicate.Record {
-	return predicate.Record(sql.FieldContains(FieldIdentifier, v))
+// MetadataFormatIDLT applies the LT predicate on the "metadata_format_id" field.
+func MetadataFormatIDLT(v string) predicate.Record {
+	return predicate.Record(sql.FieldLT(FieldMetadataFormatID, v))
 }
 
-// IdentifierHasPrefix applies the HasPrefix predicate on the "identifier" field.
-func IdentifierHasPrefix(v string) predicate.Record {
-	return predicate.Record(sql.FieldHasPrefix(FieldIdentifier, v))
+// MetadataFormatIDLTE applies the LTE predicate on the "metadata_format_id" field.
+func MetadataFormatIDLTE(v string) predicate.Record {
+	return predicate.Record(sql.FieldLTE(FieldMetadataFormatID, v))
 }
 
-// IdentifierHasSuffix applies the HasSuffix predicate on the "identifier" field.
-func IdentifierHasSuffix(v string) predicate.Record {
-	return predicate.Record(sql.FieldHasSuffix(FieldIdentifier, v))
+// MetadataFormatIDContains applies the Contains predicate on the "metadata_format_id" field.
+func MetadataFormatIDContains(v string) predicate.Record {
+	return predicate.Record(sql.FieldContains(FieldMetadataFormatID, v))
 }
 
-// IdentifierEqualFold applies the EqualFold predicate on the "identifier" field.
-func IdentifierEqualFold(v string) predicate.Record {
-	return predicate.Record(sql.FieldEqualFold(FieldIdentifier, v))
+// MetadataFormatIDHasPrefix applies the HasPrefix predicate on the "metadata_format_id" field.
+func MetadataFormatIDHasPrefix(v string) predicate.Record {
+	return predicate.Record(sql.FieldHasPrefix(FieldMetadataFormatID, v))
 }
 
-// IdentifierContainsFold applies the ContainsFold predicate on the "identifier" field.
-func IdentifierContainsFold(v string) predicate.Record {
-	return predicate.Record(sql.FieldContainsFold(FieldIdentifier, v))
+// MetadataFormatIDHasSuffix applies the HasSuffix predicate on the "metadata_format_id" field.
+func MetadataFormatIDHasSuffix(v string) predicate.Record {
+	return predicate.Record(sql.FieldHasSuffix(FieldMetadataFormatID, v))
 }
 
-// DeletedEQ applies the EQ predicate on the "deleted" field.
-func DeletedEQ(v bool) predicate.Record {
-	return predicate.Record(sql.FieldEQ(FieldDeleted, v))
+// MetadataFormatIDEqualFold applies the EqualFold predicate on the "metadata_format_id" field.
+func MetadataFormatIDEqualFold(v string) predicate.Record {
+	return predicate.Record(sql.FieldEqualFold(FieldMetadataFormatID, v))
 }
 
-// DeletedNEQ applies the NEQ predicate on the "deleted" field.
-func DeletedNEQ(v bool) predicate.Record {
-	return predicate.Record(sql.FieldNEQ(FieldDeleted, v))
+// MetadataFormatIDContainsFold applies the ContainsFold predicate on the "metadata_format_id" field.
+func MetadataFormatIDContainsFold(v string) predicate.Record {
+	return predicate.Record(sql.FieldContainsFold(FieldMetadataFormatID, v))
 }
 
-// HasMetadata applies the HasEdge predicate on the "metadata" edge.
-func HasMetadata() predicate.Record {
+// ItemIDEQ applies the EQ predicate on the "item_id" field.
+func ItemIDEQ(v string) predicate.Record {
+	return predicate.Record(sql.FieldEQ(FieldItemID, v))
+}
+
+// ItemIDNEQ applies the NEQ predicate on the "item_id" field.
+func ItemIDNEQ(v string) predicate.Record {
+	return predicate.Record(sql.FieldNEQ(FieldItemID, v))
+}
+
+// ItemIDIn applies the In predicate on the "item_id" field.
+func ItemIDIn(vs ...string) predicate.Record {
+	return predicate.Record(sql.FieldIn(FieldItemID, vs...))
+}
+
+// ItemIDNotIn applies the NotIn predicate on the "item_id" field.
+func ItemIDNotIn(vs ...string) predicate.Record {
+	return predicate.Record(sql.FieldNotIn(FieldItemID, vs...))
+}
+
+// ItemIDGT applies the GT predicate on the "item_id" field.
+func ItemIDGT(v string) predicate.Record {
+	return predicate.Record(sql.FieldGT(FieldItemID, v))
+}
+
+// ItemIDGTE applies the GTE predicate on the "item_id" field.
+func ItemIDGTE(v string) predicate.Record {
+	return predicate.Record(sql.FieldGTE(FieldItemID, v))
+}
+
+// ItemIDLT applies the LT predicate on the "item_id" field.
+func ItemIDLT(v string) predicate.Record {
+	return predicate.Record(sql.FieldLT(FieldItemID, v))
+}
+
+// ItemIDLTE applies the LTE predicate on the "item_id" field.
+func ItemIDLTE(v string) predicate.Record {
+	return predicate.Record(sql.FieldLTE(FieldItemID, v))
+}
+
+// ItemIDContains applies the Contains predicate on the "item_id" field.
+func ItemIDContains(v string) predicate.Record {
+	return predicate.Record(sql.FieldContains(FieldItemID, v))
+}
+
+// ItemIDHasPrefix applies the HasPrefix predicate on the "item_id" field.
+func ItemIDHasPrefix(v string) predicate.Record {
+	return predicate.Record(sql.FieldHasPrefix(FieldItemID, v))
+}
+
+// ItemIDHasSuffix applies the HasSuffix predicate on the "item_id" field.
+func ItemIDHasSuffix(v string) predicate.Record {
+	return predicate.Record(sql.FieldHasSuffix(FieldItemID, v))
+}
+
+// ItemIDEqualFold applies the EqualFold predicate on the "item_id" field.
+func ItemIDEqualFold(v string) predicate.Record {
+	return predicate.Record(sql.FieldEqualFold(FieldItemID, v))
+}
+
+// ItemIDContainsFold applies the ContainsFold predicate on the "item_id" field.
+func ItemIDContainsFold(v string) predicate.Record {
+	return predicate.Record(sql.FieldContainsFold(FieldItemID, v))
+}
+
+// MetadataEQ applies the EQ predicate on the "metadata" field.
+func MetadataEQ(v string) predicate.Record {
+	return predicate.Record(sql.FieldEQ(FieldMetadata, v))
+}
+
+// MetadataNEQ applies the NEQ predicate on the "metadata" field.
+func MetadataNEQ(v string) predicate.Record {
+	return predicate.Record(sql.FieldNEQ(FieldMetadata, v))
+}
+
+// MetadataIn applies the In predicate on the "metadata" field.
+func MetadataIn(vs ...string) predicate.Record {
+	return predicate.Record(sql.FieldIn(FieldMetadata, vs...))
+}
+
+// MetadataNotIn applies the NotIn predicate on the "metadata" field.
+func MetadataNotIn(vs ...string) predicate.Record {
+	return predicate.Record(sql.FieldNotIn(FieldMetadata, vs...))
+}
+
+// MetadataGT applies the GT predicate on the "metadata" field.
+func MetadataGT(v string) predicate.Record {
+	return predicate.Record(sql.FieldGT(FieldMetadata, v))
+}
+
+// MetadataGTE applies the GTE predicate on the "metadata" field.
+func MetadataGTE(v string) predicate.Record {
+	return predicate.Record(sql.FieldGTE(FieldMetadata, v))
+}
+
+// MetadataLT applies the LT predicate on the "metadata" field.
+func MetadataLT(v string) predicate.Record {
+	return predicate.Record(sql.FieldLT(FieldMetadata, v))
+}
+
+// MetadataLTE applies the LTE predicate on the "metadata" field.
+func MetadataLTE(v string) predicate.Record {
+	return predicate.Record(sql.FieldLTE(FieldMetadata, v))
+}
+
+// MetadataContains applies the Contains predicate on the "metadata" field.
+func MetadataContains(v string) predicate.Record {
+	return predicate.Record(sql.FieldContains(FieldMetadata, v))
+}
+
+// MetadataHasPrefix applies the HasPrefix predicate on the "metadata" field.
+func MetadataHasPrefix(v string) predicate.Record {
+	return predicate.Record(sql.FieldHasPrefix(FieldMetadata, v))
+}
+
+// MetadataHasSuffix applies the HasSuffix predicate on the "metadata" field.
+func MetadataHasSuffix(v string) predicate.Record {
+	return predicate.Record(sql.FieldHasSuffix(FieldMetadata, v))
+}
+
+// MetadataIsNil applies the IsNil predicate on the "metadata" field.
+func MetadataIsNil() predicate.Record {
+	return predicate.Record(sql.FieldIsNull(FieldMetadata))
+}
+
+// MetadataNotNil applies the NotNil predicate on the "metadata" field.
+func MetadataNotNil() predicate.Record {
+	return predicate.Record(sql.FieldNotNull(FieldMetadata))
+}
+
+// MetadataEqualFold applies the EqualFold predicate on the "metadata" field.
+func MetadataEqualFold(v string) predicate.Record {
+	return predicate.Record(sql.FieldEqualFold(FieldMetadata, v))
+}
+
+// MetadataContainsFold applies the ContainsFold predicate on the "metadata" field.
+func MetadataContainsFold(v string) predicate.Record {
+	return predicate.Record(sql.FieldContainsFold(FieldMetadata, v))
+}
+
+// DatestampEQ applies the EQ predicate on the "datestamp" field.
+func DatestampEQ(v time.Time) predicate.Record {
+	return predicate.Record(sql.FieldEQ(FieldDatestamp, v))
+}
+
+// DatestampNEQ applies the NEQ predicate on the "datestamp" field.
+func DatestampNEQ(v time.Time) predicate.Record {
+	return predicate.Record(sql.FieldNEQ(FieldDatestamp, v))
+}
+
+// DatestampIn applies the In predicate on the "datestamp" field.
+func DatestampIn(vs ...time.Time) predicate.Record {
+	return predicate.Record(sql.FieldIn(FieldDatestamp, vs...))
+}
+
+// DatestampNotIn applies the NotIn predicate on the "datestamp" field.
+func DatestampNotIn(vs ...time.Time) predicate.Record {
+	return predicate.Record(sql.FieldNotIn(FieldDatestamp, vs...))
+}
+
+// DatestampGT applies the GT predicate on the "datestamp" field.
+func DatestampGT(v time.Time) predicate.Record {
+	return predicate.Record(sql.FieldGT(FieldDatestamp, v))
+}
+
+// DatestampGTE applies the GTE predicate on the "datestamp" field.
+func DatestampGTE(v time.Time) predicate.Record {
+	return predicate.Record(sql.FieldGTE(FieldDatestamp, v))
+}
+
+// DatestampLT applies the LT predicate on the "datestamp" field.
+func DatestampLT(v time.Time) predicate.Record {
+	return predicate.Record(sql.FieldLT(FieldDatestamp, v))
+}
+
+// DatestampLTE applies the LTE predicate on the "datestamp" field.
+func DatestampLTE(v time.Time) predicate.Record {
+	return predicate.Record(sql.FieldLTE(FieldDatestamp, v))
+}
+
+// HasMetadataFormat applies the HasEdge predicate on the "metadata_format" edge.
+func HasMetadataFormat() predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, MetadataTable, MetadataColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, MetadataFormatTable, MetadataFormatColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasMetadataWith applies the HasEdge predicate on the "metadata" edge with a given conditions (other predicates).
-func HasMetadataWith(preds ...predicate.Metadata) predicate.Record {
+// HasMetadataFormatWith applies the HasEdge predicate on the "metadata_format" edge with a given conditions (other predicates).
+func HasMetadataFormatWith(preds ...predicate.MetadataFormat) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
-		step := newMetadataStep()
+		step := newMetadataFormatStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -161,21 +343,21 @@ func HasMetadataWith(preds ...predicate.Metadata) predicate.Record {
 	})
 }
 
-// HasSets applies the HasEdge predicate on the "sets" edge.
-func HasSets() predicate.Record {
+// HasItem applies the HasEdge predicate on the "item" edge.
+func HasItem() predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, SetsTable, SetsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, true, ItemTable, ItemColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasSetsWith applies the HasEdge predicate on the "sets" edge with a given conditions (other predicates).
-func HasSetsWith(preds ...predicate.Set) predicate.Record {
+// HasItemWith applies the HasEdge predicate on the "item" edge with a given conditions (other predicates).
+func HasItemWith(preds ...predicate.Item) predicate.Record {
 	return predicate.Record(func(s *sql.Selector) {
-		step := newSetsStep()
+		step := newItemStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

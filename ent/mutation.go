@@ -11,7 +11,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/ugent-library/oai-service/ent/metadata"
+	"github.com/ugent-library/oai-service/ent/item"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
 	"github.com/ugent-library/oai-service/ent/predicate"
 	"github.com/ugent-library/oai-service/ent/record"
@@ -27,41 +27,41 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeMetadata       = "Metadata"
+	TypeItem           = "Item"
 	TypeMetadataFormat = "MetadataFormat"
 	TypeRecord         = "Record"
 	TypeSet            = "Set"
 )
 
-// MetadataMutation represents an operation that mutates the Metadata nodes in the graph.
-type MetadataMutation struct {
+// ItemMutation represents an operation that mutates the Item nodes in the graph.
+type ItemMutation struct {
 	config
-	op                     Op
-	typ                    string
-	id                     *int64
-	content                *string
-	datestamp              *time.Time
-	clearedFields          map[string]struct{}
-	record                 *int64
-	clearedrecord          bool
-	metadata_format        *int64
-	clearedmetadata_format bool
-	done                   bool
-	oldValue               func(context.Context) (*Metadata, error)
-	predicates             []predicate.Metadata
+	op             Op
+	typ            string
+	id             *string
+	clearedFields  map[string]struct{}
+	records        map[int64]struct{}
+	removedrecords map[int64]struct{}
+	clearedrecords bool
+	sets           map[string]struct{}
+	removedsets    map[string]struct{}
+	clearedsets    bool
+	done           bool
+	oldValue       func(context.Context) (*Item, error)
+	predicates     []predicate.Item
 }
 
-var _ ent.Mutation = (*MetadataMutation)(nil)
+var _ ent.Mutation = (*ItemMutation)(nil)
 
-// metadataOption allows management of the mutation configuration using functional options.
-type metadataOption func(*MetadataMutation)
+// itemOption allows management of the mutation configuration using functional options.
+type itemOption func(*ItemMutation)
 
-// newMetadataMutation creates new mutation for the Metadata entity.
-func newMetadataMutation(c config, op Op, opts ...metadataOption) *MetadataMutation {
-	m := &MetadataMutation{
+// newItemMutation creates new mutation for the Item entity.
+func newItemMutation(c config, op Op, opts ...itemOption) *ItemMutation {
+	m := &ItemMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeMetadata,
+		typ:           TypeItem,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -70,20 +70,20 @@ func newMetadataMutation(c config, op Op, opts ...metadataOption) *MetadataMutat
 	return m
 }
 
-// withMetadataID sets the ID field of the mutation.
-func withMetadataID(id int64) metadataOption {
-	return func(m *MetadataMutation) {
+// withItemID sets the ID field of the mutation.
+func withItemID(id string) itemOption {
+	return func(m *ItemMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *Metadata
+			value *Item
 		)
-		m.oldValue = func(ctx context.Context) (*Metadata, error) {
+		m.oldValue = func(ctx context.Context) (*Item, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().Metadata.Get(ctx, id)
+					value, err = m.Client().Item.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -92,10 +92,10 @@ func withMetadataID(id int64) metadataOption {
 	}
 }
 
-// withMetadata sets the old Metadata of the mutation.
-func withMetadata(node *Metadata) metadataOption {
-	return func(m *MetadataMutation) {
-		m.oldValue = func(context.Context) (*Metadata, error) {
+// withItem sets the old Item of the mutation.
+func withItem(node *Item) itemOption {
+	return func(m *ItemMutation) {
+		m.oldValue = func(context.Context) (*Item, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -104,7 +104,7 @@ func withMetadata(node *Metadata) metadataOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m MetadataMutation) Client() *Client {
+func (m ItemMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -112,7 +112,7 @@ func (m MetadataMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m MetadataMutation) Tx() (*Tx, error) {
+func (m ItemMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -122,14 +122,14 @@ func (m MetadataMutation) Tx() (*Tx, error) {
 }
 
 // SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Metadata entities.
-func (m *MetadataMutation) SetID(id int64) {
+// operation is only accepted on creation of Item entities.
+func (m *ItemMutation) SetID(id string) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *MetadataMutation) ID() (id int64, exists bool) {
+func (m *ItemMutation) ID() (id string, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -140,226 +140,138 @@ func (m *MetadataMutation) ID() (id int64, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *MetadataMutation) IDs(ctx context.Context) ([]int64, error) {
+func (m *ItemMutation) IDs(ctx context.Context) ([]string, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int64{id}, nil
+			return []string{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().Metadata.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().Item.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
-// SetRecordID sets the "record_id" field.
-func (m *MetadataMutation) SetRecordID(i int64) {
-	m.record = &i
-}
-
-// RecordID returns the value of the "record_id" field in the mutation.
-func (m *MetadataMutation) RecordID() (r int64, exists bool) {
-	v := m.record
-	if v == nil {
-		return
+// AddRecordIDs adds the "records" edge to the Record entity by ids.
+func (m *ItemMutation) AddRecordIDs(ids ...int64) {
+	if m.records == nil {
+		m.records = make(map[int64]struct{})
 	}
-	return *v, true
-}
-
-// OldRecordID returns the old "record_id" field's value of the Metadata entity.
-// If the Metadata object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MetadataMutation) OldRecordID(ctx context.Context) (v int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldRecordID is only allowed on UpdateOne operations")
+	for i := range ids {
+		m.records[ids[i]] = struct{}{}
 	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldRecordID requires an ID field in the mutation")
+}
+
+// ClearRecords clears the "records" edge to the Record entity.
+func (m *ItemMutation) ClearRecords() {
+	m.clearedrecords = true
+}
+
+// RecordsCleared reports if the "records" edge to the Record entity was cleared.
+func (m *ItemMutation) RecordsCleared() bool {
+	return m.clearedrecords
+}
+
+// RemoveRecordIDs removes the "records" edge to the Record entity by IDs.
+func (m *ItemMutation) RemoveRecordIDs(ids ...int64) {
+	if m.removedrecords == nil {
+		m.removedrecords = make(map[int64]struct{})
 	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldRecordID: %w", err)
+	for i := range ids {
+		delete(m.records, ids[i])
+		m.removedrecords[ids[i]] = struct{}{}
 	}
-	return oldValue.RecordID, nil
 }
 
-// ResetRecordID resets all changes to the "record_id" field.
-func (m *MetadataMutation) ResetRecordID() {
-	m.record = nil
-}
-
-// SetMetadataFormatID sets the "metadata_format_id" field.
-func (m *MetadataMutation) SetMetadataFormatID(i int64) {
-	m.metadata_format = &i
-}
-
-// MetadataFormatID returns the value of the "metadata_format_id" field in the mutation.
-func (m *MetadataMutation) MetadataFormatID() (r int64, exists bool) {
-	v := m.metadata_format
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldMetadataFormatID returns the old "metadata_format_id" field's value of the Metadata entity.
-// If the Metadata object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MetadataMutation) OldMetadataFormatID(ctx context.Context) (v int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldMetadataFormatID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldMetadataFormatID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldMetadataFormatID: %w", err)
-	}
-	return oldValue.MetadataFormatID, nil
-}
-
-// ResetMetadataFormatID resets all changes to the "metadata_format_id" field.
-func (m *MetadataMutation) ResetMetadataFormatID() {
-	m.metadata_format = nil
-}
-
-// SetContent sets the "content" field.
-func (m *MetadataMutation) SetContent(s string) {
-	m.content = &s
-}
-
-// Content returns the value of the "content" field in the mutation.
-func (m *MetadataMutation) Content() (r string, exists bool) {
-	v := m.content
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldContent returns the old "content" field's value of the Metadata entity.
-// If the Metadata object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MetadataMutation) OldContent(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldContent is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldContent requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldContent: %w", err)
-	}
-	return oldValue.Content, nil
-}
-
-// ResetContent resets all changes to the "content" field.
-func (m *MetadataMutation) ResetContent() {
-	m.content = nil
-}
-
-// SetDatestamp sets the "datestamp" field.
-func (m *MetadataMutation) SetDatestamp(t time.Time) {
-	m.datestamp = &t
-}
-
-// Datestamp returns the value of the "datestamp" field in the mutation.
-func (m *MetadataMutation) Datestamp() (r time.Time, exists bool) {
-	v := m.datestamp
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDatestamp returns the old "datestamp" field's value of the Metadata entity.
-// If the Metadata object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MetadataMutation) OldDatestamp(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDatestamp is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDatestamp requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDatestamp: %w", err)
-	}
-	return oldValue.Datestamp, nil
-}
-
-// ResetDatestamp resets all changes to the "datestamp" field.
-func (m *MetadataMutation) ResetDatestamp() {
-	m.datestamp = nil
-}
-
-// ClearRecord clears the "record" edge to the Record entity.
-func (m *MetadataMutation) ClearRecord() {
-	m.clearedrecord = true
-}
-
-// RecordCleared reports if the "record" edge to the Record entity was cleared.
-func (m *MetadataMutation) RecordCleared() bool {
-	return m.clearedrecord
-}
-
-// RecordIDs returns the "record" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// RecordID instead. It exists only for internal usage by the builders.
-func (m *MetadataMutation) RecordIDs() (ids []int64) {
-	if id := m.record; id != nil {
-		ids = append(ids, *id)
+// RemovedRecords returns the removed IDs of the "records" edge to the Record entity.
+func (m *ItemMutation) RemovedRecordsIDs() (ids []int64) {
+	for id := range m.removedrecords {
+		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetRecord resets all changes to the "record" edge.
-func (m *MetadataMutation) ResetRecord() {
-	m.record = nil
-	m.clearedrecord = false
-}
-
-// ClearMetadataFormat clears the "metadata_format" edge to the MetadataFormat entity.
-func (m *MetadataMutation) ClearMetadataFormat() {
-	m.clearedmetadata_format = true
-}
-
-// MetadataFormatCleared reports if the "metadata_format" edge to the MetadataFormat entity was cleared.
-func (m *MetadataMutation) MetadataFormatCleared() bool {
-	return m.clearedmetadata_format
-}
-
-// MetadataFormatIDs returns the "metadata_format" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// MetadataFormatID instead. It exists only for internal usage by the builders.
-func (m *MetadataMutation) MetadataFormatIDs() (ids []int64) {
-	if id := m.metadata_format; id != nil {
-		ids = append(ids, *id)
+// RecordsIDs returns the "records" edge IDs in the mutation.
+func (m *ItemMutation) RecordsIDs() (ids []int64) {
+	for id := range m.records {
+		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetMetadataFormat resets all changes to the "metadata_format" edge.
-func (m *MetadataMutation) ResetMetadataFormat() {
-	m.metadata_format = nil
-	m.clearedmetadata_format = false
+// ResetRecords resets all changes to the "records" edge.
+func (m *ItemMutation) ResetRecords() {
+	m.records = nil
+	m.clearedrecords = false
+	m.removedrecords = nil
 }
 
-// Where appends a list predicates to the MetadataMutation builder.
-func (m *MetadataMutation) Where(ps ...predicate.Metadata) {
+// AddSetIDs adds the "sets" edge to the Set entity by ids.
+func (m *ItemMutation) AddSetIDs(ids ...string) {
+	if m.sets == nil {
+		m.sets = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.sets[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSets clears the "sets" edge to the Set entity.
+func (m *ItemMutation) ClearSets() {
+	m.clearedsets = true
+}
+
+// SetsCleared reports if the "sets" edge to the Set entity was cleared.
+func (m *ItemMutation) SetsCleared() bool {
+	return m.clearedsets
+}
+
+// RemoveSetIDs removes the "sets" edge to the Set entity by IDs.
+func (m *ItemMutation) RemoveSetIDs(ids ...string) {
+	if m.removedsets == nil {
+		m.removedsets = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.sets, ids[i])
+		m.removedsets[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSets returns the removed IDs of the "sets" edge to the Set entity.
+func (m *ItemMutation) RemovedSetsIDs() (ids []string) {
+	for id := range m.removedsets {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SetsIDs returns the "sets" edge IDs in the mutation.
+func (m *ItemMutation) SetsIDs() (ids []string) {
+	for id := range m.sets {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSets resets all changes to the "sets" edge.
+func (m *ItemMutation) ResetSets() {
+	m.sets = nil
+	m.clearedsets = false
+	m.removedsets = nil
+}
+
+// Where appends a list predicates to the ItemMutation builder.
+func (m *ItemMutation) Where(ps ...predicate.Item) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the MetadataMutation builder. Using this method,
+// WhereP appends storage-level predicates to the ItemMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *MetadataMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.Metadata, len(ps))
+func (m *ItemMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Item, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -367,283 +279,221 @@ func (m *MetadataMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *MetadataMutation) Op() Op {
+func (m *ItemMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *MetadataMutation) SetOp(op Op) {
+func (m *ItemMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (Metadata).
-func (m *MetadataMutation) Type() string {
+// Type returns the node type of this mutation (Item).
+func (m *ItemMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *MetadataMutation) Fields() []string {
-	fields := make([]string, 0, 4)
-	if m.record != nil {
-		fields = append(fields, metadata.FieldRecordID)
-	}
-	if m.metadata_format != nil {
-		fields = append(fields, metadata.FieldMetadataFormatID)
-	}
-	if m.content != nil {
-		fields = append(fields, metadata.FieldContent)
-	}
-	if m.datestamp != nil {
-		fields = append(fields, metadata.FieldDatestamp)
-	}
+func (m *ItemMutation) Fields() []string {
+	fields := make([]string, 0, 0)
 	return fields
 }
 
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *MetadataMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case metadata.FieldRecordID:
-		return m.RecordID()
-	case metadata.FieldMetadataFormatID:
-		return m.MetadataFormatID()
-	case metadata.FieldContent:
-		return m.Content()
-	case metadata.FieldDatestamp:
-		return m.Datestamp()
-	}
+func (m *ItemMutation) Field(name string) (ent.Value, bool) {
 	return nil, false
 }
 
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *MetadataMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case metadata.FieldRecordID:
-		return m.OldRecordID(ctx)
-	case metadata.FieldMetadataFormatID:
-		return m.OldMetadataFormatID(ctx)
-	case metadata.FieldContent:
-		return m.OldContent(ctx)
-	case metadata.FieldDatestamp:
-		return m.OldDatestamp(ctx)
-	}
-	return nil, fmt.Errorf("unknown Metadata field %s", name)
+func (m *ItemMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, fmt.Errorf("unknown Item field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *MetadataMutation) SetField(name string, value ent.Value) error {
+func (m *ItemMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case metadata.FieldRecordID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetRecordID(v)
-		return nil
-	case metadata.FieldMetadataFormatID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetMetadataFormatID(v)
-		return nil
-	case metadata.FieldContent:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetContent(v)
-		return nil
-	case metadata.FieldDatestamp:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDatestamp(v)
-		return nil
 	}
-	return fmt.Errorf("unknown Metadata field %s", name)
+	return fmt.Errorf("unknown Item field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *MetadataMutation) AddedFields() []string {
-	var fields []string
-	return fields
+func (m *ItemMutation) AddedFields() []string {
+	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *MetadataMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	}
+func (m *ItemMutation) AddedField(name string) (ent.Value, bool) {
 	return nil, false
 }
 
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *MetadataMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown Metadata numeric field %s", name)
+func (m *ItemMutation) AddField(name string, value ent.Value) error {
+	return fmt.Errorf("unknown Item numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *MetadataMutation) ClearedFields() []string {
+func (m *ItemMutation) ClearedFields() []string {
 	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *MetadataMutation) FieldCleared(name string) bool {
+func (m *ItemMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *MetadataMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown Metadata nullable field %s", name)
+func (m *ItemMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Item nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *MetadataMutation) ResetField(name string) error {
-	switch name {
-	case metadata.FieldRecordID:
-		m.ResetRecordID()
-		return nil
-	case metadata.FieldMetadataFormatID:
-		m.ResetMetadataFormatID()
-		return nil
-	case metadata.FieldContent:
-		m.ResetContent()
-		return nil
-	case metadata.FieldDatestamp:
-		m.ResetDatestamp()
-		return nil
-	}
-	return fmt.Errorf("unknown Metadata field %s", name)
+func (m *ItemMutation) ResetField(name string) error {
+	return fmt.Errorf("unknown Item field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *MetadataMutation) AddedEdges() []string {
+func (m *ItemMutation) AddedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.record != nil {
-		edges = append(edges, metadata.EdgeRecord)
+	if m.records != nil {
+		edges = append(edges, item.EdgeRecords)
 	}
-	if m.metadata_format != nil {
-		edges = append(edges, metadata.EdgeMetadataFormat)
+	if m.sets != nil {
+		edges = append(edges, item.EdgeSets)
 	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *MetadataMutation) AddedIDs(name string) []ent.Value {
+func (m *ItemMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case metadata.EdgeRecord:
-		if id := m.record; id != nil {
-			return []ent.Value{*id}
+	case item.EdgeRecords:
+		ids := make([]ent.Value, 0, len(m.records))
+		for id := range m.records {
+			ids = append(ids, id)
 		}
-	case metadata.EdgeMetadataFormat:
-		if id := m.metadata_format; id != nil {
-			return []ent.Value{*id}
+		return ids
+	case item.EdgeSets:
+		ids := make([]ent.Value, 0, len(m.sets))
+		for id := range m.sets {
+			ids = append(ids, id)
 		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *MetadataMutation) RemovedEdges() []string {
+func (m *ItemMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
+	if m.removedrecords != nil {
+		edges = append(edges, item.EdgeRecords)
+	}
+	if m.removedsets != nil {
+		edges = append(edges, item.EdgeSets)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *MetadataMutation) RemovedIDs(name string) []ent.Value {
+func (m *ItemMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case item.EdgeRecords:
+		ids := make([]ent.Value, 0, len(m.removedrecords))
+		for id := range m.removedrecords {
+			ids = append(ids, id)
+		}
+		return ids
+	case item.EdgeSets:
+		ids := make([]ent.Value, 0, len(m.removedsets))
+		for id := range m.removedsets {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *MetadataMutation) ClearedEdges() []string {
+func (m *ItemMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.clearedrecord {
-		edges = append(edges, metadata.EdgeRecord)
+	if m.clearedrecords {
+		edges = append(edges, item.EdgeRecords)
 	}
-	if m.clearedmetadata_format {
-		edges = append(edges, metadata.EdgeMetadataFormat)
+	if m.clearedsets {
+		edges = append(edges, item.EdgeSets)
 	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *MetadataMutation) EdgeCleared(name string) bool {
+func (m *ItemMutation) EdgeCleared(name string) bool {
 	switch name {
-	case metadata.EdgeRecord:
-		return m.clearedrecord
-	case metadata.EdgeMetadataFormat:
-		return m.clearedmetadata_format
+	case item.EdgeRecords:
+		return m.clearedrecords
+	case item.EdgeSets:
+		return m.clearedsets
 	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *MetadataMutation) ClearEdge(name string) error {
+func (m *ItemMutation) ClearEdge(name string) error {
 	switch name {
-	case metadata.EdgeRecord:
-		m.ClearRecord()
-		return nil
-	case metadata.EdgeMetadataFormat:
-		m.ClearMetadataFormat()
-		return nil
 	}
-	return fmt.Errorf("unknown Metadata unique edge %s", name)
+	return fmt.Errorf("unknown Item unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *MetadataMutation) ResetEdge(name string) error {
+func (m *ItemMutation) ResetEdge(name string) error {
 	switch name {
-	case metadata.EdgeRecord:
-		m.ResetRecord()
+	case item.EdgeRecords:
+		m.ResetRecords()
 		return nil
-	case metadata.EdgeMetadataFormat:
-		m.ResetMetadataFormat()
+	case item.EdgeSets:
+		m.ResetSets()
 		return nil
 	}
-	return fmt.Errorf("unknown Metadata edge %s", name)
+	return fmt.Errorf("unknown Item edge %s", name)
 }
 
 // MetadataFormatMutation represents an operation that mutates the MetadataFormat nodes in the graph.
 type MetadataFormatMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *int64
-	metadata_prefix    *string
-	schema             *string
-	metadata_namespace *string
-	clearedFields      map[string]struct{}
-	metadata           map[int64]struct{}
-	removedmetadata    map[int64]struct{}
-	clearedmetadata    bool
-	done               bool
-	oldValue           func(context.Context) (*MetadataFormat, error)
-	predicates         []predicate.MetadataFormat
+	op             Op
+	typ            string
+	id             *string
+	schema         *string
+	namespace      *string
+	clearedFields  map[string]struct{}
+	records        map[int64]struct{}
+	removedrecords map[int64]struct{}
+	clearedrecords bool
+	done           bool
+	oldValue       func(context.Context) (*MetadataFormat, error)
+	predicates     []predicate.MetadataFormat
 }
 
 var _ ent.Mutation = (*MetadataFormatMutation)(nil)
@@ -666,7 +516,7 @@ func newMetadataFormatMutation(c config, op Op, opts ...metadataformatOption) *M
 }
 
 // withMetadataFormatID sets the ID field of the mutation.
-func withMetadataFormatID(id int64) metadataformatOption {
+func withMetadataFormatID(id string) metadataformatOption {
 	return func(m *MetadataFormatMutation) {
 		var (
 			err   error
@@ -718,13 +568,13 @@ func (m MetadataFormatMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of MetadataFormat entities.
-func (m *MetadataFormatMutation) SetID(id int64) {
+func (m *MetadataFormatMutation) SetID(id string) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *MetadataFormatMutation) ID() (id int64, exists bool) {
+func (m *MetadataFormatMutation) ID() (id string, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -735,12 +585,12 @@ func (m *MetadataFormatMutation) ID() (id int64, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *MetadataFormatMutation) IDs(ctx context.Context) ([]int64, error) {
+func (m *MetadataFormatMutation) IDs(ctx context.Context) ([]string, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int64{id}, nil
+			return []string{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -748,42 +598,6 @@ func (m *MetadataFormatMutation) IDs(ctx context.Context) ([]int64, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetMetadataPrefix sets the "metadata_prefix" field.
-func (m *MetadataFormatMutation) SetMetadataPrefix(s string) {
-	m.metadata_prefix = &s
-}
-
-// MetadataPrefix returns the value of the "metadata_prefix" field in the mutation.
-func (m *MetadataFormatMutation) MetadataPrefix() (r string, exists bool) {
-	v := m.metadata_prefix
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldMetadataPrefix returns the old "metadata_prefix" field's value of the MetadataFormat entity.
-// If the MetadataFormat object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MetadataFormatMutation) OldMetadataPrefix(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldMetadataPrefix is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldMetadataPrefix requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldMetadataPrefix: %w", err)
-	}
-	return oldValue.MetadataPrefix, nil
-}
-
-// ResetMetadataPrefix resets all changes to the "metadata_prefix" field.
-func (m *MetadataFormatMutation) ResetMetadataPrefix() {
-	m.metadata_prefix = nil
 }
 
 // SetSchema sets the "schema" field.
@@ -822,94 +636,94 @@ func (m *MetadataFormatMutation) ResetSchema() {
 	m.schema = nil
 }
 
-// SetMetadataNamespace sets the "metadata_namespace" field.
-func (m *MetadataFormatMutation) SetMetadataNamespace(s string) {
-	m.metadata_namespace = &s
+// SetNamespace sets the "namespace" field.
+func (m *MetadataFormatMutation) SetNamespace(s string) {
+	m.namespace = &s
 }
 
-// MetadataNamespace returns the value of the "metadata_namespace" field in the mutation.
-func (m *MetadataFormatMutation) MetadataNamespace() (r string, exists bool) {
-	v := m.metadata_namespace
+// Namespace returns the value of the "namespace" field in the mutation.
+func (m *MetadataFormatMutation) Namespace() (r string, exists bool) {
+	v := m.namespace
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldMetadataNamespace returns the old "metadata_namespace" field's value of the MetadataFormat entity.
+// OldNamespace returns the old "namespace" field's value of the MetadataFormat entity.
 // If the MetadataFormat object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MetadataFormatMutation) OldMetadataNamespace(ctx context.Context) (v string, err error) {
+func (m *MetadataFormatMutation) OldNamespace(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldMetadataNamespace is only allowed on UpdateOne operations")
+		return v, errors.New("OldNamespace is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldMetadataNamespace requires an ID field in the mutation")
+		return v, errors.New("OldNamespace requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldMetadataNamespace: %w", err)
+		return v, fmt.Errorf("querying old value for OldNamespace: %w", err)
 	}
-	return oldValue.MetadataNamespace, nil
+	return oldValue.Namespace, nil
 }
 
-// ResetMetadataNamespace resets all changes to the "metadata_namespace" field.
-func (m *MetadataFormatMutation) ResetMetadataNamespace() {
-	m.metadata_namespace = nil
+// ResetNamespace resets all changes to the "namespace" field.
+func (m *MetadataFormatMutation) ResetNamespace() {
+	m.namespace = nil
 }
 
-// AddMetadatumIDs adds the "metadata" edge to the Metadata entity by ids.
-func (m *MetadataFormatMutation) AddMetadatumIDs(ids ...int64) {
-	if m.metadata == nil {
-		m.metadata = make(map[int64]struct{})
-	}
-	for i := range ids {
-		m.metadata[ids[i]] = struct{}{}
-	}
-}
-
-// ClearMetadata clears the "metadata" edge to the Metadata entity.
-func (m *MetadataFormatMutation) ClearMetadata() {
-	m.clearedmetadata = true
-}
-
-// MetadataCleared reports if the "metadata" edge to the Metadata entity was cleared.
-func (m *MetadataFormatMutation) MetadataCleared() bool {
-	return m.clearedmetadata
-}
-
-// RemoveMetadatumIDs removes the "metadata" edge to the Metadata entity by IDs.
-func (m *MetadataFormatMutation) RemoveMetadatumIDs(ids ...int64) {
-	if m.removedmetadata == nil {
-		m.removedmetadata = make(map[int64]struct{})
+// AddRecordIDs adds the "records" edge to the Record entity by ids.
+func (m *MetadataFormatMutation) AddRecordIDs(ids ...int64) {
+	if m.records == nil {
+		m.records = make(map[int64]struct{})
 	}
 	for i := range ids {
-		delete(m.metadata, ids[i])
-		m.removedmetadata[ids[i]] = struct{}{}
+		m.records[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedMetadata returns the removed IDs of the "metadata" edge to the Metadata entity.
-func (m *MetadataFormatMutation) RemovedMetadataIDs() (ids []int64) {
-	for id := range m.removedmetadata {
+// ClearRecords clears the "records" edge to the Record entity.
+func (m *MetadataFormatMutation) ClearRecords() {
+	m.clearedrecords = true
+}
+
+// RecordsCleared reports if the "records" edge to the Record entity was cleared.
+func (m *MetadataFormatMutation) RecordsCleared() bool {
+	return m.clearedrecords
+}
+
+// RemoveRecordIDs removes the "records" edge to the Record entity by IDs.
+func (m *MetadataFormatMutation) RemoveRecordIDs(ids ...int64) {
+	if m.removedrecords == nil {
+		m.removedrecords = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.records, ids[i])
+		m.removedrecords[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRecords returns the removed IDs of the "records" edge to the Record entity.
+func (m *MetadataFormatMutation) RemovedRecordsIDs() (ids []int64) {
+	for id := range m.removedrecords {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// MetadataIDs returns the "metadata" edge IDs in the mutation.
-func (m *MetadataFormatMutation) MetadataIDs() (ids []int64) {
-	for id := range m.metadata {
+// RecordsIDs returns the "records" edge IDs in the mutation.
+func (m *MetadataFormatMutation) RecordsIDs() (ids []int64) {
+	for id := range m.records {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetMetadata resets all changes to the "metadata" edge.
-func (m *MetadataFormatMutation) ResetMetadata() {
-	m.metadata = nil
-	m.clearedmetadata = false
-	m.removedmetadata = nil
+// ResetRecords resets all changes to the "records" edge.
+func (m *MetadataFormatMutation) ResetRecords() {
+	m.records = nil
+	m.clearedrecords = false
+	m.removedrecords = nil
 }
 
 // Where appends a list predicates to the MetadataFormatMutation builder.
@@ -946,15 +760,12 @@ func (m *MetadataFormatMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MetadataFormatMutation) Fields() []string {
-	fields := make([]string, 0, 3)
-	if m.metadata_prefix != nil {
-		fields = append(fields, metadataformat.FieldMetadataPrefix)
-	}
+	fields := make([]string, 0, 2)
 	if m.schema != nil {
 		fields = append(fields, metadataformat.FieldSchema)
 	}
-	if m.metadata_namespace != nil {
-		fields = append(fields, metadataformat.FieldMetadataNamespace)
+	if m.namespace != nil {
+		fields = append(fields, metadataformat.FieldNamespace)
 	}
 	return fields
 }
@@ -964,12 +775,10 @@ func (m *MetadataFormatMutation) Fields() []string {
 // schema.
 func (m *MetadataFormatMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case metadataformat.FieldMetadataPrefix:
-		return m.MetadataPrefix()
 	case metadataformat.FieldSchema:
 		return m.Schema()
-	case metadataformat.FieldMetadataNamespace:
-		return m.MetadataNamespace()
+	case metadataformat.FieldNamespace:
+		return m.Namespace()
 	}
 	return nil, false
 }
@@ -979,12 +788,10 @@ func (m *MetadataFormatMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *MetadataFormatMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case metadataformat.FieldMetadataPrefix:
-		return m.OldMetadataPrefix(ctx)
 	case metadataformat.FieldSchema:
 		return m.OldSchema(ctx)
-	case metadataformat.FieldMetadataNamespace:
-		return m.OldMetadataNamespace(ctx)
+	case metadataformat.FieldNamespace:
+		return m.OldNamespace(ctx)
 	}
 	return nil, fmt.Errorf("unknown MetadataFormat field %s", name)
 }
@@ -994,13 +801,6 @@ func (m *MetadataFormatMutation) OldField(ctx context.Context, name string) (ent
 // type.
 func (m *MetadataFormatMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case metadataformat.FieldMetadataPrefix:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetMetadataPrefix(v)
-		return nil
 	case metadataformat.FieldSchema:
 		v, ok := value.(string)
 		if !ok {
@@ -1008,12 +808,12 @@ func (m *MetadataFormatMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSchema(v)
 		return nil
-	case metadataformat.FieldMetadataNamespace:
+	case metadataformat.FieldNamespace:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetMetadataNamespace(v)
+		m.SetNamespace(v)
 		return nil
 	}
 	return fmt.Errorf("unknown MetadataFormat field %s", name)
@@ -1064,14 +864,11 @@ func (m *MetadataFormatMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *MetadataFormatMutation) ResetField(name string) error {
 	switch name {
-	case metadataformat.FieldMetadataPrefix:
-		m.ResetMetadataPrefix()
-		return nil
 	case metadataformat.FieldSchema:
 		m.ResetSchema()
 		return nil
-	case metadataformat.FieldMetadataNamespace:
-		m.ResetMetadataNamespace()
+	case metadataformat.FieldNamespace:
+		m.ResetNamespace()
 		return nil
 	}
 	return fmt.Errorf("unknown MetadataFormat field %s", name)
@@ -1080,8 +877,8 @@ func (m *MetadataFormatMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *MetadataFormatMutation) AddedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.metadata != nil {
-		edges = append(edges, metadataformat.EdgeMetadata)
+	if m.records != nil {
+		edges = append(edges, metadataformat.EdgeRecords)
 	}
 	return edges
 }
@@ -1090,9 +887,9 @@ func (m *MetadataFormatMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *MetadataFormatMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case metadataformat.EdgeMetadata:
-		ids := make([]ent.Value, 0, len(m.metadata))
-		for id := range m.metadata {
+	case metadataformat.EdgeRecords:
+		ids := make([]ent.Value, 0, len(m.records))
+		for id := range m.records {
 			ids = append(ids, id)
 		}
 		return ids
@@ -1103,8 +900,8 @@ func (m *MetadataFormatMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MetadataFormatMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.removedmetadata != nil {
-		edges = append(edges, metadataformat.EdgeMetadata)
+	if m.removedrecords != nil {
+		edges = append(edges, metadataformat.EdgeRecords)
 	}
 	return edges
 }
@@ -1113,9 +910,9 @@ func (m *MetadataFormatMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *MetadataFormatMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case metadataformat.EdgeMetadata:
-		ids := make([]ent.Value, 0, len(m.removedmetadata))
-		for id := range m.removedmetadata {
+	case metadataformat.EdgeRecords:
+		ids := make([]ent.Value, 0, len(m.removedrecords))
+		for id := range m.removedrecords {
 			ids = append(ids, id)
 		}
 		return ids
@@ -1126,8 +923,8 @@ func (m *MetadataFormatMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *MetadataFormatMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.clearedmetadata {
-		edges = append(edges, metadataformat.EdgeMetadata)
+	if m.clearedrecords {
+		edges = append(edges, metadataformat.EdgeRecords)
 	}
 	return edges
 }
@@ -1136,8 +933,8 @@ func (m *MetadataFormatMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *MetadataFormatMutation) EdgeCleared(name string) bool {
 	switch name {
-	case metadataformat.EdgeMetadata:
-		return m.clearedmetadata
+	case metadataformat.EdgeRecords:
+		return m.clearedrecords
 	}
 	return false
 }
@@ -1154,8 +951,8 @@ func (m *MetadataFormatMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *MetadataFormatMutation) ResetEdge(name string) error {
 	switch name {
-	case metadataformat.EdgeMetadata:
-		m.ResetMetadata()
+	case metadataformat.EdgeRecords:
+		m.ResetRecords()
 		return nil
 	}
 	return fmt.Errorf("unknown MetadataFormat edge %s", name)
@@ -1164,21 +961,19 @@ func (m *MetadataFormatMutation) ResetEdge(name string) error {
 // RecordMutation represents an operation that mutates the Record nodes in the graph.
 type RecordMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *int64
-	identifier      *string
-	deleted         *bool
-	clearedFields   map[string]struct{}
-	metadata        map[int64]struct{}
-	removedmetadata map[int64]struct{}
-	clearedmetadata bool
-	sets            map[int64]struct{}
-	removedsets     map[int64]struct{}
-	clearedsets     bool
-	done            bool
-	oldValue        func(context.Context) (*Record, error)
-	predicates      []predicate.Record
+	op                     Op
+	typ                    string
+	id                     *int64
+	metadata               *string
+	datestamp              *time.Time
+	clearedFields          map[string]struct{}
+	metadata_format        *string
+	clearedmetadata_format bool
+	item                   *string
+	cleareditem            bool
+	done                   bool
+	oldValue               func(context.Context) (*Record, error)
+	predicates             []predicate.Record
 }
 
 var _ ent.Mutation = (*RecordMutation)(nil)
@@ -1285,184 +1080,213 @@ func (m *RecordMutation) IDs(ctx context.Context) ([]int64, error) {
 	}
 }
 
-// SetIdentifier sets the "identifier" field.
-func (m *RecordMutation) SetIdentifier(s string) {
-	m.identifier = &s
+// SetMetadataFormatID sets the "metadata_format_id" field.
+func (m *RecordMutation) SetMetadataFormatID(s string) {
+	m.metadata_format = &s
 }
 
-// Identifier returns the value of the "identifier" field in the mutation.
-func (m *RecordMutation) Identifier() (r string, exists bool) {
-	v := m.identifier
+// MetadataFormatID returns the value of the "metadata_format_id" field in the mutation.
+func (m *RecordMutation) MetadataFormatID() (r string, exists bool) {
+	v := m.metadata_format
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldIdentifier returns the old "identifier" field's value of the Record entity.
+// OldMetadataFormatID returns the old "metadata_format_id" field's value of the Record entity.
 // If the Record object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RecordMutation) OldIdentifier(ctx context.Context) (v string, err error) {
+func (m *RecordMutation) OldMetadataFormatID(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldIdentifier is only allowed on UpdateOne operations")
+		return v, errors.New("OldMetadataFormatID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldIdentifier requires an ID field in the mutation")
+		return v, errors.New("OldMetadataFormatID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldIdentifier: %w", err)
+		return v, fmt.Errorf("querying old value for OldMetadataFormatID: %w", err)
 	}
-	return oldValue.Identifier, nil
+	return oldValue.MetadataFormatID, nil
 }
 
-// ResetIdentifier resets all changes to the "identifier" field.
-func (m *RecordMutation) ResetIdentifier() {
-	m.identifier = nil
+// ResetMetadataFormatID resets all changes to the "metadata_format_id" field.
+func (m *RecordMutation) ResetMetadataFormatID() {
+	m.metadata_format = nil
 }
 
-// SetDeleted sets the "deleted" field.
-func (m *RecordMutation) SetDeleted(b bool) {
-	m.deleted = &b
+// SetItemID sets the "item_id" field.
+func (m *RecordMutation) SetItemID(s string) {
+	m.item = &s
 }
 
-// Deleted returns the value of the "deleted" field in the mutation.
-func (m *RecordMutation) Deleted() (r bool, exists bool) {
-	v := m.deleted
+// ItemID returns the value of the "item_id" field in the mutation.
+func (m *RecordMutation) ItemID() (r string, exists bool) {
+	v := m.item
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldDeleted returns the old "deleted" field's value of the Record entity.
+// OldItemID returns the old "item_id" field's value of the Record entity.
 // If the Record object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RecordMutation) OldDeleted(ctx context.Context) (v bool, err error) {
+func (m *RecordMutation) OldItemID(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDeleted is only allowed on UpdateOne operations")
+		return v, errors.New("OldItemID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDeleted requires an ID field in the mutation")
+		return v, errors.New("OldItemID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDeleted: %w", err)
+		return v, fmt.Errorf("querying old value for OldItemID: %w", err)
 	}
-	return oldValue.Deleted, nil
+	return oldValue.ItemID, nil
 }
 
-// ResetDeleted resets all changes to the "deleted" field.
-func (m *RecordMutation) ResetDeleted() {
-	m.deleted = nil
+// ResetItemID resets all changes to the "item_id" field.
+func (m *RecordMutation) ResetItemID() {
+	m.item = nil
 }
 
-// AddMetadatumIDs adds the "metadata" edge to the Metadata entity by ids.
-func (m *RecordMutation) AddMetadatumIDs(ids ...int64) {
-	if m.metadata == nil {
-		m.metadata = make(map[int64]struct{})
-	}
-	for i := range ids {
-		m.metadata[ids[i]] = struct{}{}
-	}
+// SetMetadata sets the "metadata" field.
+func (m *RecordMutation) SetMetadata(s string) {
+	m.metadata = &s
 }
 
-// ClearMetadata clears the "metadata" edge to the Metadata entity.
+// Metadata returns the value of the "metadata" field in the mutation.
+func (m *RecordMutation) Metadata() (r string, exists bool) {
+	v := m.metadata
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadata returns the old "metadata" field's value of the Record entity.
+// If the Record object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RecordMutation) OldMetadata(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadata requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+	}
+	return oldValue.Metadata, nil
+}
+
+// ClearMetadata clears the value of the "metadata" field.
 func (m *RecordMutation) ClearMetadata() {
-	m.clearedmetadata = true
+	m.metadata = nil
+	m.clearedFields[record.FieldMetadata] = struct{}{}
 }
 
-// MetadataCleared reports if the "metadata" edge to the Metadata entity was cleared.
+// MetadataCleared returns if the "metadata" field was cleared in this mutation.
 func (m *RecordMutation) MetadataCleared() bool {
-	return m.clearedmetadata
+	_, ok := m.clearedFields[record.FieldMetadata]
+	return ok
 }
 
-// RemoveMetadatumIDs removes the "metadata" edge to the Metadata entity by IDs.
-func (m *RecordMutation) RemoveMetadatumIDs(ids ...int64) {
-	if m.removedmetadata == nil {
-		m.removedmetadata = make(map[int64]struct{})
-	}
-	for i := range ids {
-		delete(m.metadata, ids[i])
-		m.removedmetadata[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedMetadata returns the removed IDs of the "metadata" edge to the Metadata entity.
-func (m *RecordMutation) RemovedMetadataIDs() (ids []int64) {
-	for id := range m.removedmetadata {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// MetadataIDs returns the "metadata" edge IDs in the mutation.
-func (m *RecordMutation) MetadataIDs() (ids []int64) {
-	for id := range m.metadata {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetMetadata resets all changes to the "metadata" edge.
+// ResetMetadata resets all changes to the "metadata" field.
 func (m *RecordMutation) ResetMetadata() {
 	m.metadata = nil
-	m.clearedmetadata = false
-	m.removedmetadata = nil
+	delete(m.clearedFields, record.FieldMetadata)
 }
 
-// AddSetIDs adds the "sets" edge to the Set entity by ids.
-func (m *RecordMutation) AddSetIDs(ids ...int64) {
-	if m.sets == nil {
-		m.sets = make(map[int64]struct{})
+// SetDatestamp sets the "datestamp" field.
+func (m *RecordMutation) SetDatestamp(t time.Time) {
+	m.datestamp = &t
+}
+
+// Datestamp returns the value of the "datestamp" field in the mutation.
+func (m *RecordMutation) Datestamp() (r time.Time, exists bool) {
+	v := m.datestamp
+	if v == nil {
+		return
 	}
-	for i := range ids {
-		m.sets[ids[i]] = struct{}{}
+	return *v, true
+}
+
+// OldDatestamp returns the old "datestamp" field's value of the Record entity.
+// If the Record object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RecordMutation) OldDatestamp(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDatestamp is only allowed on UpdateOne operations")
 	}
-}
-
-// ClearSets clears the "sets" edge to the Set entity.
-func (m *RecordMutation) ClearSets() {
-	m.clearedsets = true
-}
-
-// SetsCleared reports if the "sets" edge to the Set entity was cleared.
-func (m *RecordMutation) SetsCleared() bool {
-	return m.clearedsets
-}
-
-// RemoveSetIDs removes the "sets" edge to the Set entity by IDs.
-func (m *RecordMutation) RemoveSetIDs(ids ...int64) {
-	if m.removedsets == nil {
-		m.removedsets = make(map[int64]struct{})
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDatestamp requires an ID field in the mutation")
 	}
-	for i := range ids {
-		delete(m.sets, ids[i])
-		m.removedsets[ids[i]] = struct{}{}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDatestamp: %w", err)
 	}
+	return oldValue.Datestamp, nil
 }
 
-// RemovedSets returns the removed IDs of the "sets" edge to the Set entity.
-func (m *RecordMutation) RemovedSetsIDs() (ids []int64) {
-	for id := range m.removedsets {
-		ids = append(ids, id)
+// ResetDatestamp resets all changes to the "datestamp" field.
+func (m *RecordMutation) ResetDatestamp() {
+	m.datestamp = nil
+}
+
+// ClearMetadataFormat clears the "metadata_format" edge to the MetadataFormat entity.
+func (m *RecordMutation) ClearMetadataFormat() {
+	m.clearedmetadata_format = true
+}
+
+// MetadataFormatCleared reports if the "metadata_format" edge to the MetadataFormat entity was cleared.
+func (m *RecordMutation) MetadataFormatCleared() bool {
+	return m.clearedmetadata_format
+}
+
+// MetadataFormatIDs returns the "metadata_format" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// MetadataFormatID instead. It exists only for internal usage by the builders.
+func (m *RecordMutation) MetadataFormatIDs() (ids []string) {
+	if id := m.metadata_format; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
 
-// SetsIDs returns the "sets" edge IDs in the mutation.
-func (m *RecordMutation) SetsIDs() (ids []int64) {
-	for id := range m.sets {
-		ids = append(ids, id)
+// ResetMetadataFormat resets all changes to the "metadata_format" edge.
+func (m *RecordMutation) ResetMetadataFormat() {
+	m.metadata_format = nil
+	m.clearedmetadata_format = false
+}
+
+// ClearItem clears the "item" edge to the Item entity.
+func (m *RecordMutation) ClearItem() {
+	m.cleareditem = true
+}
+
+// ItemCleared reports if the "item" edge to the Item entity was cleared.
+func (m *RecordMutation) ItemCleared() bool {
+	return m.cleareditem
+}
+
+// ItemIDs returns the "item" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ItemID instead. It exists only for internal usage by the builders.
+func (m *RecordMutation) ItemIDs() (ids []string) {
+	if id := m.item; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetSets resets all changes to the "sets" edge.
-func (m *RecordMutation) ResetSets() {
-	m.sets = nil
-	m.clearedsets = false
-	m.removedsets = nil
+// ResetItem resets all changes to the "item" edge.
+func (m *RecordMutation) ResetItem() {
+	m.item = nil
+	m.cleareditem = false
 }
 
 // Where appends a list predicates to the RecordMutation builder.
@@ -1499,12 +1323,18 @@ func (m *RecordMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RecordMutation) Fields() []string {
-	fields := make([]string, 0, 2)
-	if m.identifier != nil {
-		fields = append(fields, record.FieldIdentifier)
+	fields := make([]string, 0, 4)
+	if m.metadata_format != nil {
+		fields = append(fields, record.FieldMetadataFormatID)
 	}
-	if m.deleted != nil {
-		fields = append(fields, record.FieldDeleted)
+	if m.item != nil {
+		fields = append(fields, record.FieldItemID)
+	}
+	if m.metadata != nil {
+		fields = append(fields, record.FieldMetadata)
+	}
+	if m.datestamp != nil {
+		fields = append(fields, record.FieldDatestamp)
 	}
 	return fields
 }
@@ -1514,10 +1344,14 @@ func (m *RecordMutation) Fields() []string {
 // schema.
 func (m *RecordMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case record.FieldIdentifier:
-		return m.Identifier()
-	case record.FieldDeleted:
-		return m.Deleted()
+	case record.FieldMetadataFormatID:
+		return m.MetadataFormatID()
+	case record.FieldItemID:
+		return m.ItemID()
+	case record.FieldMetadata:
+		return m.Metadata()
+	case record.FieldDatestamp:
+		return m.Datestamp()
 	}
 	return nil, false
 }
@@ -1527,10 +1361,14 @@ func (m *RecordMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *RecordMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case record.FieldIdentifier:
-		return m.OldIdentifier(ctx)
-	case record.FieldDeleted:
-		return m.OldDeleted(ctx)
+	case record.FieldMetadataFormatID:
+		return m.OldMetadataFormatID(ctx)
+	case record.FieldItemID:
+		return m.OldItemID(ctx)
+	case record.FieldMetadata:
+		return m.OldMetadata(ctx)
+	case record.FieldDatestamp:
+		return m.OldDatestamp(ctx)
 	}
 	return nil, fmt.Errorf("unknown Record field %s", name)
 }
@@ -1540,19 +1378,33 @@ func (m *RecordMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *RecordMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case record.FieldIdentifier:
+	case record.FieldMetadataFormatID:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetIdentifier(v)
+		m.SetMetadataFormatID(v)
 		return nil
-	case record.FieldDeleted:
-		v, ok := value.(bool)
+	case record.FieldItemID:
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetDeleted(v)
+		m.SetItemID(v)
+		return nil
+	case record.FieldMetadata:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadata(v)
+		return nil
+	case record.FieldDatestamp:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDatestamp(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Record field %s", name)
@@ -1583,7 +1435,11 @@ func (m *RecordMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *RecordMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(record.FieldMetadata) {
+		fields = append(fields, record.FieldMetadata)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1596,6 +1452,11 @@ func (m *RecordMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *RecordMutation) ClearField(name string) error {
+	switch name {
+	case record.FieldMetadata:
+		m.ClearMetadata()
+		return nil
+	}
 	return fmt.Errorf("unknown Record nullable field %s", name)
 }
 
@@ -1603,11 +1464,17 @@ func (m *RecordMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *RecordMutation) ResetField(name string) error {
 	switch name {
-	case record.FieldIdentifier:
-		m.ResetIdentifier()
+	case record.FieldMetadataFormatID:
+		m.ResetMetadataFormatID()
 		return nil
-	case record.FieldDeleted:
-		m.ResetDeleted()
+	case record.FieldItemID:
+		m.ResetItemID()
+		return nil
+	case record.FieldMetadata:
+		m.ResetMetadata()
+		return nil
+	case record.FieldDatestamp:
+		m.ResetDatestamp()
 		return nil
 	}
 	return fmt.Errorf("unknown Record field %s", name)
@@ -1616,11 +1483,11 @@ func (m *RecordMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RecordMutation) AddedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.metadata != nil {
-		edges = append(edges, record.EdgeMetadata)
+	if m.metadata_format != nil {
+		edges = append(edges, record.EdgeMetadataFormat)
 	}
-	if m.sets != nil {
-		edges = append(edges, record.EdgeSets)
+	if m.item != nil {
+		edges = append(edges, record.EdgeItem)
 	}
 	return edges
 }
@@ -1629,18 +1496,14 @@ func (m *RecordMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *RecordMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case record.EdgeMetadata:
-		ids := make([]ent.Value, 0, len(m.metadata))
-		for id := range m.metadata {
-			ids = append(ids, id)
+	case record.EdgeMetadataFormat:
+		if id := m.metadata_format; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
-	case record.EdgeSets:
-		ids := make([]ent.Value, 0, len(m.sets))
-		for id := range m.sets {
-			ids = append(ids, id)
+	case record.EdgeItem:
+		if id := m.item; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
@@ -1648,43 +1511,23 @@ func (m *RecordMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RecordMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.removedmetadata != nil {
-		edges = append(edges, record.EdgeMetadata)
-	}
-	if m.removedsets != nil {
-		edges = append(edges, record.EdgeSets)
-	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *RecordMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case record.EdgeMetadata:
-		ids := make([]ent.Value, 0, len(m.removedmetadata))
-		for id := range m.removedmetadata {
-			ids = append(ids, id)
-		}
-		return ids
-	case record.EdgeSets:
-		ids := make([]ent.Value, 0, len(m.removedsets))
-		for id := range m.removedsets {
-			ids = append(ids, id)
-		}
-		return ids
-	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RecordMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.clearedmetadata {
-		edges = append(edges, record.EdgeMetadata)
+	if m.clearedmetadata_format {
+		edges = append(edges, record.EdgeMetadataFormat)
 	}
-	if m.clearedsets {
-		edges = append(edges, record.EdgeSets)
+	if m.cleareditem {
+		edges = append(edges, record.EdgeItem)
 	}
 	return edges
 }
@@ -1693,10 +1536,10 @@ func (m *RecordMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *RecordMutation) EdgeCleared(name string) bool {
 	switch name {
-	case record.EdgeMetadata:
-		return m.clearedmetadata
-	case record.EdgeSets:
-		return m.clearedsets
+	case record.EdgeMetadataFormat:
+		return m.clearedmetadata_format
+	case record.EdgeItem:
+		return m.cleareditem
 	}
 	return false
 }
@@ -1705,6 +1548,12 @@ func (m *RecordMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *RecordMutation) ClearEdge(name string) error {
 	switch name {
+	case record.EdgeMetadataFormat:
+		m.ClearMetadataFormat()
+		return nil
+	case record.EdgeItem:
+		m.ClearItem()
+		return nil
 	}
 	return fmt.Errorf("unknown Record unique edge %s", name)
 }
@@ -1713,11 +1562,11 @@ func (m *RecordMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *RecordMutation) ResetEdge(name string) error {
 	switch name {
-	case record.EdgeMetadata:
-		m.ResetMetadata()
+	case record.EdgeMetadataFormat:
+		m.ResetMetadataFormat()
 		return nil
-	case record.EdgeSets:
-		m.ResetSets()
+	case record.EdgeItem:
+		m.ResetItem()
 		return nil
 	}
 	return fmt.Errorf("unknown Record edge %s", name)
@@ -1726,19 +1575,18 @@ func (m *RecordMutation) ResetEdge(name string) error {
 // SetMutation represents an operation that mutates the Set nodes in the graph.
 type SetMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *int64
-	set_spec        *string
-	set_name        *string
-	set_description *string
-	clearedFields   map[string]struct{}
-	records         map[int64]struct{}
-	removedrecords  map[int64]struct{}
-	clearedrecords  bool
-	done            bool
-	oldValue        func(context.Context) (*Set, error)
-	predicates      []predicate.Set
+	op            Op
+	typ           string
+	id            *string
+	name          *string
+	description   *string
+	clearedFields map[string]struct{}
+	items         map[string]struct{}
+	removeditems  map[string]struct{}
+	cleareditems  bool
+	done          bool
+	oldValue      func(context.Context) (*Set, error)
+	predicates    []predicate.Set
 }
 
 var _ ent.Mutation = (*SetMutation)(nil)
@@ -1761,7 +1609,7 @@ func newSetMutation(c config, op Op, opts ...setOption) *SetMutation {
 }
 
 // withSetID sets the ID field of the mutation.
-func withSetID(id int64) setOption {
+func withSetID(id string) setOption {
 	return func(m *SetMutation) {
 		var (
 			err   error
@@ -1813,13 +1661,13 @@ func (m SetMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of Set entities.
-func (m *SetMutation) SetID(id int64) {
+func (m *SetMutation) SetID(id string) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *SetMutation) ID() (id int64, exists bool) {
+func (m *SetMutation) ID() (id string, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -1830,12 +1678,12 @@ func (m *SetMutation) ID() (id int64, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *SetMutation) IDs(ctx context.Context) ([]int64, error) {
+func (m *SetMutation) IDs(ctx context.Context) ([]string, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int64{id}, nil
+			return []string{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -1845,179 +1693,143 @@ func (m *SetMutation) IDs(ctx context.Context) ([]int64, error) {
 	}
 }
 
-// SetSetSpec sets the "set_spec" field.
-func (m *SetMutation) SetSetSpec(s string) {
-	m.set_spec = &s
+// SetName sets the "name" field.
+func (m *SetMutation) SetName(s string) {
+	m.name = &s
 }
 
-// SetSpec returns the value of the "set_spec" field in the mutation.
-func (m *SetMutation) SetSpec() (r string, exists bool) {
-	v := m.set_spec
+// Name returns the value of the "name" field in the mutation.
+func (m *SetMutation) Name() (r string, exists bool) {
+	v := m.name
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldSetSpec returns the old "set_spec" field's value of the Set entity.
+// OldName returns the old "name" field's value of the Set entity.
 // If the Set object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SetMutation) OldSetSpec(ctx context.Context) (v string, err error) {
+func (m *SetMutation) OldName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSetSpec is only allowed on UpdateOne operations")
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSetSpec requires an ID field in the mutation")
+		return v, errors.New("OldName requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSetSpec: %w", err)
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
 	}
-	return oldValue.SetSpec, nil
+	return oldValue.Name, nil
 }
 
-// ResetSetSpec resets all changes to the "set_spec" field.
-func (m *SetMutation) ResetSetSpec() {
-	m.set_spec = nil
+// ResetName resets all changes to the "name" field.
+func (m *SetMutation) ResetName() {
+	m.name = nil
 }
 
-// SetSetName sets the "set_name" field.
-func (m *SetMutation) SetSetName(s string) {
-	m.set_name = &s
+// SetDescription sets the "description" field.
+func (m *SetMutation) SetDescription(s string) {
+	m.description = &s
 }
 
-// SetName returns the value of the "set_name" field in the mutation.
-func (m *SetMutation) SetName() (r string, exists bool) {
-	v := m.set_name
+// Description returns the value of the "description" field in the mutation.
+func (m *SetMutation) Description() (r string, exists bool) {
+	v := m.description
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldSetName returns the old "set_name" field's value of the Set entity.
+// OldDescription returns the old "description" field's value of the Set entity.
 // If the Set object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SetMutation) OldSetName(ctx context.Context) (v string, err error) {
+func (m *SetMutation) OldDescription(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSetName is only allowed on UpdateOne operations")
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSetName requires an ID field in the mutation")
+		return v, errors.New("OldDescription requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSetName: %w", err)
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
 	}
-	return oldValue.SetName, nil
+	return oldValue.Description, nil
 }
 
-// ResetSetName resets all changes to the "set_name" field.
-func (m *SetMutation) ResetSetName() {
-	m.set_name = nil
+// ClearDescription clears the value of the "description" field.
+func (m *SetMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[set.FieldDescription] = struct{}{}
 }
 
-// SetSetDescription sets the "set_description" field.
-func (m *SetMutation) SetSetDescription(s string) {
-	m.set_description = &s
-}
-
-// SetDescription returns the value of the "set_description" field in the mutation.
-func (m *SetMutation) SetDescription() (r string, exists bool) {
-	v := m.set_description
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldSetDescription returns the old "set_description" field's value of the Set entity.
-// If the Set object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SetMutation) OldSetDescription(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSetDescription is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSetDescription requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSetDescription: %w", err)
-	}
-	return oldValue.SetDescription, nil
-}
-
-// ClearSetDescription clears the value of the "set_description" field.
-func (m *SetMutation) ClearSetDescription() {
-	m.set_description = nil
-	m.clearedFields[set.FieldSetDescription] = struct{}{}
-}
-
-// SetDescriptionCleared returns if the "set_description" field was cleared in this mutation.
-func (m *SetMutation) SetDescriptionCleared() bool {
-	_, ok := m.clearedFields[set.FieldSetDescription]
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *SetMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[set.FieldDescription]
 	return ok
 }
 
-// ResetSetDescription resets all changes to the "set_description" field.
-func (m *SetMutation) ResetSetDescription() {
-	m.set_description = nil
-	delete(m.clearedFields, set.FieldSetDescription)
+// ResetDescription resets all changes to the "description" field.
+func (m *SetMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, set.FieldDescription)
 }
 
-// AddRecordIDs adds the "records" edge to the Record entity by ids.
-func (m *SetMutation) AddRecordIDs(ids ...int64) {
-	if m.records == nil {
-		m.records = make(map[int64]struct{})
+// AddItemIDs adds the "items" edge to the Item entity by ids.
+func (m *SetMutation) AddItemIDs(ids ...string) {
+	if m.items == nil {
+		m.items = make(map[string]struct{})
 	}
 	for i := range ids {
-		m.records[ids[i]] = struct{}{}
+		m.items[ids[i]] = struct{}{}
 	}
 }
 
-// ClearRecords clears the "records" edge to the Record entity.
-func (m *SetMutation) ClearRecords() {
-	m.clearedrecords = true
+// ClearItems clears the "items" edge to the Item entity.
+func (m *SetMutation) ClearItems() {
+	m.cleareditems = true
 }
 
-// RecordsCleared reports if the "records" edge to the Record entity was cleared.
-func (m *SetMutation) RecordsCleared() bool {
-	return m.clearedrecords
+// ItemsCleared reports if the "items" edge to the Item entity was cleared.
+func (m *SetMutation) ItemsCleared() bool {
+	return m.cleareditems
 }
 
-// RemoveRecordIDs removes the "records" edge to the Record entity by IDs.
-func (m *SetMutation) RemoveRecordIDs(ids ...int64) {
-	if m.removedrecords == nil {
-		m.removedrecords = make(map[int64]struct{})
+// RemoveItemIDs removes the "items" edge to the Item entity by IDs.
+func (m *SetMutation) RemoveItemIDs(ids ...string) {
+	if m.removeditems == nil {
+		m.removeditems = make(map[string]struct{})
 	}
 	for i := range ids {
-		delete(m.records, ids[i])
-		m.removedrecords[ids[i]] = struct{}{}
+		delete(m.items, ids[i])
+		m.removeditems[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedRecords returns the removed IDs of the "records" edge to the Record entity.
-func (m *SetMutation) RemovedRecordsIDs() (ids []int64) {
-	for id := range m.removedrecords {
+// RemovedItems returns the removed IDs of the "items" edge to the Item entity.
+func (m *SetMutation) RemovedItemsIDs() (ids []string) {
+	for id := range m.removeditems {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// RecordsIDs returns the "records" edge IDs in the mutation.
-func (m *SetMutation) RecordsIDs() (ids []int64) {
-	for id := range m.records {
+// ItemsIDs returns the "items" edge IDs in the mutation.
+func (m *SetMutation) ItemsIDs() (ids []string) {
+	for id := range m.items {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetRecords resets all changes to the "records" edge.
-func (m *SetMutation) ResetRecords() {
-	m.records = nil
-	m.clearedrecords = false
-	m.removedrecords = nil
+// ResetItems resets all changes to the "items" edge.
+func (m *SetMutation) ResetItems() {
+	m.items = nil
+	m.cleareditems = false
+	m.removeditems = nil
 }
 
 // Where appends a list predicates to the SetMutation builder.
@@ -2054,15 +1866,12 @@ func (m *SetMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SetMutation) Fields() []string {
-	fields := make([]string, 0, 3)
-	if m.set_spec != nil {
-		fields = append(fields, set.FieldSetSpec)
+	fields := make([]string, 0, 2)
+	if m.name != nil {
+		fields = append(fields, set.FieldName)
 	}
-	if m.set_name != nil {
-		fields = append(fields, set.FieldSetName)
-	}
-	if m.set_description != nil {
-		fields = append(fields, set.FieldSetDescription)
+	if m.description != nil {
+		fields = append(fields, set.FieldDescription)
 	}
 	return fields
 }
@@ -2072,12 +1881,10 @@ func (m *SetMutation) Fields() []string {
 // schema.
 func (m *SetMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case set.FieldSetSpec:
-		return m.SetSpec()
-	case set.FieldSetName:
-		return m.SetName()
-	case set.FieldSetDescription:
-		return m.SetDescription()
+	case set.FieldName:
+		return m.Name()
+	case set.FieldDescription:
+		return m.Description()
 	}
 	return nil, false
 }
@@ -2087,12 +1894,10 @@ func (m *SetMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *SetMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case set.FieldSetSpec:
-		return m.OldSetSpec(ctx)
-	case set.FieldSetName:
-		return m.OldSetName(ctx)
-	case set.FieldSetDescription:
-		return m.OldSetDescription(ctx)
+	case set.FieldName:
+		return m.OldName(ctx)
+	case set.FieldDescription:
+		return m.OldDescription(ctx)
 	}
 	return nil, fmt.Errorf("unknown Set field %s", name)
 }
@@ -2102,26 +1907,19 @@ func (m *SetMutation) OldField(ctx context.Context, name string) (ent.Value, err
 // type.
 func (m *SetMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case set.FieldSetSpec:
+	case set.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetSetSpec(v)
+		m.SetName(v)
 		return nil
-	case set.FieldSetName:
+	case set.FieldDescription:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetSetName(v)
-		return nil
-	case set.FieldSetDescription:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSetDescription(v)
+		m.SetDescription(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Set field %s", name)
@@ -2153,8 +1951,8 @@ func (m *SetMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *SetMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(set.FieldSetDescription) {
-		fields = append(fields, set.FieldSetDescription)
+	if m.FieldCleared(set.FieldDescription) {
+		fields = append(fields, set.FieldDescription)
 	}
 	return fields
 }
@@ -2170,8 +1968,8 @@ func (m *SetMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *SetMutation) ClearField(name string) error {
 	switch name {
-	case set.FieldSetDescription:
-		m.ClearSetDescription()
+	case set.FieldDescription:
+		m.ClearDescription()
 		return nil
 	}
 	return fmt.Errorf("unknown Set nullable field %s", name)
@@ -2181,14 +1979,11 @@ func (m *SetMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *SetMutation) ResetField(name string) error {
 	switch name {
-	case set.FieldSetSpec:
-		m.ResetSetSpec()
+	case set.FieldName:
+		m.ResetName()
 		return nil
-	case set.FieldSetName:
-		m.ResetSetName()
-		return nil
-	case set.FieldSetDescription:
-		m.ResetSetDescription()
+	case set.FieldDescription:
+		m.ResetDescription()
 		return nil
 	}
 	return fmt.Errorf("unknown Set field %s", name)
@@ -2197,8 +1992,8 @@ func (m *SetMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *SetMutation) AddedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.records != nil {
-		edges = append(edges, set.EdgeRecords)
+	if m.items != nil {
+		edges = append(edges, set.EdgeItems)
 	}
 	return edges
 }
@@ -2207,9 +2002,9 @@ func (m *SetMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *SetMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case set.EdgeRecords:
-		ids := make([]ent.Value, 0, len(m.records))
-		for id := range m.records {
+	case set.EdgeItems:
+		ids := make([]ent.Value, 0, len(m.items))
+		for id := range m.items {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2220,8 +2015,8 @@ func (m *SetMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *SetMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.removedrecords != nil {
-		edges = append(edges, set.EdgeRecords)
+	if m.removeditems != nil {
+		edges = append(edges, set.EdgeItems)
 	}
 	return edges
 }
@@ -2230,9 +2025,9 @@ func (m *SetMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *SetMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case set.EdgeRecords:
-		ids := make([]ent.Value, 0, len(m.removedrecords))
-		for id := range m.removedrecords {
+	case set.EdgeItems:
+		ids := make([]ent.Value, 0, len(m.removeditems))
+		for id := range m.removeditems {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2243,8 +2038,8 @@ func (m *SetMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *SetMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.clearedrecords {
-		edges = append(edges, set.EdgeRecords)
+	if m.cleareditems {
+		edges = append(edges, set.EdgeItems)
 	}
 	return edges
 }
@@ -2253,8 +2048,8 @@ func (m *SetMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *SetMutation) EdgeCleared(name string) bool {
 	switch name {
-	case set.EdgeRecords:
-		return m.clearedrecords
+	case set.EdgeItems:
+		return m.cleareditems
 	}
 	return false
 }
@@ -2271,8 +2066,8 @@ func (m *SetMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *SetMutation) ResetEdge(name string) error {
 	switch name {
-	case set.EdgeRecords:
-		m.ResetRecords()
+	case set.EdgeItems:
+		m.ResetItems()
 		return nil
 	}
 	return fmt.Errorf("unknown Set edge %s", name)

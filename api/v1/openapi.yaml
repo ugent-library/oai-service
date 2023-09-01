@@ -42,16 +42,16 @@ paths:
         default:
           $ref: "#/components/responses/Error"
 
-  /add-record-sets:
+  /add-item:
     post:
-      summary: Add record sets
-      description: Add record sets
-      operationId: addRecordSets
+      summary: Add item
+      description: Add item
+      operationId: addItem
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddRecordSetsRequest'
+              $ref: '#/components/schemas/AddItemRequest'
         required: true
       responses:
         '200':
@@ -59,16 +59,16 @@ paths:
         default:
           $ref: '#/components/responses/Error'
   
-  /add-record-metadata:
+  /add-record:
     post:
-      summary: Add record metadata
-      description: Add record metadata
-      operationId: addRecordMetadata
+      summary: Add record
+      description: Add record
+      operationId: addRecord
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddRecordMetadataRequest'
+              $ref: '#/components/schemas/AddRecordRequest'
         required: true
       responses:
         '200':
@@ -134,7 +134,7 @@ components:
           type: string
       required: [set_spec, set_name]
 
-    AddRecordSetsRequest:
+    AddItemRequest:
       type: object
       properties:
         identifier:
@@ -145,7 +145,7 @@ components:
             type: string
       required: [identifier]
 
-    AddRecordMetadataRequest:
+    AddRecordRequest:
       type: object
       properties:
         identifier:
@@ -161,7 +161,9 @@ components:
       properties:
         identifier:
           type: string
-      required: [identifier]
+        metadata_prefix:
+          type: string
+      required: [identifier, metadata_prefix]
 
     Error:
       type: object

@@ -15,13 +15,11 @@ import (
 type MetadataFormat struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int64 `json:"id,omitempty"`
-	// MetadataPrefix holds the value of the "metadata_prefix" field.
-	MetadataPrefix string `json:"metadata_prefix,omitempty"`
+	ID string `json:"id,omitempty"`
 	// Schema holds the value of the "schema" field.
 	Schema string `json:"schema,omitempty"`
-	// MetadataNamespace holds the value of the "metadata_namespace" field.
-	MetadataNamespace string `json:"metadata_namespace,omitempty"`
+	// Namespace holds the value of the "namespace" field.
+	Namespace string `json:"namespace,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MetadataFormatQuery when eager-loading is set.
 	Edges        MetadataFormatEdges `json:"edges"`
@@ -30,20 +28,20 @@ type MetadataFormat struct {
 
 // MetadataFormatEdges holds the relations/edges for other nodes in the graph.
 type MetadataFormatEdges struct {
-	// Metadata holds the value of the metadata edge.
-	Metadata []*Metadata `json:"metadata,omitempty"`
+	// Records holds the value of the records edge.
+	Records []*Record `json:"records,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// MetadataOrErr returns the Metadata value or an error if the edge
+// RecordsOrErr returns the Records value or an error if the edge
 // was not loaded in eager-loading.
-func (e MetadataFormatEdges) MetadataOrErr() ([]*Metadata, error) {
+func (e MetadataFormatEdges) RecordsOrErr() ([]*Record, error) {
 	if e.loadedTypes[0] {
-		return e.Metadata, nil
+		return e.Records, nil
 	}
-	return nil, &NotLoadedError{edge: "metadata"}
+	return nil, &NotLoadedError{edge: "records"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -51,9 +49,7 @@ func (*MetadataFormat) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case metadataformat.FieldID:
-			values[i] = new(sql.NullInt64)
-		case metadataformat.FieldMetadataPrefix, metadataformat.FieldSchema, metadataformat.FieldMetadataNamespace:
+		case metadataformat.FieldID, metadataformat.FieldSchema, metadataformat.FieldNamespace:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -71,16 +67,10 @@ func (mf *MetadataFormat) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case metadataformat.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
-			}
-			mf.ID = int64(value.Int64)
-		case metadataformat.FieldMetadataPrefix:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field metadata_prefix", values[i])
+				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
-				mf.MetadataPrefix = value.String
+				mf.ID = value.String
 			}
 		case metadataformat.FieldSchema:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -88,11 +78,11 @@ func (mf *MetadataFormat) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				mf.Schema = value.String
 			}
-		case metadataformat.FieldMetadataNamespace:
+		case metadataformat.FieldNamespace:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field metadata_namespace", values[i])
+				return fmt.Errorf("unexpected type %T for field namespace", values[i])
 			} else if value.Valid {
-				mf.MetadataNamespace = value.String
+				mf.Namespace = value.String
 			}
 		default:
 			mf.selectValues.Set(columns[i], values[i])
@@ -107,9 +97,9 @@ func (mf *MetadataFormat) Value(name string) (ent.Value, error) {
 	return mf.selectValues.Get(name)
 }
 
-// QueryMetadata queries the "metadata" edge of the MetadataFormat entity.
-func (mf *MetadataFormat) QueryMetadata() *MetadataQuery {
-	return NewMetadataFormatClient(mf.config).QueryMetadata(mf)
+// QueryRecords queries the "records" edge of the MetadataFormat entity.
+func (mf *MetadataFormat) QueryRecords() *RecordQuery {
+	return NewMetadataFormatClient(mf.config).QueryRecords(mf)
 }
 
 // Update returns a builder for updating this MetadataFormat.
@@ -135,14 +125,11 @@ func (mf *MetadataFormat) String() string {
 	var builder strings.Builder
 	builder.WriteString("MetadataFormat(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", mf.ID))
-	builder.WriteString("metadata_prefix=")
-	builder.WriteString(mf.MetadataPrefix)
-	builder.WriteString(", ")
 	builder.WriteString("schema=")
 	builder.WriteString(mf.Schema)
 	builder.WriteString(", ")
-	builder.WriteString("metadata_namespace=")
-	builder.WriteString(mf.MetadataNamespace)
+	builder.WriteString("namespace=")
+	builder.WriteString(mf.Namespace)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -6,20 +6,19 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-type MetadataFormat struct {
+type Item struct {
 	ent.Schema
 }
 
-func (MetadataFormat) Fields() []ent.Field {
+func (Item) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id"),
-		field.String("schema"),
-		field.String("namespace"),
 	}
 }
 
-func (MetadataFormat) Edges() []ent.Edge {
+func (Item) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("records", Record.Type),
+		edge.To("sets", Set.Type),
 	}
 }

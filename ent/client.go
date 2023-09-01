@@ -14,7 +14,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/ugent-library/oai-service/ent/metadata"
+	"github.com/ugent-library/oai-service/ent/item"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
 	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/set"
@@ -27,8 +27,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
-	// Metadata is the client for interacting with the Metadata builders.
-	Metadata *MetadataClient
+	// Item is the client for interacting with the Item builders.
+	Item *ItemClient
 	// MetadataFormat is the client for interacting with the MetadataFormat builders.
 	MetadataFormat *MetadataFormatClient
 	// Record is the client for interacting with the Record builders.
@@ -48,7 +48,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
-	c.Metadata = NewMetadataClient(c.config)
+	c.Item = NewItemClient(c.config)
 	c.MetadataFormat = NewMetadataFormatClient(c.config)
 	c.Record = NewRecordClient(c.config)
 	c.Set = NewSetClient(c.config)
@@ -134,7 +134,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:            ctx,
 		config:         cfg,
-		Metadata:       NewMetadataClient(cfg),
+		Item:           NewItemClient(cfg),
 		MetadataFormat: NewMetadataFormatClient(cfg),
 		Record:         NewRecordClient(cfg),
 		Set:            NewSetClient(cfg),
@@ -157,7 +157,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:            ctx,
 		config:         cfg,
-		Metadata:       NewMetadataClient(cfg),
+		Item:           NewItemClient(cfg),
 		MetadataFormat: NewMetadataFormatClient(cfg),
 		Record:         NewRecordClient(cfg),
 		Set:            NewSetClient(cfg),
@@ -167,7 +167,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Metadata.
+//		Item.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -189,7 +189,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Metadata.Use(hooks...)
+	c.Item.Use(hooks...)
 	c.MetadataFormat.Use(hooks...)
 	c.Record.Use(hooks...)
 	c.Set.Use(hooks...)
@@ -198,7 +198,7 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Metadata.Intercept(interceptors...)
+	c.Item.Intercept(interceptors...)
 	c.MetadataFormat.Intercept(interceptors...)
 	c.Record.Intercept(interceptors...)
 	c.Set.Intercept(interceptors...)
@@ -207,8 +207,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
-	case *MetadataMutation:
-		return c.Metadata.mutate(ctx, m)
+	case *ItemMutation:
+		return c.Item.mutate(ctx, m)
 	case *MetadataFormatMutation:
 		return c.MetadataFormat.mutate(ctx, m)
 	case *RecordMutation:
@@ -220,92 +220,92 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	}
 }
 
-// MetadataClient is a client for the Metadata schema.
-type MetadataClient struct {
+// ItemClient is a client for the Item schema.
+type ItemClient struct {
 	config
 }
 
-// NewMetadataClient returns a client for the Metadata from the given config.
-func NewMetadataClient(c config) *MetadataClient {
-	return &MetadataClient{config: c}
+// NewItemClient returns a client for the Item from the given config.
+func NewItemClient(c config) *ItemClient {
+	return &ItemClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `metadata.Hooks(f(g(h())))`.
-func (c *MetadataClient) Use(hooks ...Hook) {
-	c.hooks.Metadata = append(c.hooks.Metadata, hooks...)
+// A call to `Use(f, g, h)` equals to `item.Hooks(f(g(h())))`.
+func (c *ItemClient) Use(hooks ...Hook) {
+	c.hooks.Item = append(c.hooks.Item, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `metadata.Intercept(f(g(h())))`.
-func (c *MetadataClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Metadata = append(c.inters.Metadata, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `item.Intercept(f(g(h())))`.
+func (c *ItemClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Item = append(c.inters.Item, interceptors...)
 }
 
-// Create returns a builder for creating a Metadata entity.
-func (c *MetadataClient) Create() *MetadataCreate {
-	mutation := newMetadataMutation(c.config, OpCreate)
-	return &MetadataCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Item entity.
+func (c *ItemClient) Create() *ItemCreate {
+	mutation := newItemMutation(c.config, OpCreate)
+	return &ItemCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Metadata entities.
-func (c *MetadataClient) CreateBulk(builders ...*MetadataCreate) *MetadataCreateBulk {
-	return &MetadataCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Item entities.
+func (c *ItemClient) CreateBulk(builders ...*ItemCreate) *ItemCreateBulk {
+	return &ItemCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Metadata.
-func (c *MetadataClient) Update() *MetadataUpdate {
-	mutation := newMetadataMutation(c.config, OpUpdate)
-	return &MetadataUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Item.
+func (c *ItemClient) Update() *ItemUpdate {
+	mutation := newItemMutation(c.config, OpUpdate)
+	return &ItemUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *MetadataClient) UpdateOne(m *Metadata) *MetadataUpdateOne {
-	mutation := newMetadataMutation(c.config, OpUpdateOne, withMetadata(m))
-	return &MetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ItemClient) UpdateOne(i *Item) *ItemUpdateOne {
+	mutation := newItemMutation(c.config, OpUpdateOne, withItem(i))
+	return &ItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *MetadataClient) UpdateOneID(id int64) *MetadataUpdateOne {
-	mutation := newMetadataMutation(c.config, OpUpdateOne, withMetadataID(id))
-	return &MetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ItemClient) UpdateOneID(id string) *ItemUpdateOne {
+	mutation := newItemMutation(c.config, OpUpdateOne, withItemID(id))
+	return &ItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Metadata.
-func (c *MetadataClient) Delete() *MetadataDelete {
-	mutation := newMetadataMutation(c.config, OpDelete)
-	return &MetadataDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Item.
+func (c *ItemClient) Delete() *ItemDelete {
+	mutation := newItemMutation(c.config, OpDelete)
+	return &ItemDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *MetadataClient) DeleteOne(m *Metadata) *MetadataDeleteOne {
-	return c.DeleteOneID(m.ID)
+func (c *ItemClient) DeleteOne(i *Item) *ItemDeleteOne {
+	return c.DeleteOneID(i.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *MetadataClient) DeleteOneID(id int64) *MetadataDeleteOne {
-	builder := c.Delete().Where(metadata.ID(id))
+func (c *ItemClient) DeleteOneID(id string) *ItemDeleteOne {
+	builder := c.Delete().Where(item.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &MetadataDeleteOne{builder}
+	return &ItemDeleteOne{builder}
 }
 
-// Query returns a query builder for Metadata.
-func (c *MetadataClient) Query() *MetadataQuery {
-	return &MetadataQuery{
+// Query returns a query builder for Item.
+func (c *ItemClient) Query() *ItemQuery {
+	return &ItemQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeMetadata},
+		ctx:    &QueryContext{Type: TypeItem},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Metadata entity by its id.
-func (c *MetadataClient) Get(ctx context.Context, id int64) (*Metadata, error) {
-	return c.Query().Where(metadata.ID(id)).Only(ctx)
+// Get returns a Item entity by its id.
+func (c *ItemClient) Get(ctx context.Context, id string) (*Item, error) {
+	return c.Query().Where(item.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *MetadataClient) GetX(ctx context.Context, id int64) *Metadata {
+func (c *ItemClient) GetX(ctx context.Context, id string) *Item {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -313,60 +313,60 @@ func (c *MetadataClient) GetX(ctx context.Context, id int64) *Metadata {
 	return obj
 }
 
-// QueryRecord queries the record edge of a Metadata.
-func (c *MetadataClient) QueryRecord(m *Metadata) *RecordQuery {
+// QueryRecords queries the records edge of a Item.
+func (c *ItemClient) QueryRecords(i *Item) *RecordQuery {
 	query := (&RecordClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := m.ID
+		id := i.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(metadata.Table, metadata.FieldID, id),
+			sqlgraph.From(item.Table, item.FieldID, id),
 			sqlgraph.To(record.Table, record.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, metadata.RecordTable, metadata.RecordColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, item.RecordsTable, item.RecordsColumn),
 		)
-		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
-// QueryMetadataFormat queries the metadata_format edge of a Metadata.
-func (c *MetadataClient) QueryMetadataFormat(m *Metadata) *MetadataFormatQuery {
-	query := (&MetadataFormatClient{config: c.config}).Query()
+// QuerySets queries the sets edge of a Item.
+func (c *ItemClient) QuerySets(i *Item) *SetQuery {
+	query := (&SetClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := m.ID
+		id := i.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(metadata.Table, metadata.FieldID, id),
-			sqlgraph.To(metadataformat.Table, metadataformat.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, metadata.MetadataFormatTable, metadata.MetadataFormatColumn),
+			sqlgraph.From(item.Table, item.FieldID, id),
+			sqlgraph.To(set.Table, set.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, item.SetsTable, item.SetsPrimaryKey...),
 		)
-		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // Hooks returns the client hooks.
-func (c *MetadataClient) Hooks() []Hook {
-	return c.hooks.Metadata
+func (c *ItemClient) Hooks() []Hook {
+	return c.hooks.Item
 }
 
 // Interceptors returns the client interceptors.
-func (c *MetadataClient) Interceptors() []Interceptor {
-	return c.inters.Metadata
+func (c *ItemClient) Interceptors() []Interceptor {
+	return c.inters.Item
 }
 
-func (c *MetadataClient) mutate(ctx context.Context, m *MetadataMutation) (Value, error) {
+func (c *ItemClient) mutate(ctx context.Context, m *ItemMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&MetadataCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ItemCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&MetadataUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ItemUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&MetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&MetadataDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&ItemDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Metadata mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Item mutation op: %q", m.Op())
 	}
 }
 
@@ -416,7 +416,7 @@ func (c *MetadataFormatClient) UpdateOne(mf *MetadataFormat) *MetadataFormatUpda
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *MetadataFormatClient) UpdateOneID(id int64) *MetadataFormatUpdateOne {
+func (c *MetadataFormatClient) UpdateOneID(id string) *MetadataFormatUpdateOne {
 	mutation := newMetadataFormatMutation(c.config, OpUpdateOne, withMetadataFormatID(id))
 	return &MetadataFormatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -433,7 +433,7 @@ func (c *MetadataFormatClient) DeleteOne(mf *MetadataFormat) *MetadataFormatDele
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *MetadataFormatClient) DeleteOneID(id int64) *MetadataFormatDeleteOne {
+func (c *MetadataFormatClient) DeleteOneID(id string) *MetadataFormatDeleteOne {
 	builder := c.Delete().Where(metadataformat.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -450,12 +450,12 @@ func (c *MetadataFormatClient) Query() *MetadataFormatQuery {
 }
 
 // Get returns a MetadataFormat entity by its id.
-func (c *MetadataFormatClient) Get(ctx context.Context, id int64) (*MetadataFormat, error) {
+func (c *MetadataFormatClient) Get(ctx context.Context, id string) (*MetadataFormat, error) {
 	return c.Query().Where(metadataformat.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *MetadataFormatClient) GetX(ctx context.Context, id int64) *MetadataFormat {
+func (c *MetadataFormatClient) GetX(ctx context.Context, id string) *MetadataFormat {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -463,15 +463,15 @@ func (c *MetadataFormatClient) GetX(ctx context.Context, id int64) *MetadataForm
 	return obj
 }
 
-// QueryMetadata queries the metadata edge of a MetadataFormat.
-func (c *MetadataFormatClient) QueryMetadata(mf *MetadataFormat) *MetadataQuery {
-	query := (&MetadataClient{config: c.config}).Query()
+// QueryRecords queries the records edge of a MetadataFormat.
+func (c *MetadataFormatClient) QueryRecords(mf *MetadataFormat) *RecordQuery {
+	query := (&RecordClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := mf.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(metadataformat.Table, metadataformat.FieldID, id),
-			sqlgraph.To(metadata.Table, metadata.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, metadataformat.MetadataTable, metadataformat.MetadataColumn),
+			sqlgraph.To(record.Table, record.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, metadataformat.RecordsTable, metadataformat.RecordsColumn),
 		)
 		fromV = sqlgraph.Neighbors(mf.driver.Dialect(), step)
 		return fromV, nil
@@ -597,15 +597,15 @@ func (c *RecordClient) GetX(ctx context.Context, id int64) *Record {
 	return obj
 }
 
-// QueryMetadata queries the metadata edge of a Record.
-func (c *RecordClient) QueryMetadata(r *Record) *MetadataQuery {
-	query := (&MetadataClient{config: c.config}).Query()
+// QueryMetadataFormat queries the metadata_format edge of a Record.
+func (c *RecordClient) QueryMetadataFormat(r *Record) *MetadataFormatQuery {
+	query := (&MetadataFormatClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := r.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(record.Table, record.FieldID, id),
-			sqlgraph.To(metadata.Table, metadata.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, record.MetadataTable, record.MetadataColumn),
+			sqlgraph.To(metadataformat.Table, metadataformat.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, record.MetadataFormatTable, record.MetadataFormatColumn),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
@@ -613,15 +613,15 @@ func (c *RecordClient) QueryMetadata(r *Record) *MetadataQuery {
 	return query
 }
 
-// QuerySets queries the sets edge of a Record.
-func (c *RecordClient) QuerySets(r *Record) *SetQuery {
-	query := (&SetClient{config: c.config}).Query()
+// QueryItem queries the item edge of a Record.
+func (c *RecordClient) QueryItem(r *Record) *ItemQuery {
+	query := (&ItemClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := r.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(record.Table, record.FieldID, id),
-			sqlgraph.To(set.Table, set.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, record.SetsTable, record.SetsPrimaryKey...),
+			sqlgraph.To(item.Table, item.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, record.ItemTable, record.ItemColumn),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
@@ -700,7 +700,7 @@ func (c *SetClient) UpdateOne(s *Set) *SetUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *SetClient) UpdateOneID(id int64) *SetUpdateOne {
+func (c *SetClient) UpdateOneID(id string) *SetUpdateOne {
 	mutation := newSetMutation(c.config, OpUpdateOne, withSetID(id))
 	return &SetUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -717,7 +717,7 @@ func (c *SetClient) DeleteOne(s *Set) *SetDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *SetClient) DeleteOneID(id int64) *SetDeleteOne {
+func (c *SetClient) DeleteOneID(id string) *SetDeleteOne {
 	builder := c.Delete().Where(set.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -734,12 +734,12 @@ func (c *SetClient) Query() *SetQuery {
 }
 
 // Get returns a Set entity by its id.
-func (c *SetClient) Get(ctx context.Context, id int64) (*Set, error) {
+func (c *SetClient) Get(ctx context.Context, id string) (*Set, error) {
 	return c.Query().Where(set.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *SetClient) GetX(ctx context.Context, id int64) *Set {
+func (c *SetClient) GetX(ctx context.Context, id string) *Set {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -747,15 +747,15 @@ func (c *SetClient) GetX(ctx context.Context, id int64) *Set {
 	return obj
 }
 
-// QueryRecords queries the records edge of a Set.
-func (c *SetClient) QueryRecords(s *Set) *RecordQuery {
-	query := (&RecordClient{config: c.config}).Query()
+// QueryItems queries the items edge of a Set.
+func (c *SetClient) QueryItems(s *Set) *ItemQuery {
+	query := (&ItemClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := s.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(set.Table, set.FieldID, id),
-			sqlgraph.To(record.Table, record.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, set.RecordsTable, set.RecordsPrimaryKey...),
+			sqlgraph.To(item.Table, item.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, set.ItemsTable, set.ItemsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil
@@ -791,10 +791,10 @@ func (c *SetClient) mutate(ctx context.Context, m *SetMutation) (Value, error) {
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Metadata, MetadataFormat, Record, Set []ent.Hook
+		Item, MetadataFormat, Record, Set []ent.Hook
 	}
 	inters struct {
-		Metadata, MetadataFormat, Record, Set []ent.Interceptor
+		Item, MetadataFormat, Record, Set []ent.Interceptor
 	}
 )
 

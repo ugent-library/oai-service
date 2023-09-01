@@ -3,58 +3,26 @@
 package migrate
 
 import (
-	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
 
 var (
-	// MetadataColumns holds the columns for the "metadata" table.
-	MetadataColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "content", Type: field.TypeString},
-		{Name: "datestamp", Type: field.TypeTime},
-		{Name: "metadata_format_id", Type: field.TypeInt64},
-		{Name: "record_id", Type: field.TypeInt64},
+	// ItemsColumns holds the columns for the "items" table.
+	ItemsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
 	}
-	// MetadataTable holds the schema information for the "metadata" table.
-	MetadataTable = &schema.Table{
-		Name:       "metadata",
-		Columns:    MetadataColumns,
-		PrimaryKey: []*schema.Column{MetadataColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "metadata_metadata_formats_metadata",
-				Columns:    []*schema.Column{MetadataColumns[3]},
-				RefColumns: []*schema.Column{MetadataFormatsColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-			{
-				Symbol:     "metadata_records_metadata",
-				Columns:    []*schema.Column{MetadataColumns[4]},
-				RefColumns: []*schema.Column{RecordsColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "metadata_record_id_metadata_format_id",
-				Unique:  true,
-				Columns: []*schema.Column{MetadataColumns[4], MetadataColumns[3]},
-			},
-			{
-				Name:    "metadata_datestamp",
-				Unique:  false,
-				Columns: []*schema.Column{MetadataColumns[2]},
-			},
-		},
+	// ItemsTable holds the schema information for the "items" table.
+	ItemsTable = &schema.Table{
+		Name:       "items",
+		Columns:    ItemsColumns,
+		PrimaryKey: []*schema.Column{ItemsColumns[0]},
 	}
 	// MetadataFormatsColumns holds the columns for the "metadata_formats" table.
 	MetadataFormatsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "metadata_prefix", Type: field.TypeString, Unique: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "schema", Type: field.TypeString},
-		{Name: "metadata_namespace", Type: field.TypeString},
+		{Name: "namespace", Type: field.TypeString},
 	}
 	// MetadataFormatsTable holds the schema information for the "metadata_formats" table.
 	MetadataFormatsTable = &schema.Table{
@@ -65,28 +33,48 @@ var (
 	// RecordsColumns holds the columns for the "records" table.
 	RecordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "identifier", Type: field.TypeString},
-		{Name: "deleted", Type: field.TypeBool, Default: false},
+		{Name: "metadata", Type: field.TypeString, Nullable: true},
+		{Name: "datestamp", Type: field.TypeTime},
+		{Name: "item_id", Type: field.TypeString},
+		{Name: "metadata_format_id", Type: field.TypeString},
 	}
 	// RecordsTable holds the schema information for the "records" table.
 	RecordsTable = &schema.Table{
 		Name:       "records",
 		Columns:    RecordsColumns,
 		PrimaryKey: []*schema.Column{RecordsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "records_items_records",
+				Columns:    []*schema.Column{RecordsColumns[3]},
+				RefColumns: []*schema.Column{ItemsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "records_metadata_formats_records",
+				Columns:    []*schema.Column{RecordsColumns[4]},
+				RefColumns: []*schema.Column{MetadataFormatsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "record_identifier",
+				Name:    "record_metadata_format_id_item_id",
 				Unique:  true,
-				Columns: []*schema.Column{RecordsColumns[1]},
+				Columns: []*schema.Column{RecordsColumns[4], RecordsColumns[3]},
+			},
+			{
+				Name:    "record_datestamp",
+				Unique:  false,
+				Columns: []*schema.Column{RecordsColumns[2]},
 			},
 		},
 	}
 	// SetsColumns holds the columns for the "sets" table.
 	SetsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "set_spec", Type: field.TypeString, Unique: true},
-		{Name: "set_name", Type: field.TypeString},
-		{Name: "set_description", Type: field.TypeString, Nullable: true},
+		{Name: "id", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
 	}
 	// SetsTable holds the schema information for the "sets" table.
 	SetsTable = &schema.Table{
@@ -94,26 +82,26 @@ var (
 		Columns:    SetsColumns,
 		PrimaryKey: []*schema.Column{SetsColumns[0]},
 	}
-	// RecordSetsColumns holds the columns for the "record_sets" table.
-	RecordSetsColumns = []*schema.Column{
-		{Name: "record_id", Type: field.TypeInt64},
-		{Name: "set_id", Type: field.TypeInt64},
+	// ItemSetsColumns holds the columns for the "item_sets" table.
+	ItemSetsColumns = []*schema.Column{
+		{Name: "item_id", Type: field.TypeString},
+		{Name: "set_id", Type: field.TypeString},
 	}
-	// RecordSetsTable holds the schema information for the "record_sets" table.
-	RecordSetsTable = &schema.Table{
-		Name:       "record_sets",
-		Columns:    RecordSetsColumns,
-		PrimaryKey: []*schema.Column{RecordSetsColumns[0], RecordSetsColumns[1]},
+	// ItemSetsTable holds the schema information for the "item_sets" table.
+	ItemSetsTable = &schema.Table{
+		Name:       "item_sets",
+		Columns:    ItemSetsColumns,
+		PrimaryKey: []*schema.Column{ItemSetsColumns[0], ItemSetsColumns[1]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "record_sets_record_id",
-				Columns:    []*schema.Column{RecordSetsColumns[0]},
-				RefColumns: []*schema.Column{RecordsColumns[0]},
+				Symbol:     "item_sets_item_id",
+				Columns:    []*schema.Column{ItemSetsColumns[0]},
+				RefColumns: []*schema.Column{ItemsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "record_sets_set_id",
-				Columns:    []*schema.Column{RecordSetsColumns[1]},
+				Symbol:     "item_sets_set_id",
+				Columns:    []*schema.Column{ItemSetsColumns[1]},
 				RefColumns: []*schema.Column{SetsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -121,20 +109,17 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		MetadataTable,
+		ItemsTable,
 		MetadataFormatsTable,
 		RecordsTable,
 		SetsTable,
-		RecordSetsTable,
+		ItemSetsTable,
 	}
 )
 
 func init() {
-	MetadataTable.ForeignKeys[0].RefTable = MetadataFormatsTable
-	MetadataTable.ForeignKeys[1].RefTable = RecordsTable
-	MetadataTable.Annotation = &entsql.Annotation{
-		Table: "metadata",
-	}
-	RecordSetsTable.ForeignKeys[0].RefTable = RecordsTable
-	RecordSetsTable.ForeignKeys[1].RefTable = SetsTable
+	RecordsTable.ForeignKeys[0].RefTable = ItemsTable
+	RecordsTable.ForeignKeys[1].RefTable = MetadataFormatsTable
+	ItemSetsTable.ForeignKeys[0].RefTable = ItemsTable
+	ItemSetsTable.ForeignKeys[1].RefTable = SetsTable
 }

@@ -4,28 +4,27 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/ugent-library/oai-service/ent/metadata"
+	"github.com/ugent-library/oai-service/ent/item"
+	"github.com/ugent-library/oai-service/ent/metadataformat"
 	"github.com/ugent-library/oai-service/ent/predicate"
 	"github.com/ugent-library/oai-service/ent/record"
-	"github.com/ugent-library/oai-service/ent/set"
 )
 
 // RecordQuery is the builder for querying Record entities.
 type RecordQuery struct {
 	config
-	ctx          *QueryContext
-	order        []record.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.Record
-	withMetadata *MetadataQuery
-	withSets     *SetQuery
+	ctx                *QueryContext
+	order              []record.OrderOption
+	inters             []Interceptor
+	predicates         []predicate.Record
+	withMetadataFormat *MetadataFormatQuery
+	withItem           *ItemQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -62,9 +61,9 @@ func (rq *RecordQuery) Order(o ...record.OrderOption) *RecordQuery {
 	return rq
 }
 
-// QueryMetadata chains the current query on the "metadata" edge.
-func (rq *RecordQuery) QueryMetadata() *MetadataQuery {
-	query := (&MetadataClient{config: rq.config}).Query()
+// QueryMetadataFormat chains the current query on the "metadata_format" edge.
+func (rq *RecordQuery) QueryMetadataFormat() *MetadataFormatQuery {
+	query := (&MetadataFormatClient{config: rq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := rq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -75,8 +74,8 @@ func (rq *RecordQuery) QueryMetadata() *MetadataQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(record.Table, record.FieldID, selector),
-			sqlgraph.To(metadata.Table, metadata.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, record.MetadataTable, record.MetadataColumn),
+			sqlgraph.To(metadataformat.Table, metadataformat.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, record.MetadataFormatTable, record.MetadataFormatColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -84,9 +83,9 @@ func (rq *RecordQuery) QueryMetadata() *MetadataQuery {
 	return query
 }
 
-// QuerySets chains the current query on the "sets" edge.
-func (rq *RecordQuery) QuerySets() *SetQuery {
-	query := (&SetClient{config: rq.config}).Query()
+// QueryItem chains the current query on the "item" edge.
+func (rq *RecordQuery) QueryItem() *ItemQuery {
+	query := (&ItemClient{config: rq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := rq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -97,8 +96,8 @@ func (rq *RecordQuery) QuerySets() *SetQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(record.Table, record.FieldID, selector),
-			sqlgraph.To(set.Table, set.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, record.SetsTable, record.SetsPrimaryKey...),
+			sqlgraph.To(item.Table, item.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, record.ItemTable, record.ItemColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -293,38 +292,38 @@ func (rq *RecordQuery) Clone() *RecordQuery {
 		return nil
 	}
 	return &RecordQuery{
-		config:       rq.config,
-		ctx:          rq.ctx.Clone(),
-		order:        append([]record.OrderOption{}, rq.order...),
-		inters:       append([]Interceptor{}, rq.inters...),
-		predicates:   append([]predicate.Record{}, rq.predicates...),
-		withMetadata: rq.withMetadata.Clone(),
-		withSets:     rq.withSets.Clone(),
+		config:             rq.config,
+		ctx:                rq.ctx.Clone(),
+		order:              append([]record.OrderOption{}, rq.order...),
+		inters:             append([]Interceptor{}, rq.inters...),
+		predicates:         append([]predicate.Record{}, rq.predicates...),
+		withMetadataFormat: rq.withMetadataFormat.Clone(),
+		withItem:           rq.withItem.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
 	}
 }
 
-// WithMetadata tells the query-builder to eager-load the nodes that are connected to
-// the "metadata" edge. The optional arguments are used to configure the query builder of the edge.
-func (rq *RecordQuery) WithMetadata(opts ...func(*MetadataQuery)) *RecordQuery {
-	query := (&MetadataClient{config: rq.config}).Query()
+// WithMetadataFormat tells the query-builder to eager-load the nodes that are connected to
+// the "metadata_format" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RecordQuery) WithMetadataFormat(opts ...func(*MetadataFormatQuery)) *RecordQuery {
+	query := (&MetadataFormatClient{config: rq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	rq.withMetadata = query
+	rq.withMetadataFormat = query
 	return rq
 }
 
-// WithSets tells the query-builder to eager-load the nodes that are connected to
-// the "sets" edge. The optional arguments are used to configure the query builder of the edge.
-func (rq *RecordQuery) WithSets(opts ...func(*SetQuery)) *RecordQuery {
-	query := (&SetClient{config: rq.config}).Query()
+// WithItem tells the query-builder to eager-load the nodes that are connected to
+// the "item" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RecordQuery) WithItem(opts ...func(*ItemQuery)) *RecordQuery {
+	query := (&ItemClient{config: rq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	rq.withSets = query
+	rq.withItem = query
 	return rq
 }
 
@@ -334,12 +333,12 @@ func (rq *RecordQuery) WithSets(opts ...func(*SetQuery)) *RecordQuery {
 // Example:
 //
 //	var v []struct {
-//		Identifier string `json:"identifier,omitempty"`
+//		MetadataFormatID string `json:"metadata_format_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Record.Query().
-//		GroupBy(record.FieldIdentifier).
+//		GroupBy(record.FieldMetadataFormatID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (rq *RecordQuery) GroupBy(field string, fields ...string) *RecordGroupBy {
@@ -357,11 +356,11 @@ func (rq *RecordQuery) GroupBy(field string, fields ...string) *RecordGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Identifier string `json:"identifier,omitempty"`
+//		MetadataFormatID string `json:"metadata_format_id,omitempty"`
 //	}
 //
 //	client.Record.Query().
-//		Select(record.FieldIdentifier).
+//		Select(record.FieldMetadataFormatID).
 //		Scan(ctx, &v)
 func (rq *RecordQuery) Select(fields ...string) *RecordSelect {
 	rq.ctx.Fields = append(rq.ctx.Fields, fields...)
@@ -407,8 +406,8 @@ func (rq *RecordQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Recor
 		nodes       = []*Record{}
 		_spec       = rq.querySpec()
 		loadedTypes = [2]bool{
-			rq.withMetadata != nil,
-			rq.withSets != nil,
+			rq.withMetadataFormat != nil,
+			rq.withItem != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -429,110 +428,75 @@ func (rq *RecordQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Recor
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := rq.withMetadata; query != nil {
-		if err := rq.loadMetadata(ctx, query, nodes,
-			func(n *Record) { n.Edges.Metadata = []*Metadata{} },
-			func(n *Record, e *Metadata) { n.Edges.Metadata = append(n.Edges.Metadata, e) }); err != nil {
+	if query := rq.withMetadataFormat; query != nil {
+		if err := rq.loadMetadataFormat(ctx, query, nodes, nil,
+			func(n *Record, e *MetadataFormat) { n.Edges.MetadataFormat = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := rq.withSets; query != nil {
-		if err := rq.loadSets(ctx, query, nodes,
-			func(n *Record) { n.Edges.Sets = []*Set{} },
-			func(n *Record, e *Set) { n.Edges.Sets = append(n.Edges.Sets, e) }); err != nil {
+	if query := rq.withItem; query != nil {
+		if err := rq.loadItem(ctx, query, nodes, nil,
+			func(n *Record, e *Item) { n.Edges.Item = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (rq *RecordQuery) loadMetadata(ctx context.Context, query *MetadataQuery, nodes []*Record, init func(*Record), assign func(*Record, *Metadata)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int64]*Record)
+func (rq *RecordQuery) loadMetadataFormat(ctx context.Context, query *MetadataFormatQuery, nodes []*Record, init func(*Record), assign func(*Record, *MetadataFormat)) error {
+	ids := make([]string, 0, len(nodes))
+	nodeids := make(map[string][]*Record)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
+		fk := nodes[i].MetadataFormatID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
 		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(metadata.FieldRecordID)
+	if len(ids) == 0 {
+		return nil
 	}
-	query.Where(predicate.Metadata(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(record.MetadataColumn), fks...))
-	}))
+	query.Where(metadataformat.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.RecordID
-		node, ok := nodeids[fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "record_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "metadata_format_id" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
-func (rq *RecordQuery) loadSets(ctx context.Context, query *SetQuery, nodes []*Record, init func(*Record), assign func(*Record, *Set)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int64]*Record)
-	nids := make(map[int64]map[*Record]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
-		if init != nil {
-			init(node)
+func (rq *RecordQuery) loadItem(ctx context.Context, query *ItemQuery, nodes []*Record, init func(*Record), assign func(*Record, *Item)) error {
+	ids := make([]string, 0, len(nodes))
+	nodeids := make(map[string][]*Record)
+	for i := range nodes {
+		fk := nodes[i].ItemID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
 		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(record.SetsTable)
-		s.Join(joinT).On(s.C(set.FieldID), joinT.C(record.SetsPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(record.SetsPrimaryKey[0]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(record.SetsPrimaryKey[0]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
+	if len(ids) == 0 {
+		return nil
 	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := values[0].(*sql.NullInt64).Int64
-				inValue := values[1].(*sql.NullInt64).Int64
-				if nids[inValue] == nil {
-					nids[inValue] = map[*Record]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*Set](ctx, query, qr, query.inters)
+	query.Where(item.IDIn(ids...))
+	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected "sets" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "item_id" returned %v`, n.ID)
 		}
-		for kn := range nodes {
-			assign(kn, n)
+		for i := range nodes {
+			assign(nodes[i], n)
 		}
 	}
 	return nil
@@ -562,6 +526,12 @@ func (rq *RecordQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != record.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if rq.withMetadataFormat != nil {
+			_spec.Node.AddColumnOnce(record.FieldMetadataFormatID)
+		}
+		if rq.withItem != nil {
+			_spec.Node.AddColumnOnce(record.FieldItemID)
 		}
 	}
 	if ps := rq.predicates; len(ps) > 0 {
