@@ -443,7 +443,7 @@ func (r *Repo) AddRecord(ctx context.Context, identifier, prefix, content string
 	  values ($1, $2, $3, current_timestamp)
 	  on conflict (item_id, metadata_format_id)
 	  do update set metadata = excluded.metadata, datestamp = excluded.datestamp
-	  where metadata.content != excluded.content
+	  where records.metadata != excluded.metadata
 	`
 	_, err := r.client.ExecContext(ctx, sql, identifier, prefix, content)
 	return err
