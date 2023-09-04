@@ -626,6 +626,9 @@ func setFromUntil(ctx context.Context, p *Provider, res *response, args url.Valu
 	u := getArg(res, args, "until")
 
 	if f != "" {
+		if p.Granularity == "YYYY-MM-DDThh:mm:ssZ" && len(f) == 10 {
+			f += "T00:00:00Z"
+		}
 		if _, err := time.Parse(p.dateFormat, f); err == nil {
 			res.Request.From = f
 		} else {
@@ -633,6 +636,9 @@ func setFromUntil(ctx context.Context, p *Provider, res *response, args url.Valu
 		}
 	}
 	if u != "" {
+		if p.Granularity == "YYYY-MM-DDThh:mm:ssZ" && len(u) == 10 {
+			u += "T00:00:00Z"
+		}
 		if _, err := time.Parse(p.dateFormat, u); err == nil {
 			res.Request.Until = u
 		} else {
