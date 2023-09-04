@@ -108,7 +108,7 @@ func (r *Repo) HasSets(ctx context.Context) (bool, error) {
 
 func (r *Repo) HasSet(ctx context.Context, spec string) (bool, error) {
 	return r.client.Set.Query().
-		Where(set.SpecEQ(spec)).
+		Where(set.Or(set.SpecEQ(spec), set.SpecHasPrefix(spec+":"))).
 		Exist(ctx)
 }
 
@@ -307,7 +307,7 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 	}
 	if c.SetSpec != "" {
 		where = append(where, record.HasItemWith(
-			item.HasSetsWith(set.SpecEQ(c.SetSpec)),
+			item.HasSetsWith(set.Or(set.SpecEQ(c.SetSpec), set.SpecHasPrefix(c.SetSpec+":"))),
 		))
 	}
 	if c.From != "" {
