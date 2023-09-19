@@ -466,7 +466,6 @@ func (r *Repo) AddRecord(ctx context.Context, identifier, prefix, metadata strin
 	return err
 }
 
-// TODO add prefix argument
 func (r *Repo) DeleteRecord(ctx context.Context, identifier, prefix string) error {
 	return r.client.Record.Update().
 		Where(

@@ -40,6 +40,6 @@ func initLogger() {
 	}
 }
 
-func Run() error {
-	return rootCmd.Execute()
+func Run() {
+	cobra.CheckErr(rootCmd.Execute())
 }
