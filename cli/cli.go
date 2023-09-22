@@ -8,24 +8,31 @@ import (
 )
 
 var (
-	config Config
-	logger *zap.SugaredLogger
+	version Version
+	config  Config
+	logger  *zap.SugaredLogger
 
 	rootCmd = &cobra.Command{
-		Use:   "deliver",
-		Short: "Deliver CLI",
+		Use:   "oai",
+		Short: "OAI CLI",
 	}
 )
 
 func init() {
-	cobra.OnInitialize(initConfig, initLogger)
+	cobra.OnInitialize(initVersion, initConfig, initLogger)
 	cobra.OnFinalize(func() {
 		logger.Sync()
 	})
 }
 
+func initVersion() {
+	cobra.CheckErr(env.Parse(&version))
+}
+
 func initConfig() {
-	cobra.CheckErr(env.Parse(&config))
+	cobra.CheckErr(env.ParseWithOptions(&config, env.Options{
+		Prefix: "OAI_",
+	}))
 }
 
 func initLogger() {

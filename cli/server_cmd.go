@@ -87,9 +87,9 @@ var serverCmd = &cobra.Command{
 				Commit string `json:"commit,omitempty"`
 				Image  string `json:"image,omitempty"`
 			}{
-				Branch: config.Version.Branch,
-				Commit: config.Version.Commit,
-				Image:  config.Version.Image,
+				Branch: version.Branch,
+				Commit: version.Commit,
+				Image:  version.Image,
 			})
 		})
 
