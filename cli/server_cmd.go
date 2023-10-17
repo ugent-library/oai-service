@@ -80,7 +80,7 @@ var serverCmd = &cobra.Command{
 		mux.Use(middleware.Recoverer)
 
 		// mount health and info
-		mux.Get("/health", health.NewHandler(health.NewChecker())) // TODO add checkers
+		mux.Get("/status", health.NewHandler(health.NewChecker())) // TODO add checkers
 		mux.Get("/info", func(w http.ResponseWriter, r *http.Request) {
 			render.JSON(w, http.StatusOK, &struct {
 				Branch string `json:"branch,omitempty"`
