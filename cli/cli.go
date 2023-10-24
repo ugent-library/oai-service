@@ -12,8 +12,8 @@ var (
 	logger *zap.SugaredLogger
 
 	rootCmd = &cobra.Command{
-		Use:   "deliver",
-		Short: "Deliver CLI",
+		Use:   "OAI",
+		Short: "OAI CLI",
 	}
 )
 
