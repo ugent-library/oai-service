@@ -26,6 +26,8 @@ import (
 
 var ErrNotFound = errors.New("not found")
 
+const PageLimit = 100
+
 type Repo struct {
 	client *ent.Client
 	config Config
@@ -137,7 +139,7 @@ func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh
 	rows, err := r.client.Set.Query().
 		Where(set.IDGT(c.LastID)).
 		Order(ent.Asc(set.FieldID)).
-		Limit(100).
+		Limit(PageLimit).
 		All(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -154,7 +156,7 @@ func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh
 	}
 
 	var token *oaipmh.ResumptionToken
-	if len(rows) >= 100 {
+	if len(rows) >= PageLimit {
 		tokenValue, err := r.encodeCursor(setCursor{
 			LastID: rows[len(rows)-1].ID,
 		})
@@ -347,7 +349,7 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 			})
 		}).
 		Order(ent.Asc(record.FieldID)).
-		Limit(100).
+		Limit(PageLimit).
 		All(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -374,7 +376,7 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 	}
 
 	var token *oaipmh.ResumptionToken
-	if len(rows) >= 100 {
+	if len(rows) >= PageLimit {
 		tokenValue, err := r.encodeCursor(recordCursor{
 			MetadataPrefix: c.MetadataPrefix,
 			SetSpec:        c.SetSpec,
