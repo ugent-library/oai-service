@@ -117,10 +117,13 @@ components:
       properties:
         metadata_prefix:
           type: string
+          minLength: 1
         schema:
           type: string
+          minLength: 1
         metadata_namespace:
           type: string
+          minLength: 1
       required: [metadata_prefix, schema, metadata_namespace]
 
     AddSetRequest:
@@ -128,8 +131,10 @@ components:
       properties:
         set_spec:
           type: string
+          minLength: 1
         set_name:
           type: string
+          minLength: 1
         set_description:
           type: string
       required: [set_spec, set_name]
@@ -139,10 +144,12 @@ components:
       properties:
         identifier:
           type: string
+          minLength: 1
         set_specs:
           type: array
           items:
             type: string
+            minLength: 1
       required: [identifier]
 
     AddRecordRequest:
@@ -150,10 +157,13 @@ components:
       properties:
         identifier:
           type: string
+          minLength: 1
         metadata_prefix:
           type: string
+          minLength: 1
         content:
           type: string
+          minLength: 1
       required: [identifier, metadata_prefix, content]
 
     DeleteRecordRequest:
@@ -161,8 +171,10 @@ components:
       properties:
         identifier:
           type: string
+          minLength: 1
         metadata_prefix:
           type: string
+          minLength: 1
       required: [identifier, metadata_prefix]
 
     Error:

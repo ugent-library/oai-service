@@ -89,6 +89,15 @@ func (c *Client) sendAddItem(ctx context.Context, request *AddItemRequest) (res 
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("addItem"),
 	}
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
 
 	// Run stopwatch.
 	startTime := time.Now()
@@ -161,7 +170,7 @@ func (c *Client) sendAddItem(ctx context.Context, request *AddItemRequest) (res 
 			}
 			return false
 		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+			return res, errors.New("no security requirement satisfied")
 		}
 	}
 
@@ -195,6 +204,15 @@ func (c *Client) AddMetadataFormat(ctx context.Context, request *AddMetadataForm
 func (c *Client) sendAddMetadataFormat(ctx context.Context, request *AddMetadataFormatRequest) (res *AddMetadataFormatOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("addMetadataFormat"),
+	}
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
 	}
 
 	// Run stopwatch.
@@ -268,7 +286,7 @@ func (c *Client) sendAddMetadataFormat(ctx context.Context, request *AddMetadata
 			}
 			return false
 		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+			return res, errors.New("no security requirement satisfied")
 		}
 	}
 
@@ -302,6 +320,15 @@ func (c *Client) AddRecord(ctx context.Context, request *AddRecordRequest) error
 func (c *Client) sendAddRecord(ctx context.Context, request *AddRecordRequest) (res *AddRecordOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("addRecord"),
+	}
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
 	}
 
 	// Run stopwatch.
@@ -375,7 +402,7 @@ func (c *Client) sendAddRecord(ctx context.Context, request *AddRecordRequest) (
 			}
 			return false
 		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+			return res, errors.New("no security requirement satisfied")
 		}
 	}
 
@@ -409,6 +436,15 @@ func (c *Client) AddSet(ctx context.Context, request *AddSetRequest) error {
 func (c *Client) sendAddSet(ctx context.Context, request *AddSetRequest) (res *AddSetOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("addSet"),
+	}
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
 	}
 
 	// Run stopwatch.
@@ -482,7 +518,7 @@ func (c *Client) sendAddSet(ctx context.Context, request *AddSetRequest) (res *A
 			}
 			return false
 		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+			return res, errors.New("no security requirement satisfied")
 		}
 	}
 
@@ -516,6 +552,15 @@ func (c *Client) DeleteRecord(ctx context.Context, request *DeleteRecordRequest)
 func (c *Client) sendDeleteRecord(ctx context.Context, request *DeleteRecordRequest) (res *DeleteRecordOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteRecord"),
+	}
+	// Validate request before sending.
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
 	}
 
 	// Run stopwatch.
@@ -589,7 +634,7 @@ func (c *Client) sendDeleteRecord(ctx context.Context, request *DeleteRecordRequ
 			}
 			return false
 		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+			return res, errors.New("no security requirement satisfied")
 		}
 	}
 
