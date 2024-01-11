@@ -154,7 +154,7 @@ func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh
 	}
 
 	var token *oaipmh.ResumptionToken
-	if total > len(rows) {
+	if len(rows) >= 100 {
 		tokenValue, err := r.encodeCursor(setCursor{
 			LastID: rows[len(rows)-1].ID,
 		})
@@ -374,7 +374,7 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 	}
 
 	var token *oaipmh.ResumptionToken
-	if total > len(rows) {
+	if len(rows) >= 100 {
 		tokenValue, err := r.encodeCursor(recordCursor{
 			MetadataPrefix: c.MetadataPrefix,
 			SetSpec:        c.SetSpec,
