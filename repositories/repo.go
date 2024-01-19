@@ -469,15 +469,28 @@ func (r *Repo) AddRecord(ctx context.Context, identifier, prefix, metadata strin
 }
 
 func (r *Repo) DeleteRecord(ctx context.Context, identifier, prefix string) error {
-	return r.client.Record.Update().
-		Where(
-			record.HasItemWith(item.IdentifierEQ(identifier)),
-			record.HasMetadataFormatWith(metadataformat.PrefixEQ(prefix)),
-			record.MetadataNotNil(),
-		).
-		ClearMetadata().
-		SetDatestamp(time.Now()).
-		Exec(ctx)
+	sql := `
+  	with add_item as (
+			insert into items (identifier) values($1)
+	    on conflict (identifier)
+		  do nothing
+	    returning id
+	  ), item as (
+    	select id from add_item
+      union
+      select id from items where identifier = $1
+	  ), fmt as (
+		  select id from metadata_formats where prefix = $2
+	  )
+    insert into records (item_id, metadata_format_id, metadata, datestamp)
+	  select item.id, fmt.id, NULL, current_timestamp
+	  from item, fmt
+	  on conflict (item_id, metadata_format_id)
+	  do update set metadata = excluded.metadata, datestamp = excluded.datestamp
+	  where records.metadata != excluded.metadata
+	`
+	_, err := r.client.ExecContext(ctx, sql, identifier, prefix)
+	return err
 }
 
 func (r *Repo) encodeCursor(c any) (string, error) {
