@@ -3,10 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -120,7 +117,7 @@ func (r *Repo) GetSets(ctx context.Context) ([]*oaipmh.Set, *oaipmh.ResumptionTo
 
 func (r *Repo) GetMoreSets(ctx context.Context, tokenValue string) ([]*oaipmh.Set, *oaipmh.ResumptionToken, error) {
 	c := setCursor{}
-	if err := r.decodeCursor(tokenValue, &c); err != nil {
+	if err := crypt.DecryptValue(r.config.Secret, tokenValue, &c); err != nil {
 		return nil, nil, err
 	}
 	return r.getSets(ctx, c)
@@ -157,7 +154,7 @@ func (r *Repo) getSets(ctx context.Context, c setCursor) ([]*oaipmh.Set, *oaipmh
 
 	var token *oaipmh.ResumptionToken
 	if len(rows) >= PageLimit {
-		tokenValue, err := r.encodeCursor(setCursor{
+		tokenValue, err := crypt.EncryptValue(r.config.Secret, setCursor{
 			LastID: rows[len(rows)-1].ID,
 		})
 		if err != nil {
@@ -267,7 +264,7 @@ func (r *Repo) GetIdentifiers(ctx context.Context,
 // TODO this loads the complete record, maken an efficient version
 func (r *Repo) GetMoreIdentifiers(ctx context.Context, tokenValue string) ([]*oaipmh.Header, *oaipmh.ResumptionToken, error) {
 	c := recordCursor{}
-	if err := r.decodeCursor(tokenValue, &c); err != nil {
+	if err := crypt.DecryptValue(r.config.Secret, tokenValue, &c); err != nil {
 		return nil, nil, err
 	}
 	recs, token, err := r.getRecords(ctx, c)
@@ -297,7 +294,7 @@ func (r *Repo) GetRecords(ctx context.Context,
 
 func (r *Repo) GetMoreRecords(ctx context.Context, tokenValue string) ([]*oaipmh.Record, *oaipmh.ResumptionToken, error) {
 	c := recordCursor{}
-	if err := r.decodeCursor(tokenValue, &c); err != nil {
+	if err := crypt.DecryptValue(r.config.Secret, tokenValue, &c); err != nil {
 		return nil, nil, err
 	}
 	return r.getRecords(ctx, c)
@@ -377,7 +374,7 @@ func (r *Repo) getRecords(ctx context.Context, c recordCursor) ([]*oaipmh.Record
 
 	var token *oaipmh.ResumptionToken
 	if len(rows) >= PageLimit {
-		tokenValue, err := r.encodeCursor(recordCursor{
+		tokenValue, err := crypt.EncryptValue(r.config.Secret, recordCursor{
 			MetadataPrefix: c.MetadataPrefix,
 			SetSpec:        c.SetSpec,
 			From:           c.From,
@@ -418,26 +415,26 @@ func (r *Repo) GetRecordMetadataFormats(ctx context.Context, identifier string) 
 func (r *Repo) AddItem(ctx context.Context, identifier string, specs []string) error {
 	sql := `
   	with add_item as (
-			insert into items (identifier) values($1)
-	    on conflict (identifier)
-		  do nothing
-	    returning id
-	  ), item as (
-    	select id from add_item
+	  insert into items (identifier) values($1)
+	  on conflict (identifier)
+	    do nothing
+	  returning id
+	), item as (
+      select id from add_item
       union
       select id from items where identifier = $1
-	  ), new_sets as (
-		  select id from sets where spec = any($2)
-	  ), del_sets as (
-	  	delete from item_sets
-	  	using item, new_sets
-	  	where item_id = item.id and set_id not in (select id from new_sets)
-	  )
+	), new_sets as (
+	  select id from sets where spec = any($2)
+	), del_sets as (
+	  delete from item_sets
+	  using item, new_sets
+	  where item_id = item.id and set_id not in (select id from new_sets)
+	)
     insert into item_sets (item_id, set_id)
 	  select item.id, new_sets.id
 	  from item, new_sets
 	  on conflict (item_id, set_id)
-	  do nothing
+	    do nothing
 	`
 	_, err := r.client.ExecContext(ctx, sql, identifier, specs)
 	return err
@@ -446,23 +443,23 @@ func (r *Repo) AddItem(ctx context.Context, identifier string, specs []string) e
 func (r *Repo) AddRecord(ctx context.Context, identifier, prefix, metadata string) error {
 	sql := `
   	with add_item as (
-			insert into items (identifier) values($1)
-	    on conflict (identifier)
-		  do nothing
-	    returning id
-	  ), item as (
-    	select id from add_item
+	  insert into items (identifier) values($1)
+	  on conflict (identifier)
+	    do nothing
+	  returning id
+	), item as (
+      select id from add_item
       union
       select id from items where identifier = $1
-	  ), fmt as (
-		  select id from metadata_formats where prefix = $2
-	  )
+	), fmt as (
+	  select id from metadata_formats where prefix = $2
+	)
     insert into records (item_id, metadata_format_id, metadata, datestamp)
 	  select item.id, fmt.id, $3, current_timestamp
 	  from item, fmt
 	  on conflict (item_id, metadata_format_id)
-	  do update set metadata = excluded.metadata, datestamp = excluded.datestamp
-	  where records.metadata != excluded.metadata
+	    do update set metadata = excluded.metadata, datestamp = excluded.datestamp
+	    where records.metadata != excluded.metadata
 	`
 	_, err := r.client.ExecContext(ctx, sql, identifier, prefix, metadata)
 	return err
@@ -471,52 +468,24 @@ func (r *Repo) AddRecord(ctx context.Context, identifier, prefix, metadata strin
 func (r *Repo) DeleteRecord(ctx context.Context, identifier, prefix string) error {
 	sql := `
   	with add_item as (
-			insert into items (identifier) values($1)
-	    on conflict (identifier)
-		  do nothing
-	    returning id
-	  ), item as (
-    	select id from add_item
+	  insert into items (identifier) values($1)
+	  on conflict (identifier)
+		do nothing
+	  returning id
+	), item as (
+      select id from add_item
       union
       select id from items where identifier = $1
-	  ), fmt as (
-		  select id from metadata_formats where prefix = $2
-	  )
+	), fmt as (
+	  select id from metadata_formats where prefix = $2
+	)
     insert into records (item_id, metadata_format_id, metadata, datestamp)
 	  select item.id, fmt.id, NULL, current_timestamp
 	  from item, fmt
 	  on conflict (item_id, metadata_format_id)
-	  do update set metadata = excluded.metadata, datestamp = excluded.datestamp
-	  where records.metadata != excluded.metadata
+	  	do update set metadata = NULL, datestamp = excluded.datestamp
+	  	where records.metadata is not null
 	`
 	_, err := r.client.ExecContext(ctx, sql, identifier, prefix)
-	return err
-}
-
-func (r *Repo) encodeCursor(c any) (string, error) {
-	plaintext, _ := json.Marshal(c)
-	ciphertext, err := crypt.Encrypt(r.config.Secret, plaintext)
-	if err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(ciphertext), nil
-}
-
-func (r *Repo) decodeCursor(encryptedCursor string, c any) error {
-	ciphertext, err := base64.URLEncoding.DecodeString(encryptedCursor)
-	if err != nil {
-		return err
-	}
-	plaintext, err := crypt.Decrypt(r.config.Secret, ciphertext)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(plaintext, c)
-}
-
-func rollback(tx *ent.Tx, err error) error {
-	if rerr := tx.Rollback(); rerr != nil {
-		err = fmt.Errorf("%w: %v", err, rerr)
-	}
 	return err
 }

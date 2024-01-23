@@ -98,6 +98,8 @@ github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/ugent-library/crypt v0.0.0-20230630063634-8c02106fd40e h1:LnsNQmbNBSNTNd2mdozNfy87fbUOZ5ZxjBxA+T8h0lg=
 github.com/ugent-library/crypt v0.0.0-20230630063634-8c02106fd40e/go.mod h1:kamafwnieKPUZiNvnyN0/kBjhO9tzCzSrPY069QBBwk=
+github.com/ugent-library/crypt v0.0.0-20240117154030-a71a6ff50afe h1:xCNm+uaTWMRTuWW0V7WnAD4ML4GbMIm60ffQ6/Ss1iw=
+github.com/ugent-library/crypt v0.0.0-20240117154030-a71a6ff50afe/go.mod h1:kamafwnieKPUZiNvnyN0/kBjhO9tzCzSrPY069QBBwk=
 github.com/ugent-library/httpx v0.0.0-20230522072608-fba7bb4a066d h1:j+m9h1q80/D8oikAxVYDfnCfjM0SOuSdoHBhylp4AJg=
 github.com/ugent-library/httpx v0.0.0-20230522072608-fba7bb4a066d/go.mod h1:+m4mWcYSpZknAPTanWib+3cehzEyTDxz9ipf3NG3ezM=
 github.com/ugent-library/zaphttp v0.0.0-20230513174723-52c27d21c5ce h1:+TNoKsfMTTveEe1RQRaJ7TZnHVh1k98Nk+4gTg2mENA=
@@ -133,8 +135,6 @@ golang.org/x/sys v0.11.0 h1:eG7RXZHdqOJ1i+0lgLgCpSXAp6M3LYlAo6osgSi0xOM=
 golang.org/x/sys v0.11.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/text v0.12.0 h1:k+n5B8goJNdU7hSvEtMUz3d1Q6D/XW4COJSJR6fN0mc=
 golang.org/x/text v0.12.0/go.mod h1:TvPlkZtksWOMsz7fbANvkp4WM8x/WCo/om8BMLbz+aE=
-golang.org/x/tools v0.11.0 h1:EMCa6U9S2LtZXLAMoWiR/R8dAQFRqbAitmbJ2UKhoi8=
-golang.org/x/tools v0.11.0/go.mod h1:anzJrxPjNtfgiYQYirP2CPGzGLxrH2u2QBhn6Bf3qY8=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
