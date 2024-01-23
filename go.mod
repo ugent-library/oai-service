@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	entgo.io/ent v0.12.3
-	github.com/caarlos0/env/v8 v8.0.0
+	github.com/caarlos0/env/v10 v10.0.0
 	github.com/go-faster/errors v0.6.1
 	github.com/go-faster/jx v1.0.1
 	github.com/joho/godotenv v1.5.1
@@ -56,7 +56,7 @@ require (
 	github.com/jackc/pgx/v5 v5.4.2
 	github.com/ory/graceful v0.1.3
 	github.com/spf13/cobra v1.7.0
-	github.com/ugent-library/crypt v0.0.0-20230630063634-8c02106fd40e
+	github.com/ugent-library/crypt v0.0.0-20240117154030-a71a6ff50afe
 	github.com/ugent-library/httpx v0.0.0-20230522072608-fba7bb4a066d
 	github.com/ugent-library/zaphttp v0.0.0-20230513174723-52c27d21c5ce
 	go.uber.org/atomic v1.11.0 // indirect
