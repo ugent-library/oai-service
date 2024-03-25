@@ -14,7 +14,6 @@ import (
 	"github.com/ugent-library/oai-service/ent"
 	"github.com/ugent-library/oai-service/ent/item"
 	"github.com/ugent-library/oai-service/ent/metadataformat"
-	"github.com/ugent-library/oai-service/ent/migrate"
 	"github.com/ugent-library/oai-service/ent/predicate"
 	"github.com/ugent-library/oai-service/ent/record"
 	"github.com/ugent-library/oai-service/ent/set"
@@ -56,12 +55,12 @@ func New(c Config) (*Repo, error) {
 	driver := sqldialect.OpenDB(dialect.Postgres, db)
 	client := ent.NewClient(ent.Driver(driver))
 
-	err = client.Schema.Create(context.TODO(),
-		migrate.WithDropIndex(true),
-	)
-	if err != nil {
-		return nil, err
-	}
+	// err = client.Schema.Create(context.TODO(),
+	// 	migrate.WithDropIndex(true),
+	// )
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &Repo{
 		config: c,
